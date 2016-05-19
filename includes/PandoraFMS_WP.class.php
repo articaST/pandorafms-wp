@@ -16,10 +16,20 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-if (!defined("WP_UNINSTALL_PLUGIN")) die();
-
-require_once(plugin_dir_path(__FILE__) . "/includes/PandoraFMS_WP.class.php");
-
-
-PandoraFMS_WP::uninstall();
+class PandoraFMS_WP {
+	public static function activation() {
+		// Check if installed
+			error_log( "Install" );
+		// Only active the plugin again
+	}
+	
+	public static function deactivation() {
+		error_log( "deactivation" );
+	}
+	
+	public static function uninstall() {
+		PandoraFMS_WP::deactivation();
+		error_log( "Uninstall" );
+	}
+}
 ?>
