@@ -61,8 +61,43 @@ class PandoraFMS_WP {
 	public static function init() {
 		error_log( "Init" );
 		
+		//Code copied from footer-putter plugin
+		switch (basename( TEMPLATEPATH ) ) {  
+			case 'twentyten':
+				add_action('twentyten_credits', array('PandoraFMS_WP', 'show_footer'));
+				break;
+			case 'twentyeleven':
+				add_action('twentyeleven_credits', array('PandoraFMS_WP', 'show_footer'));
+				break;
+			case 'twentytwelve':
+				add_action('twentytwelve_credits', array('PandoraFMS_WP', 'show_footer'));
+				break;
+			case 'twentythirteen':
+				add_action('twentythirteen_credits', array('PandoraFMS_WP', 'show_footer'));
+				break;
+			case 'twentyfourteen':
+				add_action('twentyfourteen_credits', array('PandoraFMS_WP', 'show_footer'));
+				break;
+			case 'delicate':
+				add_action('get_footer', array('PandoraFMS_WP', 'show_footer'));
+				break;
+			case 'genesis':
+				add_action('genesis_footer', array('PandoraFMS_WP', 'show_footer'));
+				break;
+			case 'graphene':
+				add_action('graphene_footer', array('PandoraFMS_WP', 'show_footer'));
+				break;
+			case 'pagelines':
+				add_action('pagelines_leaf', array('PandoraFMS_WP', 'show_footer'));
+				break;
+			default:
+				add_action('wp_footer', array('PandoraFMS_WP', 'show_footer'));
+				break;
+		}
+		
 		// Added action for footer
-		add_action('wp_footer', array('PFMS_Footer', 'show_footer'));
+		//~ add_action('wp_footer', array('PandoraFMS_WP', 'show_footer'));
+		add_action('twentyfourteen_credits', array('PandoraFMS_WP', 'show_footer'));
 	}
 	
 	public static function admin_init() {
@@ -79,6 +114,18 @@ class PandoraFMS_WP {
 			array("PandoraFMS_WP", "sanitize_options"));
 		
 		error_log( "Admin Init" );
+	}
+	
+	public static function show_footer() {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$options = get_option('pfmswp-options');
+		$options = $pfms_wp->sanitize_options($options);
+		
+		if ($options['show_footer']) {
+			$pfms_footer = PFMS_Footer::getInstance();
+			$pfms_footer->show_footer();
+		}
 	}
 	//=== END ==== HOOKS CODE ==========================================
 	

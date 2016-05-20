@@ -36,10 +36,8 @@ class PFMS_Footer {
 	
 	
 	//=== INIT === HOOKS CODE ==========================================
-	public static function show_footer() {
-		// Check if installed
-			error_log( "show_footer" );
-		// Only active the plugin again
+	public function show_footer() {
+		_e("PandoraFMS WP runs!!");
 	}
 	//=== END === HOOKS CODE ===========================================
 }
