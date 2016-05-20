@@ -72,9 +72,47 @@ class PandoraFMS_WP {
 		add_action('wp_dashboard_setup',
 			array("PFMS_Widget_Dashboard", "show_dashboard"));
 		
+		//Added settings
+		register_setting(
+			"pfmswp-settings-group",
+			"pfmswp-options",
+			array("PandoraFMS_WP", "sanitize_options"));
+		
 		error_log( "Admin Init" );
 	}
 	//=== END ==== HOOKS CODE ==========================================
+	
+	public static function sanitize_options($options) {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		$pfms_wp->debug($options);
+		
+		return $options;
+	}
+	
+	public function debug($var) {
+		$more_info = '';
+		if (is_string($var)) {
+			$more_info = 'size: ' . strlen($var);
+		}
+		elseif (is_bool($var)) {
+			$more_info = 'val: ' . 
+				($var ? 'true' : 'false');
+		}
+		elseif (is_null($var)) {
+			$more_info = 'is null';
+		}
+		elseif (is_array($var)) {
+			$more_info = count($var);
+		}
+		
+		ob_start();
+		echo "(" . gettype($var) . ") " . $more_info . "\n";
+		print_r($var);
+		echo "\n\n";
+		$output = ob_get_clean();
+		
+		error_log($output);
+	}
 	
 	public static function add_admin_menu_entries() {
 		$pfms_wp = PandoraFMS_WP::getInstance();
