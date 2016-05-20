@@ -133,6 +133,9 @@ class PandoraFMS_WP {
 		$default_options = array();
 		
 		$default_options['show_footer'] = 0;
+		$default_options['email_notifications'] = "";
+		$default_options['api_password'] = "";
+		$default_options['api_ip'] = "";
 		
 		return $default_options;
 	}
@@ -142,6 +145,11 @@ class PandoraFMS_WP {
 		
 		if (!is_array($options) || empty($options) || (false === $options))
 			return $pfms_wp->set_default_options();
+		
+		$options['email_notifications'] =
+			sanitize_email($options['email_notifications']);
+		//~ $options['api_password'];
+		//~ $options['api_ip'];
 		
 		return $options;
 	}
