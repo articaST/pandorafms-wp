@@ -18,7 +18,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 if (!defined("WP_UNINSTALL_PLUGIN")) die();
 
+//=== INIT === INCLUDES ================================================
 require_once(plugin_dir_path(__FILE__) . "/includes/PandoraFMS_WP.class.php");
+//=== END ==== INCLUDES ================================================
 
 
 PandoraFMS_WP::uninstall();
