@@ -82,9 +82,19 @@ class PandoraFMS_WP {
 	}
 	//=== END ==== HOOKS CODE ==========================================
 	
+	private function set_default_options() {
+		$default_options = array();
+		
+		$default_options['show_footer'] = 0;
+		
+		return $default_options;
+	}
+	
 	public static function sanitize_options($options) {
 		$pfms_wp = PandoraFMS_WP::getInstance();
-		$pfms_wp->debug($options);
+		
+		if (!is_array($options) || empty($options) || (false === $options))
+			return $pfms_wp->set_default_options();
 		
 		return $options;
 	}

@@ -50,6 +50,10 @@ class PFMS_AdminPages {
 			<form method="post" action="options.php">
 				<?php settings_fields('pfmswp-settings-group');?>
 				<?php $options = get_option('pfmswp-options');?>
+				<?php
+				$pfms_wp = PandoraFMS_WP::getInstance();
+				$pfms_wp->debug($options);
+				?>
 				<table class="form-table">
 					<tr valign="top">
 						<th scope="row">
