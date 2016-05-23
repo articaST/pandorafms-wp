@@ -31,6 +31,12 @@ register_deactivation_hook(__FILE__, array('PandoraFMS_WP', 'deactivation'));
 //=== END ==== HOOKS FOR INSTALL (OR REGISTER) AND UNINSTALL ===========
 
 
+//=== INIT === AJAX HOOKS ==============================================
+add_action('admin_footer', array('PandoraFMS_WP', 'ajax'));
+add_action('wp_ajax_check_admin_user_enabled', array('PandoraFMS_WP', 'ajax_check_admin_user_enabled'));
+//=== END ==== AJAX HOOKS ==============================================
+
+
 //=== INIT === ANOTHER HOOKS ===========================================
 add_action('init', array('PandoraFMS_WP', 'init'));
 add_action('admin_init', array('PandoraFMS_WP', 'admin_init'));

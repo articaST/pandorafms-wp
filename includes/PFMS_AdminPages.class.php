@@ -36,9 +36,87 @@ class PFMS_AdminPages {
 	
 	
 	public static function show_dashboard() {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$data = $pfms_wp->get_dashboard_data();
 		?>
 		<div class="wrap">
 			<h2><?php esc_html_e("Dashboard");?></h2>
+		</div>
+		<div id="col-container">
+		
+		<div id="col-right">
+			<div class="col-wrap">
+				
+				<div class="card">
+					<h2 class="title"><?php esc_html_e("Acccess control");?></h2>
+					<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ut lorem nec magna fermentum tristique at non velit. Fusce venenatis nunc in dui sodales viverra. Donec in ex ut sem sagittis blandit. Phasellus quis arcu vestibulum, sollicitudin lorem in, ornare enim. Nam a porta erat. Etiam non dapibus dui. In quis tellus erat. Nulla molestie ultrices eros ac consectetur. Nullam tincidunt eros id interdum eleifend. Morbi lacinia, libero ut tristique iaculis, neque felis sagittis elit, non cursus dui est eu dui. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+				</div>
+				
+				<div class="card">
+					<h2 class="title"><?php esc_html_e("System security");?></h2>
+					<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ut lorem nec magna fermentum tristique at non velit. Fusce venenatis nunc in dui sodales viverra. Donec in ex ut sem sagittis blandit. Phasellus quis arcu vestibulum, sollicitudin lorem in, ornare enim. Nam a porta erat. Etiam non dapibus dui. In quis tellus erat. Nulla molestie ultrices eros ac consectetur. Nullam tincidunt eros id interdum eleifend. Morbi lacinia, libero ut tristique iaculis, neque felis sagittis elit, non cursus dui est eu dui. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+				</div>
+				
+			</div>
+		</div><!-- /col-right -->
+		
+		<div id="col-left">
+			<div class="col-wrap">
+				<div class="card">
+					<h2 class="title"><?php esc_html_e("Monitoring");?></h2>
+					<p>
+						<?php
+						esc_html_e("Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
+						?>
+					</p>
+					<table class="widefat">
+						<thead>
+							<tr>
+								<th><?php esc_html_e("Item");?></th>
+								<th><?php esc_html_e("Status");?></th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php
+							foreach ($data['monitoring'] as $item => $status) {
+								?>
+								<tr>
+									<td><?php echo esc_html($item);?></td>
+									<td>
+										<a href="javascript: check_admin_user_enabled();">
+											<div id="admin_user_enabled">
+												<?php
+												if ($status) {
+													?>
+													<img src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
+													<?php
+												}
+												else {
+													?>
+													<img src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
+													<?php
+												}
+												?>
+											</div>
+										</a>
+									</td>
+								</tr>
+								<?php
+							}
+							?>
+							
+						</tbody>
+					</table>
+					<div style="display: none;">
+						<img id="ajax_loading" src="<?php echo esc_url( admin_url( 'images/spinner.gif' ) ); ?>" alt="" />
+						<img id="ajax_result_ok" src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
+						<img id="ajax_result_fail" src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
+					</div>
+				</div>
+			</div>
+		</div><!-- /col-left -->
+		
 		</div>
 		<?php
 	}

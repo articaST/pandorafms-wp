@@ -231,5 +231,71 @@ class PandoraFMS_WP {
 			"pfms_wp_admin_menu_general_setup",
 			array("PFMS_AdminPages", "show_general_setup"));
 	}
+	
+	public function get_dashboard_data() {
+		$return = array();
+		
+		$return['monitoring'] = array();
+		$return['monitoring'][_('Check of "admin" user enabled')] = $this->check_admin_user_enabled();
+		
+		return $return;
+	}
+	
+	private function check_admin_user_enabled() {
+		$user = get_user_by('login', 'admin');
+		
+		return empty($user);
+	}
+	
+	
+	//=== INIT === AJAX HOOKS CODE =====================================
+	public static function ajax() {
+		error_log("ajax");
+		?>
+		<script type="text/javascript" >
+			jQuery(document).ready(function($) {
+				
+			});
+			
+			function check_admin_user_enabled() {
+				var data = {
+					'action': 'check_admin_user_enabled'
+				};
+				
+				jQuery("#admin_user_enabled").empty();
+				jQuery("#admin_user_enabled").append(
+					jQuery("#ajax_loading").clone());
+				
+				jQuery.post(ajaxurl, data, function(response) {
+					jQuery("#admin_user_enabled").empty();
+					
+					if (response.result) {
+						jQuery("#admin_user_enabled").append(
+							jQuery("#ajax_result_ok").clone());
+					}
+					else {
+						jQuery("#admin_user_enabled").append(
+							jQuery("#ajax_result_fail").clone());
+					}
+				},
+				"json");
+			}
+		</script>
+		<?php
+	}
+	
+	public static function ajax_check_admin_user_enabled() {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		if ($pfms_wp->check_admin_user_enabled()) {
+			echo json_encode(array('result' => 1));
+		}
+		else {
+			echo json_encode(array('result' => 0));
+		}
+		
+		wp_die();
+	}
+	//=== END ==== AJAX HOOKS CODE =====================================
 }
 ?>
