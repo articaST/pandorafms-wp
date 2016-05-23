@@ -18,9 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class PandoraFMS_WP {
 	//=== INIT === ATRIBUTES ===========================================
-	//=== INIT === ACL SETTINGS ========================================
-	private $acl_user_menu_entry = "manage_options";
-	//=== END ==== ACL SETTINGS ========================================
+	private $prefix = 'pfms-wp::';
+	private $acl_user_menu_entry = "manage_options"; // acl settings
 	private $position_menu_entry = 75; //Under tools
 	//=== END ==== ATRIBUTES ===========================================
 	
@@ -41,11 +40,46 @@ class PandoraFMS_WP {
 	private function __construct() {
 	}
 	
+	private function install() {
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$installed = get_option("installed", false);
+		
+		if (!$installed) {
+			add_option($pfms_wp->prefix . "installed", true);
+			
+			$audit_password = array(
+				'last_execution' => null,
+				'status' => null);
+			add_option($pfms_wp->prefix . "audit_passwords", $audit_password);
+		}
+		
+		// The wordpress has the function dbDelta that create (or update
+		// if it created previously).
+		
+		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+		
+		// Table "audit_users_weak_password"
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "audit_users_weak_password";
+		$sql = "CREATE TABLE `$tablename` (
+			`id` INT NOT NULL AUTO_INCREMENT,
+			`user` varchar(60) NOT NULL DEFAULT '',
+			PRIMARY KEY (`id`)
+			);";
+		
+		dbDelta($sql);
+	}
+	
 	
 	//=== INIT === HOOKS CODE ==========================================
 	public static function activation() {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
 		// Check if installed
-			error_log( "Install" );
+		$pfms_wp->install();
+		
 		// Only active the plugin again
 	}
 	
@@ -183,8 +217,8 @@ class PandoraFMS_WP {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
 		add_menu_page(
-			__("PandoraFMS WP : Dashboard"),
-			__("PandoraFMS WP"),
+			_("PandoraFMS WP : Dashboard"),
+			_("PandoraFMS WP"),
 			$pfms_wp->acl_user_menu_entry,
 			"pfms_wp_admin_menu",
 			array("PFMS_AdminPages", "show_dashboard"),
@@ -193,59 +227,139 @@ class PandoraFMS_WP {
 		
 		add_submenu_page(
 			"pfms_wp_admin_menu",
-			__("PandoraFMS WP : Dashboard"),
-			__("Dashboard"),
+			_("PandoraFMS WP : Dashboard"),
+			_("Dashboard"),
 			$pfms_wp->acl_user_menu_entry,
 			"pfms_wp_admin_menu",
 			array("PFMS_AdminPages", "show_dashboard"));
 		
 		add_submenu_page(
 			"pfms_wp_admin_menu",
-			__("PandoraFMS WP : Monitoring"),
-			__("Monitoring"),
+			_("PandoraFMS WP : Monitoring"),
+			_("Monitoring"),
 			$pfms_wp->acl_user_menu_entry,
 			"pfms_wp_admin_menu_monitoring",
 			array("PFMS_AdminPages", "show_monitoring"));
 		
 		add_submenu_page(
 			"pfms_wp_admin_menu",
-			__("PandoraFMS WP : Acccess control"),
-			__("Acccess control"),
+			_("PandoraFMS WP : Acccess control"),
+			_("Acccess control"),
 			$pfms_wp->acl_user_menu_entry,
 			"pfms_wp_admin_menu_acccess_control",
 			array("PFMS_AdminPages", "show_acccess_control"));
 		
 		add_submenu_page(
 			"pfms_wp_admin_menu",
-			__("PandoraFMS WP : System Security"),
-			__("System Security"),
+			_("PandoraFMS WP : System Security"),
+			_("System Security"),
 			$pfms_wp->acl_user_menu_entry,
 			"pfms_wp_admin_menu_system_security",
 			array("PFMS_AdminPages", "show_system_security"));
 		
 		add_submenu_page(
 			"pfms_wp_admin_menu",
-			__("PandoraFMS WP : General Setup"),
-			__("General Setup"),
+			_("PandoraFMS WP : General Setup"),
+			_("General Setup"),
 			$pfms_wp->acl_user_menu_entry,
 			"pfms_wp_admin_menu_general_setup",
 			array("PFMS_AdminPages", "show_general_setup"));
 	}
 	
 	public function get_dashboard_data() {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
 		$return = array();
 		
 		$return['monitoring'] = array();
-		$return['monitoring'][_('Check of "admin" user enabled')] = $this->check_admin_user_enabled();
+		$return['monitoring']['check_admin'] = $this->check_admin_user_enabled();
+		
+		// audit_passwords_strength
+		$audit_password = get_option($pfms_wp->prefix . "audit_passwords",
+			array(
+				'last_execution' => null,
+				'status' => null));
+		$return['monitoring']['audit_password'] = $audit_password;
 		
 		return $return;
 	}
 	
+	
+	//=== INIT === CHECKS ==============================================
+	private function audit_passwords_strength() {
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$table_user_weak_password =
+			$wpdb->prefix . $pfms_wp->prefix . "audit_users_weak_password";
+		
+		$audit_password = get_option($pfms_wp->prefix . "audit_passwords",
+			array(
+				'last_execution' => null,
+				'status' => null));
+		
+		//For first versions it is store in data plugin directory.
+		$weak_passwords_list = file(
+			plugin_dir_path(__FILE__) . "../data/password_dictionary.default.txt");
+		
+		//Get all users (included the disabled users because they can return to enabled)
+		$users = get_users();
+		
+		
+		$not_exists_weak_users = true;
+		foreach ($users as $user) {
+			foreach ($weak_passwords_list as $weak_password) {
+				$weak = wp_check_password(
+					trim($weak_password), $user->data->user_pass, $user->ID);
+				
+				$user_login = $user->data->user_login;
+				
+				if ($weak) {
+					$not_exists_weak_users = false;
+					
+					// Store the user with weak password.
+					$wpdb->delete(
+						$table_user_weak_password,
+						array('user' => $user_login));
+					$wpdb->insert(
+						$table_user_weak_password,
+						array('user' => $user_login));
+					
+					break;
+				}
+				else {
+					// Delete user with previous weak password.
+					$wpdb->delete(
+						$table_user_weak_password,
+						array('user' => $user_login));
+				}
+			}
+		}
+		
+		$audit_password['status'] = (int)$not_exists_weak_users;
+		$last_execution = time();
+		$audit_password['last_execution'] = $last_execution;
+		
+		update_option($pfms_wp->prefix . "audit_passwords", $audit_password);
+	}
+	
 	private function check_admin_user_enabled() {
+		//Check all users (included the disabled users because they can return to enabled)
 		$user = get_user_by('login', 'admin');
 		
 		return empty($user);
 	}
+	//=== END ==== CHECKS ==============================================
+	
+	
+	//=== INIT === CRON HOOKS CODE =====================================
+	public static function cron_audit_passwords_strength() {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$pfms_wp->audit_passwords_strength();
+	}
+	//=== END ==== CRON HOOKS CODE =====================================
 	
 	
 	//=== INIT === AJAX HOOKS CODE =====================================
@@ -280,8 +394,61 @@ class PandoraFMS_WP {
 				},
 				"json");
 			}
+			
+			function check_audit_password() {
+				var data = {
+					'action': 'check_audit_password'
+				};
+				
+				jQuery("#audit_password_status").empty();
+				jQuery("#audit_password_status").append(
+					jQuery("#ajax_loading").clone());
+				
+				jQuery("#audit_password_last_execute").empty();
+				
+				jQuery.post(ajaxurl, data, function(response) {
+					jQuery("#audit_password_status").empty();
+					
+					if (response.status) {
+						jQuery("#audit_password_status").append(
+							jQuery("#ajax_result_ok").clone());
+					}
+					else {
+						jQuery("#audit_password_status").append(
+							jQuery("#ajax_result_fail").clone());
+					}
+					
+					jQuery("#audit_password_last_execute").append(
+						response.last_execution);
+				},
+				"json");
+			}
 		</script>
 		<?php
+	}
+	
+	public static function ajax_check_audit_password() {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$pfms_wp->audit_passwords_strength();
+		
+		$audit_password = get_option($pfms_wp->prefix . "audit_passwords",
+			array(
+				'last_execution' => null,
+				'status' => null));
+		
+		if (empty($audit_password['last_execution'])) {
+			$audit_password['last_execution'] = esc_html(_("Never execute"));
+		}
+		else {
+			$audit_password['last_execution'] = esc_html(
+				date_i18n(get_option('date_format'),
+					$audit_password['last_execution']));
+		}
+		
+		echo json_encode($audit_password);
+		
+		wp_die();
 	}
 	
 	public static function ajax_check_admin_user_enabled() {

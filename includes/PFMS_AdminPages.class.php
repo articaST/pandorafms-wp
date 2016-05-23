@@ -78,34 +78,61 @@ class PFMS_AdminPages {
 							</tr>
 						</thead>
 						<tbody>
-							<?php
-							foreach ($data['monitoring'] as $item => $status) {
-								?>
-								<tr>
-									<td><?php echo esc_html($item);?></td>
-									<td>
-										<a href="javascript: check_admin_user_enabled();">
-											<div id="admin_user_enabled">
-												<?php
-												if ($status) {
-													?>
-													<img src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
-													<?php
-												}
-												else {
-													?>
-													<img src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
-													<?php
-												}
+							<tr>
+								<td><?php esc_html_e('Check of "admin" user enabled');?></td>
+								<td>
+									<a href="javascript: check_admin_user_enabled();">
+										<div id="admin_user_enabled">
+											<?php
+											if ($data['monitoring']['check_admin']) {
 												?>
-											</div>
-										</a>
-									</td>
-								</tr>
-								<?php
-							}
-							?>
-							
+												<img src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
+												<?php
+											}
+											else {
+												?>
+												<img src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
+												<?php
+											}
+											?>
+										</div>
+									</a>
+								</td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e('Audit of password strength');?></td>
+								<td>
+									<span id="audit_password_status">
+										<?php
+										if ($data['monitoring']['audit_password']['status']) {
+											?>
+											<img src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
+											<?php
+										}
+										else {
+											?>
+											<img src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
+											<?php
+										}
+										?>
+									</span>
+									<a href="javascript: check_audit_password();">
+										<span id="audit_password_last_execute">
+											<?php
+											if (empty($data['monitoring']['audit_password']['last_execution'])) {
+												esc_html_e('Never execute');
+											}
+											else {
+												echo esc_html(
+													date_i18n(
+														get_option('date_format'),
+														$data['monitoring']['audit_password']['last_execution']));
+											}
+											?>
+										</span>
+									</a>
+								</td>
+							</tr>
 						</tbody>
 					</table>
 					<div style="display: none;">
