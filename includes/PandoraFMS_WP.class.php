@@ -130,7 +130,6 @@ class PandoraFMS_WP {
 		}
 		
 		// Added action for footer
-		//~ add_action('wp_footer', array('PandoraFMS_WP', 'show_footer'));
 		add_action('twentyfourteen_credits', array('PandoraFMS_WP', 'show_footer'));
 	}
 	
@@ -146,6 +145,11 @@ class PandoraFMS_WP {
 			"pfmswp-settings-group",
 			"pfmswp-options",
 			array("PandoraFMS_WP", "sanitize_options"));
+		
+		
+		// Added script
+		wp_enqueue_script('jquery-ui-dialog');
+		wp_enqueue_style("wp-jquery-ui-dialog");
 		
 		error_log( "Admin Init" );
 	}
@@ -423,6 +427,46 @@ class PandoraFMS_WP {
 				},
 				"json");
 			}
+			
+			function show_weak_user_dialog() {
+				var status = jQuery("#audit_password_status img").attr("id");
+				
+				if (status !== "ajax_result_fail") {
+					return;
+				}
+				
+				var data = {
+					'action': 'get_list_users_with_weak_password'
+				};
+				
+				jQuery("#audit_password_status").empty();
+				jQuery("#audit_password_status").append(
+					jQuery("#ajax_loading").clone());
+				
+				jQuery.post(ajaxurl, data, function(response) {
+					var list_users = jQuery.makeArray(response.list_users);
+					console.log(typeof(list_users), list_users);
+					
+					jQuery("#audit_password_status").empty();
+					jQuery("#audit_password_status").append(
+							jQuery("#ajax_result_fail").clone());
+					
+					var dialog_weak_user =
+					jQuery("<div id='dialog_weak_user' title='<?php esc_attr_e("List weak users");?>' />")
+						.html(list_users.join('<br />'))
+						.appendTo("body");
+					
+					dialog_weak_user.dialog({
+						'dialogClass' : 'wp-dialog',
+						'height': 200,
+						'modal' : true,
+						'autoOpen' : false,
+						'closeOnEscape' : true})
+						.dialog('open');
+					
+				},
+				"json");
+			}
 		</script>
 		<?php
 	}
@@ -460,6 +504,28 @@ class PandoraFMS_WP {
 		else {
 			echo json_encode(array('result' => 0));
 		}
+		
+		wp_die();
+	}
+	
+	public static function ajax_get_list_users_with_weak_password() {
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "audit_users_weak_password";
+		$users = $wpdb->get_results("SELECT user FROM `" . $tablename . "`");
+		if (empty($users))
+			$users = array();
+		
+		$pfms_wp->debug($users);
+		
+		$return = array();
+		foreach ($users as $user) {
+			$return[] = $user->user;
+		}
+		
+		echo json_encode(array('list_users' => $return));
 		
 		wp_die();
 	}

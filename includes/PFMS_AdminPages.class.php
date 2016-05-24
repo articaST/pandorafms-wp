@@ -86,12 +86,14 @@ class PFMS_AdminPages {
 											<?php
 											if ($data['monitoring']['check_admin']) {
 												?>
-												<img src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
+												<img id ="ajax_result_ok"
+													src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
 												<?php
 											}
 											else {
 												?>
-												<img src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
+												<img id ="ajax_result_fail"
+													src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
 												<?php
 											}
 											?>
@@ -102,20 +104,24 @@ class PFMS_AdminPages {
 							<tr>
 								<td><?php esc_html_e('Audit of password strength');?></td>
 								<td>
+									<a href="#" onclick="show_weak_user_dialog();">
 									<span id="audit_password_status">
 										<?php
 										if ($data['monitoring']['audit_password']['status']) {
 											?>
-											<img src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
+											<img id ="ajax_result_ok"
+												src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
 											<?php
 										}
 										else {
 											?>
-											<img src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
+											<img id ="ajax_result_fail"
+												src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
 											<?php
 										}
 										?>
 									</span>
+									</a>
 									<a href="javascript: check_audit_password();">
 										<span id="audit_password_last_execute">
 											<?php
