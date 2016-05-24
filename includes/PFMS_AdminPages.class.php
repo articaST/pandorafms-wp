@@ -283,6 +283,31 @@ class PFMS_AdminPages {
 							</fieldset>
 						</td>
 					</tr>
+					<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("Email on login user");?>
+						</th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Email on login user");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options[email_user_login]">
+									<input
+										type="checkbox"
+										name="pfmswp-options[email_user_login]"
+										value="1"
+										<?php
+										checked($options['email_user_login'], 1, true);
+										?>
+										/>
+									<?php esc_html_e("Send email with each login.");?>
+								</label>
+							</fieldset>
+						</td>
+					</tr>
 				</table>
 				<p class="submit">
 					<input

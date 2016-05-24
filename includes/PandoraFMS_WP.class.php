@@ -135,6 +135,7 @@ class PandoraFMS_WP {
 		
 		//=== INIT === EVENT HOOKS =====================================
 		add_action("user_register", array('PandoraFMS_WP', 'user_register'));
+		add_action("wp_login", array('PandoraFMS_WP', 'user_login'));
 		//=== END ==== EVENT HOOKS =====================================
 	}
 	
@@ -198,6 +199,33 @@ class PandoraFMS_WP {
 			sprintf(__('[%s] New account creation'), $blog),
 			$message);
 	}
+	
+	public static function user_login($user_id) {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$options = get_option('pfmswp-options');
+		$options = $pfms_wp->sanitize_options($options);
+		
+		if (!$options['email_user_login'])
+			return;
+		
+		$user = get_userdata($user_id);
+		
+		$blog = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
+		
+		if (empty($options['email_notifications']))
+			$email_to = get_option('admin_email');
+		else
+			$email_to = $options['email_notifications'];
+		
+		
+		$message  = sprintf(__('Login user in %s:'), $blog) . "\r\n\r\n";
+		$message .= sprintf(__('Username: %s'), $user->user_login) . "\r\n\r\n";
+		
+		$result = wp_mail($email_to,
+			sprintf(__('[%s] Login user %s'), $blog, $user->user_login),
+			$message);
+	}
 	//=== END ==== HOOKS CODE ==========================================
 	
 	private function set_default_options() {
@@ -208,6 +236,7 @@ class PandoraFMS_WP {
 		$default_options['api_password'] = "";
 		$default_options['api_ip'] = "";
 		$default_options['email_new_account'] = 1;
+		$default_options['email_user_login'] = 1;
 		
 		return $default_options;
 	}
