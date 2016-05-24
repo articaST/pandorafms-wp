@@ -131,6 +131,11 @@ class PandoraFMS_WP {
 		
 		// Added action for footer
 		add_action('twentyfourteen_credits', array('PandoraFMS_WP', 'show_footer'));
+		
+		
+		//=== INIT === EVENT HOOKS =====================================
+		add_action("user_register", array('PandoraFMS_WP', 'user_register'));
+		//=== END ==== EVENT HOOKS =====================================
 	}
 	
 	public static function admin_init() {
@@ -165,6 +170,34 @@ class PandoraFMS_WP {
 			$pfms_footer->show_footer();
 		}
 	}
+	
+	public static function user_register($user_id) {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$options = get_option('pfmswp-options');
+		$options = $pfms_wp->sanitize_options($options);
+		
+		if (!$options['email_new_account'])
+			return;
+		
+		$user = get_userdata($user_id);
+		
+		$blog = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
+		
+		if (empty($options['email_notifications']))
+			$email_to = get_option('admin_email');
+		else
+			$email_to = $options['email_notifications'];
+		
+		
+		$message  = sprintf(__('New account in %s:'), $blog) . "\r\n\r\n";
+		$message .= sprintf(__('Username: %s'), $user->user_login) . "\r\n\r\n";
+		$message .= sprintf(__('Email: %s'), $user->user_email) . "\r\n";
+		
+		$result = wp_mail($email_to,
+			sprintf(__('[%s] New account creation'), $blog),
+			$message);
+	}
 	//=== END ==== HOOKS CODE ==========================================
 	
 	private function set_default_options() {
@@ -174,6 +207,7 @@ class PandoraFMS_WP {
 		$default_options['email_notifications'] = "";
 		$default_options['api_password'] = "";
 		$default_options['api_ip'] = "";
+		$default_options['email_new_account'] = 1;
 		
 		return $default_options;
 	}
@@ -186,8 +220,6 @@ class PandoraFMS_WP {
 		
 		$options['email_notifications'] =
 			sanitize_email($options['email_notifications']);
-		//~ $options['api_password'];
-		//~ $options['api_ip'];
 		
 		return $options;
 	}
@@ -517,8 +549,6 @@ class PandoraFMS_WP {
 		$users = $wpdb->get_results("SELECT user FROM `" . $tablename . "`");
 		if (empty($users))
 			$users = array();
-		
-		$pfms_wp->debug($users);
 		
 		$return = array();
 		foreach ($users as $user) {

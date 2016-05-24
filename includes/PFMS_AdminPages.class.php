@@ -161,10 +161,6 @@ class PFMS_AdminPages {
 			<form method="post" action="options.php">
 				<?php settings_fields('pfmswp-settings-group');?>
 				<?php $options = get_option('pfmswp-options');?>
-				<?php
-				$pfms_wp = PandoraFMS_WP::getInstance();
-				$pfms_wp->debug($options);
-				?>
 				<table class="form-table">
 					<tr valign="top">
 						<th scope="row">
@@ -256,7 +252,33 @@ class PFMS_AdminPages {
 										name="pfmswp-options[api_ip]"
 										class="large-text code"
 										rows="3"><?php
-										echo esc_textarea($options['api_ip']);?></textarea>
+										echo esc_textarea($options['api_ip']);
+										?></textarea>
+								</label>
+							</fieldset>
+						</td>
+					</tr>
+					<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("Email on new account creation");?>
+						</th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Email on new account creation");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options[email_new_account]">
+									<input
+										type="checkbox"
+										name="pfmswp-options[email_new_account]"
+										value="1"
+										<?php
+										checked($options['email_new_account'], 1, true);
+										?>
+										/>
+									<?php esc_html_e("Send email with each new account.");?>
 								</label>
 							</fieldset>
 						</td>
