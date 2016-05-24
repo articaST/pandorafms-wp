@@ -200,7 +200,7 @@ class PandoraFMS_WP {
 			$message);
 	}
 	
-	public static function user_login($user_id) {
+	public static function user_login($user_login) {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
 		$options = get_option('pfmswp-options');
@@ -209,7 +209,7 @@ class PandoraFMS_WP {
 		if (!$options['email_user_login'])
 			return;
 		
-		$user = get_userdata($user_id);
+		$user = get_user_by('login', $user_login);
 		
 		$blog = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
 		
