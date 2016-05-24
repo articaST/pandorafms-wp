@@ -308,6 +308,31 @@ class PFMS_AdminPages {
 							</fieldset>
 						</td>
 					</tr>
+					<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("Email on user email change");?>
+						</th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Email on user email change");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options[email_change_email]">
+									<input
+										type="checkbox"
+										name="pfmswp-options[email_change_email]"
+										value="1"
+										<?php
+										checked($options['email_change_email'], 1, true);
+										?>
+										/>
+									<?php esc_html_e("Send email when any user change the email.");?>
+								</label>
+							</fieldset>
+						</td>
+					</tr>
 				</table>
 				<p class="submit">
 					<input

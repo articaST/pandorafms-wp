@@ -136,6 +136,7 @@ class PandoraFMS_WP {
 		//=== INIT === EVENT HOOKS =====================================
 		add_action("user_register", array('PandoraFMS_WP', 'user_register'));
 		add_action("wp_login", array('PandoraFMS_WP', 'user_login'));
+		add_action("profile_update", array('PandoraFMS_WP', 'user_change_email'), 10, 2);
 		//=== END ==== EVENT HOOKS =====================================
 	}
 	
@@ -226,6 +227,41 @@ class PandoraFMS_WP {
 			sprintf(__('[%s] Login user %s'), $blog, $user->user_login),
 			$message);
 	}
+	
+	public static function user_change_email($user_id, $old_user_data) {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$options = get_option('pfmswp-options');
+		$options = $pfms_wp->sanitize_options($options);
+		
+		if (!$options['email_change_email'])
+			return;
+		
+		$user = get_userdata($user_id);
+		
+		$old_email = $old_user_data->data->user_email;
+		$new_email = $user->data->user_email;
+		
+		if ($old_email === $new_email)
+			return;
+		
+		$blog = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
+		
+		if (empty($options['email_notifications']))
+			$email_to = get_option('admin_email');
+		else
+			$email_to = $options['email_notifications'];
+		
+		
+		$message  = sprintf(__('User email change in %s:'), $blog) . "\r\n\r\n";
+		$message .= sprintf(__('Username: %s'), $user->user_login) . "\r\n\r\n";
+		$message .= sprintf(__('Old email: %s'), $old_email) . "\r\n\r\n";
+		$message .= sprintf(__('New email: %s'), $new_email) . "\r\n\r\n";
+		
+		$result = wp_mail($email_to,
+			sprintf(__('[%s] %s change the email'), $blog, $user->user_login),
+			$message);
+	}
 	//=== END ==== HOOKS CODE ==========================================
 	
 	private function set_default_options() {
@@ -237,6 +273,7 @@ class PandoraFMS_WP {
 		$default_options['api_ip'] = "";
 		$default_options['email_new_account'] = 1;
 		$default_options['email_user_login'] = 1;
+		$default_options['email_change_email'] = 1;
 		
 		return $default_options;
 	}
@@ -259,7 +296,7 @@ class PandoraFMS_WP {
 			$more_info = 'size: ' . strlen($var);
 		}
 		elseif (is_bool($var)) {
-			$more_info = 'val: ' . 
+			$more_info = 'val: ' .
 				($var ? 'true' : 'false');
 		}
 		elseif (is_null($var)) {
