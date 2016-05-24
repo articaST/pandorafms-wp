@@ -167,6 +167,9 @@ class PandoraFMS_WP {
 		add_action("profile_update", array('PandoraFMS_WP', 'user_change_email'), 10, 2);
 		add_action("activated_plugin", array('PandoraFMS_WP', 'activate_plugin'));
 		//=== END ==== EVENT HOOKS =====================================
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		$pfms_wp->check_theme_active();
 	}
 	
 	public static function admin_init() {
@@ -212,7 +215,7 @@ class PandoraFMS_WP {
 		
 		$user = get_userdata($user_id);
 		
-		$tablename = $wpdb->prefix . $pfms_wp->prefix . "user_register";
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
 		$return = $wpdb->insert(
 			$tablename,
 			array(
@@ -388,6 +391,59 @@ class PandoraFMS_WP {
 	}
 	//=== END ==== HOOKS CODE ==========================================
 	
+	public function check_theme_active() {
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$options = get_option('pfmswp-options');
+		$options = $pfms_wp->sanitize_options($options);
+		
+		$active_theme = wp_get_theme();
+		$theme_name = $active_theme->get('Name');
+		
+		$last_active_theme = get_option($pfms_wp->prefix . "last_active_theme", false);
+		
+		if ($last_active_theme) {
+			update_option($pfms_wp->prefix . "last_active_theme", $theme_name);
+		}
+		else {
+			add_option($pfms_wp->prefix . "last_active_theme", $theme_name);
+		}
+		
+		if ($theme_name !== $last_active_theme) {
+			$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
+			$return = $wpdb->insert(
+				$tablename,
+				array(
+					'type' => 'theme_change',
+					'data' =>
+						sprintf(
+							esc_sql(__("Change to theme [%s].")),
+							$theme_name),
+					'timestamp' => date('Y-m-d H:i:s')),
+				array('%s', '%s', '%s'));
+			
+			if (!$options['email_theme_change'])
+				return;
+			
+			$blog = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
+			
+			if (empty($options['email_notifications']))
+				$email_to = get_option('admin_email');
+			else
+				$email_to = $options['email_notifications'];
+			
+			
+			$message  = sprintf(__('Change theme in %s:'), $blog) . "\r\n\r\n";
+			$message .= sprintf(__('Theme: %s'), $theme_name) . "\r\n\r\n";
+			
+			$result = wp_mail($email_to,
+				sprintf(__('[%s] Theme change'), $blog),
+				$message);
+		}
+	}
+	
 	private function set_default_options() {
 		$default_options = array();
 		
@@ -399,6 +455,7 @@ class PandoraFMS_WP {
 		$default_options['email_user_login'] = 1;
 		$default_options['email_change_email'] = 1;
 		$default_options['email_activate_plugin'] = 1;
+		$default_options['email_theme_change'] = 1;
 		
 		return $default_options;
 	}
