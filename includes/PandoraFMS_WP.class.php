@@ -21,6 +21,7 @@ class PandoraFMS_WP {
 	private $prefix = 'pfms-wp::';
 	private $acl_user_menu_entry = "manage_options"; // acl settings
 	private $position_menu_entry = 75; //Under tools
+	private $items_per_page = 25;
 	//=== END ==== ATRIBUTES ===========================================
 	
 	
@@ -70,8 +71,35 @@ class PandoraFMS_WP {
 			);";
 		
 		dbDelta($sql);
+		
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
+		$sql = "CREATE TABLE `$tablename` (
+			`id` INT NOT NULL AUTO_INCREMENT,
+			`type` varchar(60) NOT NULL DEFAULT '',
+			`data` varchar(255) NOT NULL DEFAULT '',
+			`timestamp` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+			PRIMARY KEY (`id`)
+			);";
+		
+		dbDelta($sql);
 	}
 	
+	public function get_last_access_control() {
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
+		$rows = $wpdb->get_results(
+			"SELECT *
+			FROM `" . $tablename . "`
+			ORDER BY `timestamp` DESC
+			LIMIT " . $pfms_wp->items_per_page);
+		if (empty($rows))
+			$rows = array();
+		
+		return $rows;
+	}
 	
 	//=== INIT === HOOKS CODE ==========================================
 	public static function activation() {
@@ -174,15 +202,29 @@ class PandoraFMS_WP {
 	}
 	
 	public static function user_register($user_id) {
+		global $wpdb;
+		
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
 		$options = get_option('pfmswp-options');
 		$options = $pfms_wp->sanitize_options($options);
 		
+		$user = get_userdata($user_id);
+		
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "user_register";
+		$return = $wpdb->insert(
+			$tablename,
+			array(
+				'type' => 'user_login',
+				'data' =>
+					sprintf(
+						esc_sql(__("User [%s] register.")),
+						$user->user_login),
+				'timestamp' => date('Y-m-d H:i:s')),
+			array('%s', '%s', '%s'));
+		
 		if (!$options['email_new_account'])
 			return;
-		
-		$user = get_userdata($user_id);
 		
 		$blog = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
 		
@@ -202,15 +244,30 @@ class PandoraFMS_WP {
 	}
 	
 	public static function user_login($user_login) {
+		global $wpdb;
+		
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
 		$options = get_option('pfmswp-options');
 		$options = $pfms_wp->sanitize_options($options);
 		
+		$user = get_user_by('login', $user_login);
+		
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
+		$return = $wpdb->insert(
+			$tablename,
+			array(
+				'type' => 'user_login',
+				'data' =>
+					sprintf(
+						esc_sql(__("User [%s] login.")),
+						$user->user_login),
+				'timestamp' => date('Y-m-d H:i:s')),
+			array('%s', '%s', '%s'));
+		
+		
 		if (!$options['email_user_login'])
 			return;
-		
-		$user = get_user_by('login', $user_login);
 		
 		$blog = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
 		
@@ -229,13 +286,12 @@ class PandoraFMS_WP {
 	}
 	
 	public static function user_change_email($user_id, $old_user_data) {
+		global $wpdb;
+		
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
 		$options = get_option('pfmswp-options');
 		$options = $pfms_wp->sanitize_options($options);
-		
-		if (!$options['email_change_email'])
-			return;
 		
 		$user = get_userdata($user_id);
 		
@@ -243,6 +299,23 @@ class PandoraFMS_WP {
 		$new_email = $user->data->user_email;
 		
 		if ($old_email === $new_email)
+			return;
+		
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
+		$return = $wpdb->insert(
+			$tablename,
+			array(
+				'type' => 'user_change_email',
+				'data' =>
+					sprintf(
+						esc_sql(__("User [%s] with old email [%s] and new email [%s].")),
+						$user->user_login,
+						$old_email,
+						$new_email),
+				'timestamp' => date('Y-m-d H:i:s')),
+			array('%s', '%s', '%s'));
+		
+		if (!$options['email_change_email'])
 			return;
 		
 		$blog = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);

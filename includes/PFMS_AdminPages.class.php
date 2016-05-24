@@ -34,9 +34,47 @@ class PFMS_AdminPages {
 	private function __construct() {
 	}
 	
+	public static function print_access_control() {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$list = $pfms_wp->get_last_access_control();
+		
+		if (empty($list)) {
+			?>
+			<p><?php esc_html_e("Empty data");?></p>
+			<?php
+			return;
+		}
+		?>
+		
+		<table class="widefat">
+			<thead>
+				<tr>
+					<th><?php esc_html_e("Time");?></th>
+					<th><?php esc_html_e("Type");?></th>
+					<th><?php esc_html_e("Data");?></th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php
+				foreach ($list as $item) {
+					?>
+					<tr>
+						<td><?php esc_html_e($item->timestamp);?></td>
+						<td><?php esc_html_e($item->type);?></td>
+						<td><?php esc_html_e($item->data);?></td>
+					</tr>
+					<?php
+				}
+				?>
+			</tbody>
+		</table>
+		<?php
+	}
 	
 	public static function show_dashboard() {
 		$pfms_wp = PandoraFMS_WP::getInstance();
+		$pfms_ap = PFMS_AdminPages::getInstance();
 		
 		$data = $pfms_wp->get_dashboard_data();
 		?>
@@ -50,12 +88,15 @@ class PFMS_AdminPages {
 				
 				<div class="card">
 					<h2 class="title"><?php esc_html_e("Acccess control");?></h2>
-					<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ut lorem nec magna fermentum tristique at non velit. Fusce venenatis nunc in dui sodales viverra. Donec in ex ut sem sagittis blandit. Phasellus quis arcu vestibulum, sollicitudin lorem in, ornare enim. Nam a porta erat. Etiam non dapibus dui. In quis tellus erat. Nulla molestie ultrices eros ac consectetur. Nullam tincidunt eros id interdum eleifend. Morbi lacinia, libero ut tristique iaculis, neque felis sagittis elit, non cursus dui est eu dui. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+					<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+					<?php
+					$pfms_ap->print_access_control();
+					?>
 				</div>
 				
 				<div class="card">
 					<h2 class="title"><?php esc_html_e("System security");?></h2>
-					<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ut lorem nec magna fermentum tristique at non velit. Fusce venenatis nunc in dui sodales viverra. Donec in ex ut sem sagittis blandit. Phasellus quis arcu vestibulum, sollicitudin lorem in, ornare enim. Nam a porta erat. Etiam non dapibus dui. In quis tellus erat. Nulla molestie ultrices eros ac consectetur. Nullam tincidunt eros id interdum eleifend. Morbi lacinia, libero ut tristique iaculis, neque felis sagittis elit, non cursus dui est eu dui. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+					<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
 				</div>
 				
 			</div>
