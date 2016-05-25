@@ -401,25 +401,25 @@ class PFMS_AdminPages {
 					</tr>
 					<tr valign="top">
 						<th scope="row">
-							<?php esc_html_e("Email on change theme");?>
+							<?php esc_html_e("Email on new theme");?>
 						</th>
 						<td>
 							<fieldset>
 								<legend class="screen-reader-text">
 									<span>
-										<?php esc_html_e("Email on change theme");?>
+										<?php esc_html_e("Email on new theme");?>
 									</span>
 								</legend>
-								<label for="pfmswp-options[email_theme_change]">
+								<label for="pfmswp-options[email_theme_new]">
 									<input
 										type="checkbox"
-										name="pfmswp-options[email_theme_change]"
+										name="pfmswp-options[email_theme_new]"
 										value="1"
 										<?php
-										checked($options['email_theme_change'], 1, true);
+										checked($options['email_theme_new'], 1, true);
 										?>
 										/>
-									<?php esc_html_e("Send email when change theme.");?>
+									<?php esc_html_e("Send email when add new theme.");?>
 								</label>
 							</fieldset>
 						</td>

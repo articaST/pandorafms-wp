@@ -270,7 +270,7 @@ class PandoraFMS_WP {
 		//=== END ==== EVENT HOOKS =====================================
 		
 		$pfms_wp = PandoraFMS_WP::getInstance();
-		$pfms_wp->check_theme_active();
+		$pfms_wp->check_new_themes();
 	}
 	
 	public static function admin_init() {
@@ -504,7 +504,7 @@ class PandoraFMS_WP {
 	}
 	//=== END ==== HOOKS CODE ==========================================
 	
-	public function check_theme_active() {
+	public function check_new_themes() {
 		global $wpdb;
 		
 		$pfms_wp = PandoraFMS_WP::getInstance();
@@ -512,50 +512,63 @@ class PandoraFMS_WP {
 		$options = get_option('pfmswp-options');
 		$options = $pfms_wp->sanitize_options($options);
 		
-		$active_theme = wp_get_theme();
-		$theme_name = $active_theme->get('Name');
+		$last_installed_themes = get_option($pfms_wp->prefix . "installed_themes", false);
 		
-		$last_active_theme = get_option($pfms_wp->prefix . "last_active_theme", false);
+		$installed_themes = wp_get_themes();
+		$temp = array();
+		foreach ($installed_themes as $theme) {
+			$temp[] = $theme->get('Name');
+		}
+		$installed_themes = $temp;
 		
-		if ($last_active_theme) {
-			update_option($pfms_wp->prefix . "last_active_theme", $theme_name);
+		if (empty($last_installed_themes)) {
+			add_option($pfms_wp->prefix . "installed_themes", $installed_themes);
 		}
 		else {
-			add_option($pfms_wp->prefix . "last_active_theme", $theme_name);
+			$new_themes = array();
+			foreach ($installed_themes as $theme) {
+				if (array_search($theme, $last_installed_themes) !== false)
+					$new_themes[] = $theme;
+			}
+			
+			update_option($pfms_wp->prefix . "installed_themes", $installed_themes);
 		}
 		
-		if ($theme_name !== $last_active_theme) {
-			$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
-			$return = $wpdb->insert(
-				$tablename,
-				array(
-					'type' => 'theme_change',
-					'data' =>
-						sprintf(
-							esc_sql(__("Change to theme [%s].")),
-							$theme_name),
-					'timestamp' => date('Y-m-d H:i:s')),
-				array('%s', '%s', '%s'));
-			
-			if (!$options['email_theme_change'])
-				return;
-			
-			$blog = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
-			
-			if (empty($options['email_notifications']))
-				$email_to = get_option('admin_email');
-			else
-				$email_to = $options['email_notifications'];
-			
-			
-			$message  = sprintf(__('Change theme in %s:'), $blog) . "\r\n\r\n";
-			$message .= sprintf(__('Theme: %s'), $theme_name) . "\r\n\r\n";
-			
-			$result = wp_mail($email_to,
-				sprintf(__('[%s] Theme change'), $blog),
-				$message);
+		if (!empty($new_themes)) {
+			foreach ($new_themes as $new_theme) {
+				$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
+				$return = $wpdb->insert(
+					$tablename,
+					array(
+						'type' => 'new_theme',
+						'data' =>
+							sprintf(
+								esc_sql(__("New theme [%s].")),
+								$new_theme),
+						'timestamp' => date('Y-m-d H:i:s')),
+					array('%s', '%s', '%s'));
+				
+				if (!$options['email_theme_new'])
+					continue;
+				
+				$blog = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
+				
+				if (empty($options['email_notifications']))
+					$email_to = get_option('admin_email');
+				else
+					$email_to = $options['email_notifications'];
+				
+				
+				$message  = sprintf(__('New theme in %s:'), $blog) . "\r\n\r\n";
+				$message .= sprintf(__('Theme: %s'), $new_theme) . "\r\n\r\n";
+				
+				$result = wp_mail($email_to,
+					sprintf(__('[%s] New theme'), $blog),
+					$message);
+			}
 		}
 	}
+	
 	
 	private function set_default_options() {
 		$default_options = array();
@@ -568,7 +581,7 @@ class PandoraFMS_WP {
 		$default_options['email_user_login'] = 1;
 		$default_options['email_change_email'] = 1;
 		$default_options['email_activate_plugin'] = 1;
-		$default_options['email_theme_change'] = 1;
+		$default_options['email_theme_new'] = 1;
 		
 		return $default_options;
 	}
@@ -581,6 +594,19 @@ class PandoraFMS_WP {
 		
 		$options['email_notifications'] =
 			sanitize_email($options['email_notifications']);
+		
+		if (!isset($options['show_footer']))
+			$options['show_footer'] = 0;
+		if (!isset($options['email_new_account']))
+			$options['email_new_account'] = 0;
+		if (!isset($options['email_user_login']))
+			$options['email_user_login'] = 0;
+		if (!isset($options['email_change_email']))
+			$options['email_change_email'] = 0;
+		if (!isset($options['email_activate_plugin']))
+			$options['email_activate_plugin'] = 0;
+		if (!isset($options['email_theme_new']))
+			$options['email_theme_new'] = 0;
 		
 		return $options;
 	}
