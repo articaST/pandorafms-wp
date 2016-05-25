@@ -376,25 +376,25 @@ class PFMS_AdminPages {
 					</tr>
 					<tr valign="top">
 						<th scope="row">
-							<?php esc_html_e("Email on activate plugin");?>
+							<?php esc_html_e("Email on new plugin");?>
 						</th>
 						<td>
 							<fieldset>
 								<legend class="screen-reader-text">
 									<span>
-										<?php esc_html_e("Email on activate plugin");?>
+										<?php esc_html_e("Email on new plugin");?>
 									</span>
 								</legend>
-								<label for="pfmswp-options[email_activate_plugin]">
+								<label for="pfmswp-options[email_plugin_new]">
 									<input
 										type="checkbox"
-										name="pfmswp-options[email_activate_plugin]"
+										name="pfmswp-options[email_plugin_new]"
 										value="1"
 										<?php
-										checked($options['email_activate_plugin'], 1, true);
+										checked($options['email_plugin_new'], 1, true);
 										?>
 										/>
-									<?php esc_html_e("Send email when any plugin is activated.");?>
+									<?php esc_html_e("Send email when add new plugin.");?>
 								</label>
 							</fieldset>
 						</td>

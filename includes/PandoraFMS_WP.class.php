@@ -265,12 +265,13 @@ class PandoraFMS_WP {
 		add_action("user_register", array('PandoraFMS_WP', 'user_register'));
 		add_action("wp_login", array('PandoraFMS_WP', 'user_login'));
 		add_action("profile_update", array('PandoraFMS_WP', 'user_change_email'), 10, 2);
-		add_action("activated_plugin", array('PandoraFMS_WP', 'activate_plugin'));
+		//~ add_action("activated_plugin", array('PandoraFMS_WP', 'activate_plugin'));
 		add_action("wp_login_failed", array('PandoraFMS_WP', 'user_login_failed'));
 		//=== END ==== EVENT HOOKS =====================================
 		
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		$pfms_wp->check_new_themes();
+		$pfms_wp->check_new_plugins();
 	}
 	
 	public static function admin_init() {
@@ -504,6 +505,73 @@ class PandoraFMS_WP {
 	}
 	//=== END ==== HOOKS CODE ==========================================
 	
+	public function check_new_plugins() {
+		require_once(ABSPATH . "/wp-admin/includes/plugin.php");
+		
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$options = get_option('pfmswp-options');
+		$options = $pfms_wp->sanitize_options($options);
+		
+		$last_installed_plugins = get_option($pfms_wp->prefix . "installed_plugins", false);
+		
+		$installed_plugins = get_plugins();
+		$temp = array();
+		foreach ($installed_plugins as $plugin) {
+			$temp[] = $plugin['Name'];
+		}
+		$installed_plugins = $temp;
+		
+		if (empty($last_installed_plugins)) {
+			add_option($pfms_wp->prefix . "installed_plugins", $installed_plugins);
+		}
+		else {
+			$new_plugins = array();
+			foreach ($installed_plugins as $plugin) {
+				if (array_search($plugin, $last_installed_plugins) === false)
+					$new_plugins[] = $plugin;
+			}
+			
+			update_option($pfms_wp->prefix . "installed_plugins", $installed_plugins);
+		}
+		
+		if (!empty($new_plugins)) {
+			foreach ($new_plugins as $new_plugin) {
+				$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
+				$return = $wpdb->insert(
+					$tablename,
+					array(
+						'type' => 'new_plugin',
+						'data' =>
+							sprintf(
+								esc_sql(__("New plugin [%s].")),
+								$new_plugin),
+						'timestamp' => date('Y-m-d H:i:s')),
+					array('%s', '%s', '%s'));
+				
+				if (!$options['email_plugin_new'])
+					continue;
+				
+				$blog = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
+				
+				if (empty($options['email_notifications']))
+					$email_to = get_option('admin_email');
+				else
+					$email_to = $options['email_notifications'];
+				
+				
+				$message  = sprintf(__('New plugin in %s:'), $blog) . "\r\n\r\n";
+				$message .= sprintf(__('Plugin: %s'), $new_plugin) . "\r\n\r\n";
+				
+				$result = wp_mail($email_to,
+					sprintf(__('[%s] New plugin'), $blog),
+					$message);
+			}
+		}
+	}
+	
 	public function check_new_themes() {
 		global $wpdb;
 		
@@ -527,7 +595,7 @@ class PandoraFMS_WP {
 		else {
 			$new_themes = array();
 			foreach ($installed_themes as $theme) {
-				if (array_search($theme, $last_installed_themes) !== false)
+				if (array_search($theme, $last_installed_themes) === false)
 					$new_themes[] = $theme;
 			}
 			
@@ -580,7 +648,7 @@ class PandoraFMS_WP {
 		$default_options['email_new_account'] = 1;
 		$default_options['email_user_login'] = 1;
 		$default_options['email_change_email'] = 1;
-		$default_options['email_activate_plugin'] = 1;
+		$default_options['email_plugin_new'] = 1;
 		$default_options['email_theme_new'] = 1;
 		
 		return $default_options;
@@ -603,8 +671,8 @@ class PandoraFMS_WP {
 			$options['email_user_login'] = 0;
 		if (!isset($options['email_change_email']))
 			$options['email_change_email'] = 0;
-		if (!isset($options['email_activate_plugin']))
-			$options['email_activate_plugin'] = 0;
+		if (!isset($options['email_plugin_new']))
+			$options['email_plugin_new'] = 0;
 		if (!isset($options['email_theme_new']))
 			$options['email_theme_new'] = 0;
 		
