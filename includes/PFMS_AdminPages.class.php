@@ -47,7 +47,7 @@ class PFMS_AdminPages {
 		}
 		?>
 		
-		<table class="widefat">
+		<table class="widefat striped">
 			<thead>
 				<tr>
 					<th><?php esc_html_e("Time");?></th>
@@ -111,7 +111,7 @@ class PFMS_AdminPages {
 						esc_html_e("Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
 						?>
 					</p>
-					<table class="widefat">
+					<table class="widefat striped">
 						<thead>
 							<tr>
 								<th><?php esc_html_e("Item");?></th>
@@ -445,11 +445,57 @@ class PFMS_AdminPages {
 	}
 	
 	public static function show_acccess_control() {
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "user_stats";
 		?>
 		<div class="wrap">
 			<h2><?php esc_html_e("Access Control");?></h2>
 		</div>
+		
+		<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+		
 		<?php
+		$user_stats = $wpdb->get_results(
+			"SELECT *
+			FROM `" . $tablename . "`
+			ORDER BY timestamp DESC");
+		
+		if (empty($user_stats)) {
+			?>
+			<p><strong><?php esc_html_e("Empty list");?></strong></p>
+			<?php
+		}
+		else {
+			?>
+			<table class="widefat striped">
+				<thead>
+					<tr>
+						<th><?php esc_html_e("User");?></th>
+						<th><?php esc_html_e("Action");?></th>
+						<th><?php esc_html_e("Count");?></th>
+						<th><?php esc_html_e("Last time");?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php
+					foreach ($user_stats as $user) {
+						?>
+						<tr>
+							<td><?php echo esc_html($user->user);?></td>
+							<td><?php echo esc_html($user->action);?></td>
+							<td><?php echo esc_html($user->count);?></td>
+							<td><?php echo esc_html($user->timestamp);?></td>
+						</tr>
+						<?php
+					}
+					?>
+				</tbody>
+			</table>
+			<?php
+		}
 	}
 	
 	public static function show_system_security() {

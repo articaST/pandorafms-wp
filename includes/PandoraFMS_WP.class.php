@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class PandoraFMS_WP {
 	//=== INIT === ATRIBUTES ===========================================
-	private $prefix = 'pfms-wp::';
+	public $prefix = 'pfms-wp::';
 	private $acl_user_menu_entry = "manage_options"; // acl settings
 	private $position_menu_entry = 75; //Under tools
 	private $items_per_page = 25;
@@ -62,6 +62,7 @@ class PandoraFMS_WP {
 		
 		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 		
+		
 		// Table "audit_users_weak_password"
 		$tablename = $wpdb->prefix . $pfms_wp->prefix . "audit_users_weak_password";
 		$sql = "CREATE TABLE `$tablename` (
@@ -69,9 +70,10 @@ class PandoraFMS_WP {
 			`user` varchar(60) NOT NULL DEFAULT '',
 			PRIMARY KEY (`id`)
 			);";
-		
 		dbDelta($sql);
 		
+		
+		// Table "access_control"
 		$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
 		$sql = "CREATE TABLE `$tablename` (
 			`id` INT NOT NULL AUTO_INCREMENT,
@@ -80,7 +82,19 @@ class PandoraFMS_WP {
 			`timestamp` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
 			PRIMARY KEY (`id`)
 			);";
+		dbDelta($sql);
 		
+		
+		// Table "user_stats"
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "user_stats";
+		$sql = "CREATE TABLE `$tablename` (
+			`id` INT NOT NULL AUTO_INCREMENT,
+			`user` varchar(60) NOT NULL DEFAULT '',
+			`action` varchar(60) NOT NULL DEFAULT '',
+			`count` INT NOT NULL DEFAULT 0,
+			`timestamp` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
+			PRIMARY KEY (`id`)
+			);";
 		dbDelta($sql);
 	}
 	
@@ -99,6 +113,92 @@ class PandoraFMS_WP {
 			$rows = array();
 		
 		return $rows;
+	}
+	
+	public function store_user_login($user_login, $login) {
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "user_stats";
+		
+		
+		if ($login) {
+			$action = 'login_ok';
+		}
+		else {
+			$action = 'login_fail';
+		}
+		
+		$rows = $wpdb->get_results(
+			"SELECT *, UNIX_TIMESTAMP(timestamp) AS unix_timestamp
+			FROM `" . $tablename . "`
+			WHERE user = '" . esc_sql($user_login) ."'
+			ORDER BY timestamp DESC");
+		
+		$now = date("Ymd");
+		$yesterday = date("Ymd", (time() - (24 * 60 * 60)));
+		
+		// --- Delete old stats ----------------------------------------
+		foreach ($rows as $i => $row) {
+			$row = (array)$row;
+			
+			$date = date("Ymd", $row['unix_timestamp']);
+			
+			if (($now == $date) || ($now == $yesterday)) {
+				continue;
+			}
+			
+			// Delete the row in the array and in the db
+			$wpdb->delete($tablename,
+				array('id' => $row['id']),
+				"%d");
+			
+			unset($rows[$i]);
+		}
+		// -------------------------------------------------------------
+		
+		
+		$actual_stats = null;
+		foreach ($rows as $row) {
+			$row = (array)$row;
+			
+			$date = date("Ymd", $row['unix_timestamp']);
+			
+			if (($now == $date) && ($row['action'] == $action)) {
+				$actual_stats = $row;
+			}
+		}
+		
+		if (empty($actual_stats)) {
+			$actual_stats = array();
+			$actual_stats['user'] = $user_login;
+			$actual_stats['action'] = $action;
+			$actual_stats['count'] = 1;
+			$actual_stats['timestamp'] = date('Y-m-d H:i:s');
+			
+			$id = $wpdb->insert(
+				$tablename,
+				$actual_stats,
+				array('%s', '%s', '%d', '%s'));
+			$wpdb->flush();
+		}
+		else {
+			$id = $actual_stats['id'];
+			unset($actual_stats['id']);
+			unset($actual_stats['unix_timestamp']);
+			
+			// Refresh the data
+			$actual_stats['count'] = $actual_stats['count'] + 1;
+			$actual_stats['timestamp'] = date('Y-m-d H:i:s');
+			
+			$wpdb->update(
+				$tablename,
+				$actual_stats,
+				array('id' => $id),
+				array('%s', '%s', '%d', '%s'),
+				array('%d'));
+		}
 	}
 	
 	//=== INIT === HOOKS CODE ==========================================
@@ -166,6 +266,7 @@ class PandoraFMS_WP {
 		add_action("wp_login", array('PandoraFMS_WP', 'user_login'));
 		add_action("profile_update", array('PandoraFMS_WP', 'user_change_email'), 10, 2);
 		add_action("activated_plugin", array('PandoraFMS_WP', 'activate_plugin'));
+		add_action("wp_login_failed", array('PandoraFMS_WP', 'user_login_failed'));
 		//=== END ==== EVENT HOOKS =====================================
 		
 		$pfms_wp = PandoraFMS_WP::getInstance();
@@ -247,10 +348,22 @@ class PandoraFMS_WP {
 			$message);
 	}
 	
+	public static function user_login_failed($user_login) {
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$pfms_wp->store_user_login($user_login, false);
+		
+		error_log("user_login_failed");
+	}
+	
 	public static function user_login($user_login) {
 		global $wpdb;
 		
 		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$pfms_wp->store_user_login($user_login, true);
 		
 		$options = get_option('pfmswp-options');
 		$options = $pfms_wp->sanitize_options($options);
