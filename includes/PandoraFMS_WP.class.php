@@ -96,6 +96,18 @@ class PandoraFMS_WP {
 			PRIMARY KEY (`id`)
 			);";
 		dbDelta($sql);
+		
+		
+		// Table "list_files"
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "list_files";
+		$sql = "CREATE TABLE `$tablename` (
+			`id` INT NOT NULL AUTO_INCREMENT,
+			`path` longtext NOT NULL,
+			`status` varchar(60) NOT NULL DEFAULT '',
+			`sha1` varchar(60) NOT NULL DEFAULT '',
+			PRIMARY KEY (`id`)
+			);";
+		dbDelta($sql);
 	}
 	
 	public function get_last_access_control() {
@@ -772,11 +784,168 @@ class PandoraFMS_WP {
 				'status' => null));
 		$return['monitoring']['audit_password'] = $audit_password;
 		
+		// audit_files
+		$audit_password = get_option($pfms_wp->prefix . "audit_files",
+			array(
+				'last_execution' => null,
+				'status' => null));
+		$return['monitoring']['audit_files'] = $audit_password;
+		
 		return $return;
 	}
 	
+	private function get_files($directory = null) {
+		$list_files = array();
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		if (empty($directory))
+			$directory = ABSPATH;
+		
+		$dir = dir($directory);
+		
+		while (false !== ($entry = $dir->read())) {
+			if (($entry === '.') || ($entry === '..'))
+				continue;
+			
+			$path = realpath($directory . '/' . $entry);
+			if (is_dir($path)) {
+				$list_files_subdir = $pfms_wp->get_files($path);
+				$list_files = array_merge($list_files, $list_files_subdir);
+			}
+			else {
+				$file = array('file' => $path, 'sha1' => sha1_file($path));
+				$list_files[] = $file;
+			}
+		}
+		
+		$dir->close();
+		
+		return $list_files;
+	}
 	
 	//=== INIT === CHECKS ==============================================
+	private function audit_files() {
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "list_files";
+		
+		$audit_files = get_option($pfms_wp->prefix . "audit_files",
+			array(
+				'last_execution' => null,
+				'status' => null));
+		
+		$files = $pfms_wp->get_files();
+		
+		$not_changes_filesystem = true;
+		
+		if (is_null($audit_files['last_execution'])) {
+			// Save the files only
+			foreach ($files as $file) {
+				$value = array(
+					'path' => $file['file'],
+					'status' => '',
+					'sha1' => $file['sha1']);
+				
+				$wpdb->insert(
+					$tablename,
+					$value);
+			}
+		}
+		else {
+			//~ // Clean the audit_files table from the last execution
+			$store_files = $wpdb->get_results("
+				SELECT * FROM `" . $tablename . "`");
+			
+			foreach ($store_files as $i => $store_file) {
+				$store_file = (array)$store_file;
+				
+				switch ($store_file['status']) {
+					case 'deleted':
+						$wpdb->delete(
+							$tablename,
+							array('id' => $store_file['id']));
+						unset($store_files[$i]);
+						break;
+					case 'changed':
+					case 'new':
+						$wpdb->update(
+							$tablename,
+							array('status' => ""),
+							array('id' => $store_file['id']),
+							array('%s'),
+							array('%d'));
+						$store_files[$i]->status = "";
+						break;
+				}
+			}
+			
+			foreach ($files as $file) {
+				$found = false;
+				foreach ($store_files as $i => $store_file) {
+					$store_file = (array)$store_file;
+					
+					if ($file['file'] === $store_file['path']) {
+						$found = true;
+						
+						if ($store_file['sha1'] !== $file['sha1']) {
+							// Changed
+							
+							$wpdb->update(
+								$tablename,
+								array('status' => "changed"),
+								array('id' => $store_file['id']),
+								array('%s'),
+								array('%d'));
+							
+							$not_changes_filesystem = false;
+						}
+						
+						unset($store_files[$i]);
+						
+						break;
+					}
+				}
+				
+				if (!$found) {
+					// New
+					$value = array(
+						'path' => $file['file'],
+						'status' => 'new',
+						'sha1' => $file['sha1']);
+					
+					$wpdb->insert(
+						$tablename,
+						$value);
+					
+					$not_changes_filesystem = false;
+				}
+			}
+			
+			
+			// Check the files unpaired because they are deleted files
+			foreach ($store_files as $store_file) {
+				// Deleted
+				
+				$wpdb->update(
+					$tablename,
+					array('status' => "deleted"),
+					array('id' => $store_file->id),
+					array('%s'),
+					array('%d'));
+				
+				$not_changes_filesystem = false;
+			}
+		}
+		
+		$audit_files['status'] = (int)$not_changes_filesystem;
+		$audit_files['last_execution'] = time();
+		
+		update_option($pfms_wp->prefix . "audit_files", $audit_files);
+	}
+	
 	private function audit_passwords_strength() {
 		global $wpdb;
 		
@@ -850,6 +1019,12 @@ class PandoraFMS_WP {
 		
 		$pfms_wp->audit_passwords_strength();
 	}
+	
+	public static function cron_audit_files() {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$pfms_wp->audit_files();
+	}
 	//=== END ==== CRON HOOKS CODE =====================================
 	
 	
@@ -915,6 +1090,35 @@ class PandoraFMS_WP {
 				"json");
 			}
 			
+			function check_audit_files() {
+				var data = {
+					'action': 'check_audit_files'
+				};
+				
+				jQuery("#audit_files_status").empty();
+				jQuery("#audit_files_status").append(
+					jQuery("#ajax_loading").clone());
+				
+				jQuery("#audit_files_last_execute").empty();
+				
+				jQuery.post(ajaxurl, data, function(response) {
+					jQuery("#audit_files_status").empty();
+					
+					if (response.status) {
+						jQuery("#audit_files_status").append(
+							jQuery("#ajax_result_ok").clone());
+					}
+					else {
+						jQuery("#audit_files_status").append(
+							jQuery("#ajax_result_fail").clone());
+					}
+					
+					jQuery("#audit_files_last_execute").append(
+						response.last_execution);
+				},
+				"json");
+			}
+			
 			function show_weak_user_dialog() {
 				var status = jQuery("#audit_password_status img").attr("id");
 				
@@ -932,7 +1136,6 @@ class PandoraFMS_WP {
 				
 				jQuery.post(ajaxurl, data, function(response) {
 					var list_users = jQuery.makeArray(response.list_users);
-					console.log(typeof(list_users), list_users);
 					
 					jQuery("#audit_password_status").empty();
 					jQuery("#audit_password_status").append(
@@ -954,8 +1157,87 @@ class PandoraFMS_WP {
 				},
 				"json");
 			}
+			
+			function show_files_dialog() {
+				var status = jQuery("#audit_files_status img").attr("id");
+				
+				if (status !== "ajax_result_fail") {
+					return;
+				}
+				
+				var data = {
+					'action': 'get_list_audit_files'
+				};
+				
+				jQuery("#audit_files_status").empty();
+				jQuery("#audit_files_status").append(
+					jQuery("#ajax_loading").clone());
+				
+				jQuery.post(ajaxurl, data, function(response) {
+					var list_files = jQuery.makeArray(response.list_files);
+					
+					console.log(list_files);
+					
+					jQuery("#audit_files_status").empty();
+					jQuery("#audit_files_status").append(
+							jQuery("#ajax_result_fail").clone());
+					
+					var $table = jQuery("<table>")
+						.append("<thead><tr><th><?php esc_html_e("Path");?></th><th><?php esc_html_e("Status");?></th></tr></thead>");
+					jQuery.each(list_files, function(i, file) {
+						var tr = "<tr>";
+						
+						jQuery.each(file, function(i, item) {
+							tr = tr + "<td>" + item + "</td>";
+						});
+						tr = tr + "</tr>";
+						
+						$table.append(tr);
+					});
+					
+					var dialog_weak_user =
+					jQuery("<div id='dialog_list_files' title='<?php esc_attr_e("List change or new files");?>' />")
+						.append($table)
+						.appendTo("body");
+					
+					dialog_weak_user.dialog({
+						'dialogClass' : 'wp-dialog',
+						'height': 200,
+						'minWidth': 700,
+						'modal' : true,
+						'autoOpen' : false,
+						'closeOnEscape' : true})
+						.dialog('open');
+					
+				},
+				"json");
+			}
 		</script>
 		<?php
+	}
+	
+	public static function ajax_check_audit_files() {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$pfms_wp->audit_files();
+		
+		$audit_files = get_option($pfms_wp->prefix . "audit_files",
+			array(
+				'last_execution' => null,
+				'status' => null));
+		
+		if (empty($audit_files['last_execution'])) {
+			$audit_files['last_execution'] = esc_html(_("Never execute"));
+		}
+		else {
+			$audit_files['last_execution'] = esc_html(
+				date_i18n(get_option('date_format'),
+					$audit_files['last_execution']));
+		}
+		
+		echo json_encode($audit_files);
+		
+		wp_die();
 	}
 	
 	public static function ajax_check_audit_password() {
@@ -1011,6 +1293,31 @@ class PandoraFMS_WP {
 		}
 		
 		echo json_encode(array('list_users' => $return));
+		
+		wp_die();
+	}
+	
+	public static function ajax_get_list_audit_files() {
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "list_files";
+		$list_files = $wpdb->get_results("
+			SELECT path, status
+			FROM `" . $tablename . "`
+			WHERE status != '' ");
+		if (empty($list_files))
+			$list_files = array();
+		
+		$return = array();
+		foreach ($list_files as $file) {
+			$return[] = array(
+				'path' => $file->path,
+				'status' => $file->status);
+		}
+		
+		echo json_encode(array('list_files' => $return));
 		
 		wp_die();
 	}

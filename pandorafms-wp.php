@@ -35,7 +35,9 @@ register_deactivation_hook(__FILE__, array('PandoraFMS_WP', 'deactivation'));
 add_action('admin_footer', array('PandoraFMS_WP', 'ajax'));
 add_action('wp_ajax_check_admin_user_enabled', array('PandoraFMS_WP', 'ajax_check_admin_user_enabled'));
 add_action('wp_ajax_check_audit_password', array('PandoraFMS_WP', 'ajax_check_audit_password'));
+add_action('wp_ajax_check_audit_files', array('PandoraFMS_WP', 'ajax_check_audit_files'));
 add_action('wp_ajax_get_list_users_with_weak_password', array('PandoraFMS_WP', 'ajax_get_list_users_with_weak_password'));
+add_action('wp_ajax_get_list_audit_files', array('PandoraFMS_WP', 'ajax_get_list_audit_files'));
 //=== END ==== AJAX HOOKS ==============================================
 
 
@@ -44,6 +46,10 @@ if (!wp_next_scheduled('cron_audit_passwords_strength')) {
 	wp_schedule_event(time(), 'daily', 'cron_audit_passwords_strength');
 }
 add_action('cron_audit_passwords_strength', array('PandoraFMS_WP', 'cron_audit_passwords_strength'));
+if (!wp_next_scheduled('cron_audit_files')) {
+	wp_schedule_event(time(), 'daily', 'cron_audit_files');
+}
+add_action('cron_audit_files', array('PandoraFMS_WP', 'cron_audit_files'));
 //=== END ==== CRON HOOKS ==============================================
 
 

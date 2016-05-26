@@ -180,6 +180,44 @@ class PFMS_AdminPages {
 									</a>
 								</td>
 							</tr>
+							<tr>
+								<td><?php esc_html_e('Audit of files');?></td>
+								<td>
+									<a href="#" onclick="show_files_dialog();">
+									<span id="audit_files_status">
+										<?php
+										if ($data['monitoring']['audit_files']['status']) {
+											?>
+											<img id ="ajax_result_ok"
+												src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
+											<?php
+										}
+										else {
+											?>
+											<img id ="ajax_result_fail"
+												src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
+											<?php
+										}
+										?>
+									</span>
+									</a>
+									<a href="javascript: check_audit_files();">
+										<span id="audit_files_last_execute">
+											<?php
+											if (empty($data['monitoring']['audit_files']['last_execution'])) {
+												esc_html_e('Never execute');
+											}
+											else {
+												echo esc_html(
+													date_i18n(
+														get_option('date_format'),
+														$data['monitoring']['audit_files']['last_execution']));
+											}
+											?>
+										</span>
+									</a>
+								</td>
+							</tr>
 						</tbody>
 					</table>
 					<div style="display: none;">
