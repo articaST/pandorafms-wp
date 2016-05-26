@@ -1097,38 +1097,9 @@ class PandoraFMS_WP {
 				"json");
 			}
 			
-			//~ function check_audit_password() {
-				//~ var data = {
-					//~ 'action': 'check_audit_password'
-				//~ };
-				//~ 
-				//~ jQuery("#audit_password_status").empty();
-				//~ jQuery("#audit_password_status").append(
-					//~ jQuery("#ajax_loading").clone());
-				//~ 
-				//~ jQuery("#audit_password_last_execute").empty();
-				//~ 
-				//~ jQuery.post(ajaxurl, data, function(response) {
-					//~ jQuery("#audit_password_status").empty();
-					//~ 
-					//~ if (response.status) {
-						//~ jQuery("#audit_password_status").append(
-							//~ jQuery("#ajax_result_ok").clone());
-					//~ }
-					//~ else {
-						//~ jQuery("#audit_password_status").append(
-							//~ jQuery("#ajax_result_fail").clone());
-					//~ }
-					//~ 
-					//~ jQuery("#audit_password_last_execute").append(
-						//~ response.last_execution);
-				//~ },
-				//~ "json");
-			//~ }
-			
-			function check_audit_files() {
+			function force_cron_audit_files() {
 				var data = {
-					'action': 'check_audit_files'
+					'action': 'force_cron_audit_files'
 				};
 				
 				jQuery("#audit_files_status").empty();
@@ -1252,6 +1223,24 @@ class PandoraFMS_WP {
 		<?php
 	}
 	
+	public static function ajax_force_cron_audit_files() {
+		if ($pfms_wp->debug) {
+			$pfms_wp->ajax_check_audit_files();
+		}
+		else {
+			wp_reschedule_event(time(), 'daily', 'cron_audit_files');
+			
+			$audit_files = get_option($pfms_wp->prefix . "audit_files",
+				array(
+					'last_execution' => null,
+					'status' => null));
+			$audit_files['last_execution'] = esc_html(_("Scheduled"));
+			echo json_encode($audit_files);
+			
+			wp_die();
+		}
+	}
+	
 	public static function ajax_check_audit_files() {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
@@ -1286,9 +1275,9 @@ class PandoraFMS_WP {
 			wp_reschedule_event(time(), 'daily', 'cron_audit_passwords_strength');
 			
 			$audit_password = get_option($pfms_wp->prefix . "audit_passwords",
-			array(
-				'last_execution' => null,
-				'status' => null));
+				array(
+					'last_execution' => null,
+					'status' => null));
 			$audit_password['last_execution'] = esc_html(_("Scheduled"));
 			echo json_encode($audit_password);
 			

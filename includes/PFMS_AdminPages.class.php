@@ -201,7 +201,7 @@ class PFMS_AdminPages {
 										?>
 									</span>
 									</a>
-									<a href="javascript: check_audit_files();">
+									<a href="javascript: force_cron_audit_files();">
 										<span id="audit_files_last_execute">
 											<?php
 											if (empty($data['monitoring']['audit_files']['last_execution'])) {

@@ -35,7 +35,7 @@ register_deactivation_hook(__FILE__, array('PandoraFMS_WP', 'deactivation'));
 add_action('admin_footer', array('PandoraFMS_WP', 'ajax'));
 add_action('wp_ajax_check_admin_user_enabled', array('PandoraFMS_WP', 'ajax_check_admin_user_enabled'));
 add_action('wp_ajax_force_cron_audit_password', array('PandoraFMS_WP', 'ajax_force_cron_audit_password'));
-add_action('wp_ajax_check_audit_files', array('PandoraFMS_WP', 'ajax_check_audit_files'));
+add_action('wp_ajax_force_cron_audit_files', array('PandoraFMS_WP', 'ajax_force_cron_audit_files'));
 add_action('wp_ajax_get_list_users_with_weak_password', array('PandoraFMS_WP', 'ajax_get_list_users_with_weak_password'));
 add_action('wp_ajax_get_list_audit_files', array('PandoraFMS_WP', 'ajax_get_list_audit_files'));
 //=== END ==== AJAX HOOKS ==============================================
