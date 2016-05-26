@@ -87,10 +87,10 @@ class PFMS_AdminPages {
 			<div class="col-wrap">
 				
 				<div class="card">
-					<h2 class="title"><?php esc_html_e("Acccess control");?></h2>
+					<h2 class="title"><?php esc_html_e("Access control");?></h2>
 					<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
 					<?php
-					$pfms_ap->print_access_control();
+					$pfms_ap->print_access_control_list_dashboard();
 					?>
 				</div>
 				

@@ -753,11 +753,11 @@ class PandoraFMS_WP {
 		
 		add_submenu_page(
 			"pfms_wp_admin_menu",
-			_("PandoraFMS WP : Acccess control"),
-			_("Acccess control"),
+			_("PandoraFMS WP : Access control"),
+			_("Access control"),
 			$pfms_wp->acl_user_menu_entry,
-			"pfms_wp_admin_menu_acccess_control",
-			array("PFMS_AdminPages", "show_acccess_control"));
+			"pfms_wp_admin_menu_access_control",
+			array("PFMS_AdminPages", "show_access_control"));
 		
 		add_submenu_page(
 			"pfms_wp_admin_menu",
