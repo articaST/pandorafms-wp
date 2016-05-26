@@ -305,6 +305,10 @@ class PandoraFMS_WP {
 			"pfmswp-settings-group",
 			"pfmswp-options",
 			array("PandoraFMS_WP", "sanitize_options"));
+		register_setting(
+			"pfmswp-settings-group-access_control",
+			"pfmswp-options-access_control",
+			array("PandoraFMS_WP", "sanitize_options_access_control"));
 		
 		
 		// Added script
@@ -334,6 +338,9 @@ class PandoraFMS_WP {
 		$options = get_option('pfmswp-options');
 		$options = $pfms_wp->sanitize_options($options);
 		
+		$options_access_control = get_option('pfmswp-options-access_control');
+		$options_access_control = $pfms_wp->sanitize_options_access_control($options_access_control);
+		
 		$user = get_userdata($user_id);
 		
 		$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
@@ -348,7 +355,7 @@ class PandoraFMS_WP {
 				'timestamp' => date('Y-m-d H:i:s')),
 			array('%s', '%s', '%s'));
 		
-		if (!$options['email_new_account'])
+		if (!$options_access_control['email_new_account'])
 			return;
 		
 		$blog = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
@@ -388,6 +395,9 @@ class PandoraFMS_WP {
 		$options = get_option('pfmswp-options');
 		$options = $pfms_wp->sanitize_options($options);
 		
+		$options_access_control = get_option('pfmswp-options-access_control');
+		$options_access_control = $pfms_wp->sanitize_options_access_control($options_access_control);
+		
 		$user = get_user_by('login', $user_login);
 		
 		$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
@@ -402,8 +412,9 @@ class PandoraFMS_WP {
 				'timestamp' => date('Y-m-d H:i:s')),
 			array('%s', '%s', '%s'));
 		
+		$pfms_wp->debug($options_access_control);
 		
-		if (!$options['email_user_login'])
+		if (!$options_access_control['email_user_login'])
 			return;
 		
 		$blog = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
@@ -430,6 +441,9 @@ class PandoraFMS_WP {
 		$options = get_option('pfmswp-options');
 		$options = $pfms_wp->sanitize_options($options);
 		
+		$options_access_control = get_option('pfmswp-options-access_control');
+		$options_access_control = $pfms_wp->sanitize_options_access_control($options_access_control);
+		
 		$user = get_userdata($user_id);
 		
 		$old_email = $old_user_data->data->user_email;
@@ -452,7 +466,7 @@ class PandoraFMS_WP {
 				'timestamp' => date('Y-m-d H:i:s')),
 			array('%s', '%s', '%s'));
 		
-		if (!$options['email_change_email'])
+		if (!$options_access_control['email_change_email'])
 			return;
 		
 		$blog = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
@@ -481,6 +495,9 @@ class PandoraFMS_WP {
 		$options = get_option('pfmswp-options');
 		$options = $pfms_wp->sanitize_options($options);
 		
+		$options_access_control = get_option('pfmswp-options-access_control');
+		$options_access_control = $pfms_wp->sanitize_options_access_control($options_access_control);
+		
 		$plugins = get_plugins();
 		if (empty($plugins))
 			$plugins = array();
@@ -504,7 +521,7 @@ class PandoraFMS_WP {
 				'timestamp' => date('Y-m-d H:i:s')),
 			array('%s', '%s', '%s'));
 		
-		if (!$options['email_activate_plugin'])
+		if (!$options_access_control['email_activate_plugin'])
 			return;
 		
 		$blog = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
@@ -533,6 +550,9 @@ class PandoraFMS_WP {
 		
 		$options = get_option('pfmswp-options');
 		$options = $pfms_wp->sanitize_options($options);
+		
+		$options_access_control = get_option('pfmswp-options-access_control');
+		$options_access_control = $pfms_wp->sanitize_options_access_control($options_access_control);
 		
 		$last_installed_plugins = get_option($pfms_wp->prefix . "installed_plugins", false);
 		
@@ -570,7 +590,7 @@ class PandoraFMS_WP {
 						'timestamp' => date('Y-m-d H:i:s')),
 					array('%s', '%s', '%s'));
 				
-				if (!$options['email_plugin_new'])
+				if (!$options_access_control['email_plugin_new'])
 					continue;
 				
 				$blog = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
@@ -598,6 +618,9 @@ class PandoraFMS_WP {
 		
 		$options = get_option('pfmswp-options');
 		$options = $pfms_wp->sanitize_options($options);
+		
+		$options_access_control = get_option('pfmswp-options-access_control');
+		$options_access_control = $pfms_wp->sanitize_options_access_control($options_access_control);
 		
 		$last_installed_themes = get_option($pfms_wp->prefix . "installed_themes", false);
 		
@@ -635,7 +658,7 @@ class PandoraFMS_WP {
 						'timestamp' => date('Y-m-d H:i:s')),
 					array('%s', '%s', '%s'));
 				
-				if (!$options['email_theme_new'])
+				if (!$options_access_control['email_theme_new'])
 					continue;
 				
 				$blog = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
@@ -684,6 +707,16 @@ class PandoraFMS_WP {
 		
 		if (!isset($options['show_footer']))
 			$options['show_footer'] = 0;
+		
+		return $options;
+	}
+	
+	public static function sanitize_options_access_control($options) {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		if (!is_array($options) || empty($options) || (false === $options))
+			return $pfms_wp->set_default_options();
+		
 		if (!isset($options['email_new_account']))
 			$options['email_new_account'] = 0;
 		if (!isset($options['email_user_login']))

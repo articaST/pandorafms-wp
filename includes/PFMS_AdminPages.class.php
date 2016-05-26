@@ -337,6 +337,85 @@ class PFMS_AdminPages {
 							</fieldset>
 						</td>
 					</tr>
+				</table>
+				<p class="submit">
+					<input
+						type="submit" name="submit" id="submit"
+						class="button button-primary"
+						value="<?php esc_attr_e("Save Changes");?>" />
+				</p>
+			</form>
+		</div>
+		<?php
+	}
+	
+	public static function show_monitoring() {
+		?>
+		<div class="wrap">
+			<h2><?php esc_html_e("Monitoring");?></h2>
+		</div>
+		<?php
+	}
+	
+	public static function show_access_control() {
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "user_stats";
+		?>
+		<div class="wrap">
+			<h2><?php esc_html_e("Access Control");?></h2>
+		</div>
+		
+		<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+		
+		<?php
+		$user_stats = $wpdb->get_results(
+			"SELECT *
+			FROM `" . $tablename . "`
+			ORDER BY timestamp DESC");
+		
+		if (empty($user_stats)) {
+			?>
+			<p><strong><?php esc_html_e("Empty list");?></strong></p>
+			<?php
+		}
+		else {
+			?>
+			<table class="widefat striped">
+				<thead>
+					<tr>
+						<th><?php esc_html_e("User");?></th>
+						<th><?php esc_html_e("Action");?></th>
+						<th><?php esc_html_e("Count");?></th>
+						<th><?php esc_html_e("Last time");?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php
+					foreach ($user_stats as $user) {
+						?>
+						<tr>
+							<td><?php echo esc_html($user->user);?></td>
+							<td><?php echo esc_html($user->action);?></td>
+							<td><?php echo esc_html($user->count);?></td>
+							<td><?php echo esc_html($user->timestamp);?></td>
+						</tr>
+						<?php
+					}
+					?>
+				</tbody>
+			</table>
+			<?php
+		}
+		?>
+		<div class="wrap">
+			<h2><?php esc_html_e("Setup");?></h2>
+			<form method="post" action="options.php">
+				<?php settings_fields('pfmswp-settings-group-access_control');?>
+				<?php $options = get_option('pfmswp-options-access_control');?>
+				<table class="form-table">
 					<tr valign="top">
 						<th scope="row">
 							<?php esc_html_e("Email on new account creation");?>
@@ -472,68 +551,6 @@ class PFMS_AdminPages {
 			</form>
 		</div>
 		<?php
-	}
-	
-	public static function show_monitoring() {
-		?>
-		<div class="wrap">
-			<h2><?php esc_html_e("Monitoring");?></h2>
-		</div>
-		<?php
-	}
-	
-	public static function show_acccess_control() {
-		global $wpdb;
-		
-		$pfms_wp = PandoraFMS_WP::getInstance();
-		
-		$tablename = $wpdb->prefix . $pfms_wp->prefix . "user_stats";
-		?>
-		<div class="wrap">
-			<h2><?php esc_html_e("Access Control");?></h2>
-		</div>
-		
-		<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-		
-		<?php
-		$user_stats = $wpdb->get_results(
-			"SELECT *
-			FROM `" . $tablename . "`
-			ORDER BY timestamp DESC");
-		
-		if (empty($user_stats)) {
-			?>
-			<p><strong><?php esc_html_e("Empty list");?></strong></p>
-			<?php
-		}
-		else {
-			?>
-			<table class="widefat striped">
-				<thead>
-					<tr>
-						<th><?php esc_html_e("User");?></th>
-						<th><?php esc_html_e("Action");?></th>
-						<th><?php esc_html_e("Count");?></th>
-						<th><?php esc_html_e("Last time");?></th>
-					</tr>
-				</thead>
-				<tbody>
-					<?php
-					foreach ($user_stats as $user) {
-						?>
-						<tr>
-							<td><?php echo esc_html($user->user);?></td>
-							<td><?php echo esc_html($user->action);?></td>
-							<td><?php echo esc_html($user->count);?></td>
-							<td><?php echo esc_html($user->timestamp);?></td>
-						</tr>
-						<?php
-					}
-					?>
-				</tbody>
-			</table>
-			<?php
-		}
 	}
 	
 	public static function show_system_security() {
