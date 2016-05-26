@@ -291,6 +291,26 @@ class PandoraFMS_WP {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		$pfms_wp->check_new_themes();
 		$pfms_wp->check_new_plugins();
+		
+		$options_system_security = get_option('pfmswp-options-system_security');
+		if ($options_system_security['upload_htaccess']) {
+			$pfms_wp->install_htaccess();
+			update_option($pfms_wp->prefix . "installed_htaccess", 1);
+			update_option($pfms_wp->prefix . "installed_htaccess_dir",
+				$options_system_security['directory_htaccess']);
+		}
+		else {
+			$installed_htaccess = get_option($pfms_wp->prefix . "installed_htaccess", 0);
+			
+			if ($installed_htaccess) {
+				$pfms_wp->uninstall_htaccess();
+				update_option($pfms_wp->prefix . "installed_htaccess", 0);
+				update_option($pfms_wp->prefix . "installed_htaccess_dir", "");
+			}
+			else {
+				// None
+			}
+		}
 	}
 	
 	public static function admin_init() {
@@ -309,6 +329,10 @@ class PandoraFMS_WP {
 			"pfmswp-settings-group-access_control",
 			"pfmswp-options-access_control",
 			array("PandoraFMS_WP", "sanitize_options_access_control"));
+		register_setting(
+			"pfmswp-settings-group-system_security",
+			"pfmswp-options-system_security",
+			array("PandoraFMS_WP", "sanitize_options_system_security"));
 		
 		
 		// Added script
@@ -545,6 +569,14 @@ class PandoraFMS_WP {
 	}
 	//=== END ==== HOOKS CODE ==========================================
 	
+	private function install_htaccess() {
+		$options_system_security = get_option('pfmswp-options-system_security');
+	}
+	
+	private function uninstall_htaccess() {
+		$options_system_security = get_option('pfmswp-options-system_security');
+	}
+	
 	public function check_new_plugins() {
 		require_once(ABSPATH . "/wp-admin/includes/plugin.php");
 		
@@ -696,6 +728,8 @@ class PandoraFMS_WP {
 		$default_options['email_change_email'] = 1;
 		$default_options['email_plugin_new'] = 1;
 		$default_options['email_theme_new'] = 1;
+		$default_options['upload_htaccess'] = 1;
+		$default_options['directory_htaccess'] = "";
 		
 		return $default_options;
 	}
@@ -731,6 +765,18 @@ class PandoraFMS_WP {
 			$options['email_plugin_new'] = 0;
 		if (!isset($options['email_theme_new']))
 			$options['email_theme_new'] = 0;
+		
+		return $options;
+	}
+	
+	public static function sanitize_options_system_security($options) {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		if (!is_array($options) || empty($options) || (false === $options))
+			return $pfms_wp->set_default_options();
+		
+		if (!isset($options['upload_htaccess']))
+			$options['upload_htaccess'] = 0;
 		
 		return $options;
 	}
@@ -839,6 +885,12 @@ class PandoraFMS_WP {
 				'last_execution' => null,
 				'status' => null));
 		$return['monitoring']['audit_files'] = $audit_password;
+		
+		
+		$options_system_security = get_option('pfmswp-options-system_security');
+		$return['system_security'] = array();
+		$return['system_security']['protect_upload_php_code'] =
+			$options_system_security['upload_htaccess'];
 		
 		return $return;
 	}

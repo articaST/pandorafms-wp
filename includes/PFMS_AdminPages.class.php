@@ -103,6 +103,35 @@ class PFMS_AdminPages {
 				<div class="card">
 					<h2 class="title"><?php esc_html_e("System security");?></h2>
 					<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+					<table class="widefat striped">
+						<thead>
+							<tr>
+								<th><?php esc_html_e("Item");?></th>
+								<th><?php esc_html_e("Status");?></th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td><?php esc_html_e("Protect upload of PHP Code");?></td>
+								<td>
+									<?php
+									if ($data['system_security']['protect_upload_php_code']) {
+										?>
+										<img
+											src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
+										<?php
+									}
+									else {
+										?>
+										<img
+											src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
+										<?php
+									}
+									?>
+								</td>
+							</tr>
+						</tbody>
+					</table>
 				</div>
 				
 			</div>
@@ -549,10 +578,10 @@ class PFMS_AdminPages {
 										<?php esc_html_e("Email on new account creation");?>
 									</span>
 								</legend>
-								<label for="pfmswp-options[email_new_account]">
+								<label for="pfmswp-options-access_control[email_new_account]">
 									<input
 										type="checkbox"
-										name="pfmswp-options[email_new_account]"
+										name="pfmswp-options-access_control[email_new_account]"
 										value="1"
 										<?php
 										checked($options['email_new_account'], 1, true);
@@ -574,10 +603,10 @@ class PFMS_AdminPages {
 										<?php esc_html_e("Email on login user");?>
 									</span>
 								</legend>
-								<label for="pfmswp-options[email_user_login]">
+								<label for="pfmswp-options-access_control[email_user_login]">
 									<input
 										type="checkbox"
-										name="pfmswp-options[email_user_login]"
+										name="pfmswp-options-access_control[email_user_login]"
 										value="1"
 										<?php
 										checked($options['email_user_login'], 1, true);
@@ -599,10 +628,10 @@ class PFMS_AdminPages {
 										<?php esc_html_e("Email on user email change");?>
 									</span>
 								</legend>
-								<label for="pfmswp-options[email_change_email]">
+								<label for="pfmswp-options-access_control[email_change_email]">
 									<input
 										type="checkbox"
-										name="pfmswp-options[email_change_email]"
+										name="pfmswp-options-access_control[email_change_email]"
 										value="1"
 										<?php
 										checked($options['email_change_email'], 1, true);
@@ -624,10 +653,10 @@ class PFMS_AdminPages {
 										<?php esc_html_e("Email on new plugin");?>
 									</span>
 								</legend>
-								<label for="pfmswp-options[email_plugin_new]">
+								<label for="pfmswp-options-access_control[email_plugin_new]">
 									<input
 										type="checkbox"
-										name="pfmswp-options[email_plugin_new]"
+										name="pfmswp-options-access_control[email_plugin_new]"
 										value="1"
 										<?php
 										checked($options['email_plugin_new'], 1, true);
@@ -649,10 +678,10 @@ class PFMS_AdminPages {
 										<?php esc_html_e("Email on new theme");?>
 									</span>
 								</legend>
-								<label for="pfmswp-options[email_theme_new]">
+								<label for="pfmswp-options-access_control[email_theme_new]">
 									<input
 										type="checkbox"
-										name="pfmswp-options[email_theme_new]"
+										name="pfmswp-options-access_control[email_theme_new]"
 										value="1"
 										<?php
 										checked($options['email_theme_new'], 1, true);
@@ -679,6 +708,69 @@ class PFMS_AdminPages {
 		?>
 		<div class="wrap">
 			<h2><?php esc_html_e("System security");?></h2>
+		</div>
+		<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+		
+		<div class="wrap">
+			<h2><?php esc_html_e("Setup");?></h2>
+			<form method="post" action="options.php">
+				<?php settings_fields('pfmswp-settings-group-system_security');?>
+				<?php $options = get_option('pfmswp-options-system_security');?>
+				<table class="form-table">
+					<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("Protect upload of PHP Code");?>
+						</th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Protect upload of PHP Code");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options-system_security[upload_htaccess]">
+									<input
+										type="checkbox"
+										name="pfmswp-options-system_security[upload_htaccess]"
+										value="1"
+										<?php
+										checked($options['upload_htaccess'], 1, true);
+										?>
+										/>
+									<?php esc_html_e("Active and set a .htaccess from data plugin directory.");?>
+								</label>
+							</fieldset>
+							<br />
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Directory to save the .htaccess");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options-system_security[directory_htaccess]">
+									<input
+										class="regular-text"
+										type="text"
+										name="pfmswp-options-system_security[directory_htaccess]"
+										value="<?php echo esc_attr($options['directory_htaccess']);?>"
+										/>
+									<p class="description">
+										<?php
+										esc_html_e("The directory to save the .htaccess.");
+										?>
+									</p>
+								</label>
+							</fieldset>
+						</td>
+					</tr>
+				</table>
+				<p class="submit">
+					<input
+						type="submit" name="submit" id="submit"
+						class="button button-primary"
+						value="<?php esc_attr_e("Save Changes");?>" />
+				</p>
+			</form>
 		</div>
 		<?php
 	}
