@@ -28,7 +28,7 @@ class PandoraFMS_WP {
 	 * DEBUG == 1
 	 *  - The force the cron task for to execute the next time
 	 */
-	public $debug = 0;
+	public $debug = 1;
 	//=== END ==== ATRIBUTES ===========================================
 	
 	
@@ -736,6 +736,11 @@ class PandoraFMS_WP {
 	}
 	
 	public function debug($var) {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		if (!$pfms_wp->debug)
+			return;
+		
 		$more_info = '';
 		if (is_string($var)) {
 			$more_info = 'size: ' . strlen($var);
@@ -869,6 +874,21 @@ class PandoraFMS_WP {
 	}
 	
 	//=== INIT === CHECKS ==============================================
+	public function get_count_comments_last_day() {
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$sql = "
+			SELECT COUNT(*) AS count
+			FROM `" . $wpdb->prefix . "comments" . "`
+			WHERE TIMESTAMPDIFF(HOUR, comment_date, now()) < 25";
+		
+		$count = $wpdb->get_results($sql);
+		
+		return $count[0]->count;
+	}
+	
 	private function audit_files() {
 		global $wpdb;
 		
