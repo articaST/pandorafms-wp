@@ -163,7 +163,7 @@ class PFMS_AdminPages {
 										?>
 									</span>
 									</a>
-									<a href="javascript: check_audit_password();">
+									<a href="javascript: force_cron_audit_password();">
 										<span id="audit_password_last_execute">
 											<?php
 											if (empty($data['monitoring']['audit_password']['last_execution'])) {

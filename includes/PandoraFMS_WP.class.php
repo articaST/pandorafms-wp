@@ -22,6 +22,13 @@ class PandoraFMS_WP {
 	private $acl_user_menu_entry = "manage_options"; // acl settings
 	private $position_menu_entry = 75; //Under tools
 	private $items_per_page = 25;
+	/*
+	 * DEBUG == 0
+	 *  - The force the cron task execute now.
+	 * DEBUG == 1
+	 *  - The force the cron task for to execute the next time
+	 */
+	public $debug = 0;
 	//=== END ==== ATRIBUTES ===========================================
 	
 	
@@ -1061,9 +1068,9 @@ class PandoraFMS_WP {
 				"json");
 			}
 			
-			function check_audit_password() {
+			function force_cron_audit_password() {
 				var data = {
-					'action': 'check_audit_password'
+					'action': 'force_cron_audit_password'
 				};
 				
 				jQuery("#audit_password_status").empty();
@@ -1089,6 +1096,35 @@ class PandoraFMS_WP {
 				},
 				"json");
 			}
+			
+			//~ function check_audit_password() {
+				//~ var data = {
+					//~ 'action': 'check_audit_password'
+				//~ };
+				//~ 
+				//~ jQuery("#audit_password_status").empty();
+				//~ jQuery("#audit_password_status").append(
+					//~ jQuery("#ajax_loading").clone());
+				//~ 
+				//~ jQuery("#audit_password_last_execute").empty();
+				//~ 
+				//~ jQuery.post(ajaxurl, data, function(response) {
+					//~ jQuery("#audit_password_status").empty();
+					//~ 
+					//~ if (response.status) {
+						//~ jQuery("#audit_password_status").append(
+							//~ jQuery("#ajax_result_ok").clone());
+					//~ }
+					//~ else {
+						//~ jQuery("#audit_password_status").append(
+							//~ jQuery("#ajax_result_fail").clone());
+					//~ }
+					//~ 
+					//~ jQuery("#audit_password_last_execute").append(
+						//~ response.last_execution);
+				//~ },
+				//~ "json");
+			//~ }
 			
 			function check_audit_files() {
 				var data = {
@@ -1238,6 +1274,26 @@ class PandoraFMS_WP {
 		echo json_encode($audit_files);
 		
 		wp_die();
+	}
+	
+	public static function ajax_force_cron_audit_password() {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		if ($pfms_wp->debug) {
+			$pfms_wp->ajax_check_audit_password();
+		}
+		else {
+			wp_reschedule_event(time(), 'daily', 'cron_audit_passwords_strength');
+			
+			$audit_password = get_option($pfms_wp->prefix . "audit_passwords",
+			array(
+				'last_execution' => null,
+				'status' => null));
+			$audit_password['last_execution'] = esc_html(_("Scheduled"));
+			echo json_encode($audit_password);
+			
+			wp_die();
+		}
 	}
 	
 	public static function ajax_check_audit_password() {
