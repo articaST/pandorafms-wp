@@ -874,6 +874,20 @@ class PandoraFMS_WP {
 	}
 	
 	//=== INIT === CHECKS ==============================================
+	public function get_count_posts_last_day() {
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$sql = "
+			SELECT COUNT(*) AS count
+			FROM `" . $wpdb->prefix . "posts" . "`
+			WHERE TIMESTAMPDIFF(HOUR, post_date, now()) < 25";
+		
+		$count = $wpdb->get_results($sql);
+		
+		return $count[0]->count;
+	}
 	public function get_count_comments_last_day() {
 		global $wpdb;
 		

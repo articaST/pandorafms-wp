@@ -235,6 +235,17 @@ class PFMS_AdminPages {
 									</span>
 								</td>
 							</tr>
+							<tr>
+								<td><?php esc_html_e('New posts in last 24h');?></td>
+								<td>
+									<span class="title-count">
+										<?php
+										echo esc_html(
+											$pfms_wp->get_count_posts_last_day());
+										?>
+									</span>
+								</td>
+							</tr>
 						</tbody>
 					</table>
 					<div style="display: none;">
@@ -385,8 +396,8 @@ class PFMS_AdminPages {
 			$tposts = $wpdb->prefix . "posts";
 			$sql = "
 				SELECT COUNT(comments.comment_ID) AS count, posts.post_title AS post
-				FROM " . $tcomments . " AS comments
-				INNER JOIN wp_posts AS posts
+				FROM `" . $tcomments . "` AS comments
+				INNER JOIN `" . $tposts . "` AS posts
 					ON comments.comment_post_ID = posts.ID
 				WHERE TIMESTAMPDIFF(HOUR, comments.comment_date, now()) < 25
 				ORDER BY post ASC";
@@ -413,6 +424,48 @@ class PFMS_AdminPages {
 							<tr>
 								<td><?php echo esc_html($comment->post);?></td>
 								<td><?php echo esc_html($comment->count);?></td>
+							</tr>
+							<?php
+						}
+						?>
+					</tbody>
+				</table>
+				<?php
+			}
+			?>
+			
+			
+			<h2><?php esc_html_e("Posts in last 24h");?></h2>
+			<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+			<?php
+			
+			$tposts = $wpdb->prefix . "posts";
+			$sql = "
+				SELECT posts.post_title AS post
+				FROM `" . $tposts . "` AS posts
+				WHERE TIMESTAMPDIFF(HOUR, posts.post_date, now()) < 25
+				ORDER BY post ASC";
+			$posts = $wpdb->get_results($sql);
+			
+			if (empty($posts)) {
+				?>
+				<p><strong><?php esc_html_e("Empty list");?></strong></p>
+				<?php
+			}
+			else {
+				?>
+				<table class="widefat striped">
+					<thead>
+						<tr>
+							<th><?php esc_html_e("Post");?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php
+						foreach ($posts as $post) {
+							?>
+							<tr>
+								<td><?php echo esc_html($post->post);?></td>
 							</tr>
 							<?php
 						}
