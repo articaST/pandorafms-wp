@@ -376,49 +376,54 @@ class PFMS_AdminPages {
 			<h2><?php esc_html_e("Monitoring");?></h2>
 		</div>
 		
-		<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-		<?php
-		
-		$tcomments = $wpdb->prefix . "comments";
-		$tposts = $wpdb->prefix . "posts";
-		$sql = "
-			SELECT COUNT(comments.comment_ID) AS count, posts.post_title AS post
-			FROM " . $tcomments . " AS comments
-			INNER JOIN wp_posts AS posts
-				ON comments.comment_post_ID = posts.ID
-			WHERE TIMESTAMPDIFF(HOUR, comments.comment_date, now()) < 25
-			ORDER BY post ASC";
-		$comments = $wpdb->get_results($sql);
-		
-		if (empty($comments)) {
-			?>
-			<p><strong><?php esc_html_e("Empty list");?></strong></p>
+		<div class="wrap">
+			<h2><?php esc_html_e("Comments in last 24h");?></h2>
+			<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
 			<?php
-		}
-		else {
-			?>
-			<table class="widefat striped">
-				<thead>
-					<tr>
-						<th><?php esc_html_e("Post");?></th>
-						<th><?php esc_html_e("Count");?></th>
-					</tr>
-				</thead>
-				<tbody>
-					<?php
-					foreach ($comments as $comment) {
-						?>
+			
+			$tcomments = $wpdb->prefix . "comments";
+			$tposts = $wpdb->prefix . "posts";
+			$sql = "
+				SELECT COUNT(comments.comment_ID) AS count, posts.post_title AS post
+				FROM " . $tcomments . " AS comments
+				INNER JOIN wp_posts AS posts
+					ON comments.comment_post_ID = posts.ID
+				WHERE TIMESTAMPDIFF(HOUR, comments.comment_date, now()) < 25
+				ORDER BY post ASC";
+			$comments = $wpdb->get_results($sql);
+			
+			if (empty($comments)) {
+				?>
+				<p><strong><?php esc_html_e("Empty list");?></strong></p>
+				<?php
+			}
+			else {
+				?>
+				<table class="widefat striped">
+					<thead>
 						<tr>
-							<td><?php echo esc_html($comment->post);?></td>
-							<td><?php echo esc_html($comment->count);?></td>
+							<th><?php esc_html_e("Post");?></th>
+							<th><?php esc_html_e("Count");?></th>
 						</tr>
+					</thead>
+					<tbody>
 						<?php
-					}
-					?>
-				</tbody>
-			</table>
-			<?php
-		}
+						foreach ($comments as $comment) {
+							?>
+							<tr>
+								<td><?php echo esc_html($comment->post);?></td>
+								<td><?php echo esc_html($comment->count);?></td>
+							</tr>
+							<?php
+						}
+						?>
+					</tbody>
+				</table>
+				<?php
+			}
+			?>
+		</div>
+		<?php
 	}
 	
 	public static function show_access_control() {
