@@ -903,6 +903,12 @@ class PandoraFMS_WP {
 		return $count[0]->count;
 	}
 	
+	private function audit_public_write_dirs() {
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+	}
+	
 	private function audit_files() {
 		global $wpdb;
 		
@@ -1102,6 +1108,12 @@ class PandoraFMS_WP {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
 		$pfms_wp->audit_files();
+	}
+	
+	public static function cron_audit_public_write_dirs() {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$pfms_wp->audit_public_write_dirs();
 	}
 	//=== END ==== CRON HOOKS CODE =====================================
 	
