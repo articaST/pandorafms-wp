@@ -34,7 +34,7 @@ class PFMS_AdminPages {
 	private function __construct() {
 	}
 	
-	public static function print_access_control() {
+	public static function print_access_control_list_dashboard() {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
 		$list = $pfms_wp->get_last_access_control();
