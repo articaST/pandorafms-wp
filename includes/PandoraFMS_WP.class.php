@@ -315,6 +315,10 @@ class PandoraFMS_WP {
 		wp_enqueue_script('jquery-ui-dialog');
 		wp_enqueue_style("wp-jquery-ui-dialog");
 		
+		wp_enqueue_script(
+			'my_custom_script',
+			plugin_dir_url( __FILE__ ) . '../js/jquery.scrollTableBody-1.0.0.js');
+		
 		error_log( "Admin Init" );
 	}
 	

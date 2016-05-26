@@ -47,7 +47,7 @@ class PFMS_AdminPages {
 		}
 		?>
 		
-		<table class="widefat striped">
+		<table id="list_access_control" class="widefat striped">
 			<thead>
 				<tr>
 					<th><?php esc_html_e("Time");?></th>
@@ -69,6 +69,12 @@ class PFMS_AdminPages {
 				?>
 			</tbody>
 		</table>
+		
+		<script type="text/javascript">
+			jQuery(function() {
+				jQuery('#list_access_control').scrollTableBody({'rowsToDisplay': 5});
+			});
+		</script>
 		<?php
 	}
 	
