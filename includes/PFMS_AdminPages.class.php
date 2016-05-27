@@ -731,6 +731,68 @@ class PFMS_AdminPages {
 		<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
 		
 		<div class="wrap">
+			<h2><?php esc_html_e("Filesystem status");?></h2>
+			<?php
+			global $wpdb;
+			
+			$pfms_wp = PandoraFMS_WP::getInstance();
+			
+			$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
+			
+			$list = $wpdb->get_results("
+				SELECT path, status, writable_others
+				FROM `" . $tablename . "`
+				WHERE status != '' or writable_others = 1
+				ORDER BY status DESC");
+			if (empty($list))
+				$list = array();
+			
+			if (empty($list)) {
+				?>
+				<p><?php esc_html_e("Empty data");?></p>
+				<?php
+			}
+			else {
+				?>
+				<table id="list_filesystem" class="widefat striped">
+					<thead>
+						<tr>
+							<th><?php esc_html_e("Path");?></th>
+							<th><?php esc_html_e("Status");?></th>
+							<th><?php esc_html_e("Writable others");?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php
+						foreach ($list as $entry) {
+							if ($entry->writable_others) {
+								$icon = "<img src='" . esc_url(admin_url( 'images/yes.png')) . "' alt='' />";
+							}
+							else {
+								$icon = "<img src='" . esc_url(admin_url( 'images/no.png')) . "' alt='' />";
+							}
+							?>
+							<tr>
+								<td><?php esc_html_e($entry->path);?></td>
+								<td><?php esc_html_e($entry->status);?></td>
+								<td><?php echo $icon;?></td>
+							</tr>
+							<?php
+						}
+						?>
+					</tbody>
+				</table>
+				
+				<script type="text/javascript">
+					jQuery(function() {
+						jQuery('#list_filesystem').scrollTableBody({'rowsToDisplay': 5});
+					});
+				</script>
+				<?php
+			}
+			?>
+			
+			
 			<h2><?php esc_html_e("Setup");?></h2>
 			<form method="post" action="options.php">
 				<?php settings_fields('pfmswp-settings-group-system_security');?>
