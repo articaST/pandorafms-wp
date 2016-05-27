@@ -322,6 +322,12 @@ class PandoraFMS_WP {
 				// None
 			}
 		}
+		
+		if ($options_system_security['wp_generator_disable']) {
+			for ($i = 0; $i < 11; $i++) {
+				remove_action('wp_head', 'wp_generator', $i);
+			}
+		}
 	}
 	
 	public static function admin_init() {
@@ -833,6 +839,7 @@ class PandoraFMS_WP {
 		$default_options['directory_htaccess'] = "";
 		$default_options['upload_robots_txt'] = 0;
 		$default_options['directory_robot_txt'] = "";
+		$default_options['wp_generator_disable'] = 0;
 		
 		return $default_options;
 	}
@@ -883,6 +890,9 @@ class PandoraFMS_WP {
 		
 		if (!isset($options['upload_robots_txt']))
 			$options['upload_robots_txt'] = 0;
+			
+		if (!isset($options['wp_generator_disable']))
+			$options['wp_generator_disable'] = 0;
 		
 		return $options;
 	}

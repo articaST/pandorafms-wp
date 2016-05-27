@@ -890,6 +890,31 @@ class PFMS_AdminPages {
 							</fieldset>
 						</td>
 					</tr>
+					<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("WP Generator disable");?>
+						</th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("WP Generator disable");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options-system_security[wp_generator_disable]">
+									<input
+										type="checkbox"
+										name="pfmswp-options-system_security[wp_generator_disable]"
+										value="1"
+										<?php
+										checked($options['wp_generator_disable'], 1, true);
+										?>
+										/>
+									<?php esc_html_e("Disable the WP Generator in wp_head.");?>
+								</label>
+							</fieldset>
+						</td>
+					</tr>
 				</table>
 				<p class="submit">
 					<input
