@@ -295,17 +295,12 @@ class PandoraFMS_WP {
 		$options_system_security = get_option('pfmswp-options-system_security');
 		if ($options_system_security['upload_htaccess']) {
 			$pfms_wp->install_htaccess();
-			update_option($pfms_wp->prefix . "installed_htaccess", 1);
-			update_option($pfms_wp->prefix . "installed_htaccess_dir",
-				$options_system_security['directory_htaccess']);
 		}
 		else {
 			$installed_htaccess = get_option($pfms_wp->prefix . "installed_htaccess", 0);
 			
 			if ($installed_htaccess) {
 				$pfms_wp->uninstall_htaccess();
-				update_option($pfms_wp->prefix . "installed_htaccess", 0);
-				update_option($pfms_wp->prefix . "installed_htaccess_dir", "");
 			}
 			else {
 				// None
@@ -570,11 +565,52 @@ class PandoraFMS_WP {
 	//=== END ==== HOOKS CODE ==========================================
 	
 	private function install_htaccess() {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
 		$options_system_security = get_option('pfmswp-options-system_security');
+		$destination_dir = $options_system_security['directory_htaccess'];
+		
+		$htacess_file = plugin_dir_path(__FILE__) .
+			"../data/htaccess_file";
+		
+		$installed = false;
+		
+		// The file is from data directory of plugin
+		if (!empty($destination_dir)) {
+			if (!is_dir($destination_dir)) {
+				$destination_dir = realpath(
+					ABSPATH . $destination_dir);
+			}
+			
+			if (is_dir($destination_dir)) {
+				$installed_htaccess_file =
+					$destination_dir . "/.htaccess";
+				$installed = copy($htacess_file, $installed_htaccess_file);
+			}
+		}
+		
+		if ($installed) {
+			update_option($pfms_wp->prefix . "installed_htaccess", (int)$installed);
+			update_option($pfms_wp->prefix . "installed_htaccess_file",
+				$installed_htaccess_file);
+		}
 	}
 	
 	private function uninstall_htaccess() {
-		$options_system_security = get_option('pfmswp-options-system_security');
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$installed_file = get_option($pfms_wp->prefix . "installed_htaccess_file",
+			null);
+		
+		$install = 0;
+		if (!empty($installed_file)) {
+			$install = !unlink($installed_file);
+		}
+		
+		if (!$install) {
+			update_option($pfms_wp->prefix . "installed_htaccess_file", "");
+		}
+		update_option($pfms_wp->prefix . "installed_htaccess", (int)$install);
 	}
 	
 	public function check_new_plugins() {
@@ -890,7 +926,7 @@ class PandoraFMS_WP {
 		$options_system_security = get_option('pfmswp-options-system_security');
 		$return['system_security'] = array();
 		$return['system_security']['protect_upload_php_code'] =
-			$options_system_security['upload_htaccess'];
+			(int)get_option($pfms_wp->prefix . "installed_htaccess", 0);
 		
 		return $return;
 	}
