@@ -1009,6 +1009,8 @@ class PandoraFMS_WP {
 			(int)get_option($pfms_wp->prefix . "installed_htaccess", 0);
 		$return['system_security']['installed_robot_txt'] =
 			(int)get_option($pfms_wp->prefix . "installed_robot_txt", 0);
+		$return['system_security']['wp_generator_disable'] =
+			$options_system_security['wp_generator_disable'];
 		
 		return $return;
 	}
