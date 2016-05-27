@@ -306,6 +306,20 @@ class PandoraFMS_WP {
 				// None
 			}
 		}
+		
+		if ($options_system_security['upload_robots_txt']) {
+			$pfms_wp->install_robots_txt();
+		}
+		else {
+			$installed_robot_txt = get_option($pfms_wp->prefix . "installed_robot_txt", 0);
+			
+			if ($installed_robot_txt) {
+				$pfms_wp->uninstall_robots_txt();
+			}
+			else {
+				// None
+			}
+		}
 	}
 	
 	public static function admin_init() {
@@ -613,6 +627,55 @@ class PandoraFMS_WP {
 		update_option($pfms_wp->prefix . "installed_htaccess", (int)$install);
 	}
 	
+	public function install_robots_txt() {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$options_system_security = get_option('pfmswp-options-system_security');
+		$destination_dir = $options_system_security['directory_robot_txt'];
+		
+		$robots_txt_file = plugin_dir_path(__FILE__) .
+			"../data/robots_txt_file";
+		
+		$installed = false;
+		
+		// The file is from data directory of plugin
+		if (!empty($destination_dir)) {
+			if (!is_dir($destination_dir)) {
+				$destination_dir = realpath(
+					ABSPATH . $destination_dir);
+			}
+			
+			if (is_dir($destination_dir)) {
+				$installed_htaccess_file =
+					$destination_dir . "/robots.txt";
+				$installed = copy($robots_txt_file, $installed_htaccess_file);
+			}
+		}
+		
+		if ($installed) {
+			update_option($pfms_wp->prefix . "installed_robot_txt", (int)$installed);
+			update_option($pfms_wp->prefix . "installed_robots_txt_file",
+				$installed_htaccess_file);
+		}
+	}
+	
+	private function uninstall_robots_txt() {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$installed_file = get_option($pfms_wp->prefix . "installed_robot_txt",
+			null);
+		
+		$install = 0;
+		if (!empty($installed_file)) {
+			$install = !unlink($installed_file);
+		}
+		
+		if (!$install) {
+			update_option($pfms_wp->prefix . "installed_robots_txt_file", "");
+		}
+		update_option($pfms_wp->prefix . "installed_robot_txt", (int)$install);
+	}
+	
 	public function check_new_plugins() {
 		require_once(ABSPATH . "/wp-admin/includes/plugin.php");
 		
@@ -764,8 +827,10 @@ class PandoraFMS_WP {
 		$default_options['email_change_email'] = 1;
 		$default_options['email_plugin_new'] = 1;
 		$default_options['email_theme_new'] = 1;
-		$default_options['upload_htaccess'] = 1;
+		$default_options['upload_htaccess'] = 0;
 		$default_options['directory_htaccess'] = "";
+		$default_options['upload_robots_txt'] = 0;
+		$default_options['directory_robot_txt'] = "";
 		
 		return $default_options;
 	}
@@ -813,6 +878,9 @@ class PandoraFMS_WP {
 		
 		if (!isset($options['upload_htaccess']))
 			$options['upload_htaccess'] = 0;
+		
+		if (!isset($options['upload_robots_txt']))
+			$options['upload_robots_txt'] = 0;
 		
 		return $options;
 	}
@@ -927,6 +995,8 @@ class PandoraFMS_WP {
 		$return['system_security'] = array();
 		$return['system_security']['protect_upload_php_code'] =
 			(int)get_option($pfms_wp->prefix . "installed_htaccess", 0);
+		$return['system_security']['installed_robot_txt'] =
+			(int)get_option($pfms_wp->prefix . "installed_robot_txt", 0);
 		
 		return $return;
 	}

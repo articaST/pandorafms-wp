@@ -130,6 +130,25 @@ class PFMS_AdminPages {
 									?>
 								</td>
 							</tr>
+							<tr>
+								<td><?php esc_html_e("Robots.txt enhancement");?></td>
+								<td>
+									<?php
+									if ($data['system_security']['installed_robot_txt']) {
+										?>
+										<img
+											src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
+										<?php
+									}
+									else {
+										?>
+										<img
+											src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
+										<?php
+									}
+									?>
+								</td>
+							</tr>
 						</tbody>
 					</table>
 				</div>
@@ -757,6 +776,52 @@ class PFMS_AdminPages {
 									<p class="description">
 										<?php
 										esc_html_e("The directory to save the .htaccess.");
+										?>
+									</p>
+								</label>
+							</fieldset>
+						</td>
+					</tr>
+					<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("Robots.txt enhancement");?>
+						</th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Robots.txt enhancement");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options-system_security[upload_robots_txt]">
+									<input
+										type="checkbox"
+										name="pfmswp-options-system_security[upload_robots_txt]"
+										value="1"
+										<?php
+										checked($options['upload_robots_txt'], 1, true);
+										?>
+										/>
+									<?php esc_html_e("Active and set a Robots.txt from data plugin directory.");?>
+								</label>
+							</fieldset>
+							<br />
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Directory to save the Robots.txt");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options-system_security[directory_robot_txt]">
+									<input
+										class="regular-text"
+										type="text"
+										name="pfmswp-options-system_security[directory_robot_txt]"
+										value="<?php echo esc_attr($options['directory_robot_txt']);?>"
+										/>
+									<p class="description">
+										<?php
+										esc_html_e("The directory to save the Robot.txt.");
 										?>
 									</p>
 								</label>
