@@ -106,10 +106,12 @@ class PandoraFMS_WP {
 		
 		
 		// Table "list_files"
-		$tablename = $wpdb->prefix . $pfms_wp->prefix . "list_files";
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
 		$sql = "CREATE TABLE `$tablename` (
 			`id` INT NOT NULL AUTO_INCREMENT,
 			`path` longtext NOT NULL,
+			`writable_others` INT NOT NULL DEFAULT 0,
+			`type` varchar(60) NOT NULL DEFAULT '',
 			`status` varchar(60) NOT NULL DEFAULT '',
 			`sha1` varchar(60) NOT NULL DEFAULT '',
 			PRIMARY KEY (`id`)
@@ -1001,8 +1003,8 @@ class PandoraFMS_WP {
 		return $return;
 	}
 	
-	private function get_files($directory = null) {
-		$list_files = array();
+	private function get_filesystem_status($directory = null) {
+		$filesystem = array();
 		
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
@@ -1012,23 +1014,38 @@ class PandoraFMS_WP {
 		$dir = dir($directory);
 		
 		while (false !== ($entry = $dir->read())) {
-			if (($entry === '.') || ($entry === '..'))
+			if (($entry === '..'))
 				continue;
 			
 			$path = realpath($directory . '/' . $entry);
-			if (is_dir($path)) {
-				$list_files_subdir = $pfms_wp->get_files($path);
-				$list_files = array_merge($list_files, $list_files_subdir);
+			$perms = fileperms($path);
+			
+			$entry_filesystem = array();
+			
+			$entry_filesystem['path'] = $path;
+			$entry_filesystem['writable_others'] = ($perms & 0x0002)? 1 : 0;
+			
+			if ($entry === '.') {
+				$entry_filesystem['type'] = 'dir';
+				$entry_filesystem['sha1'] = '';
+				
+				$filesystem[] = $entry_filesystem;
+			}
+			elseif (is_dir($path)) {
+				$filesystem_subdir = $pfms_wp->get_filesystem_status($path);
+				$filesystem = array_merge($filesystem, $filesystem_subdir);
 			}
 			else {
-				$file = array('file' => $path, 'sha1' => sha1_file($path));
-				$list_files[] = $file;
+				$entry_filesystem['type'] = 'file';
+				$entry_filesystem['sha1'] = sha1_file($path);
+				
+				$filesystem[] = $entry_filesystem;
 			}
 		}
 		
 		$dir->close();
 		
-		return $list_files;
+		return $filesystem;
 	}
 	
 	//=== INIT === CHECKS ==============================================
@@ -1061,35 +1078,31 @@ class PandoraFMS_WP {
 		return $count[0]->count;
 	}
 	
-	private function audit_public_write_dirs() {
-		global $wpdb;
-		
-		$pfms_wp = PandoraFMS_WP::getInstance();
-	}
-	
 	private function audit_files() {
 		global $wpdb;
 		
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
-		$tablename = $wpdb->prefix . $pfms_wp->prefix . "list_files";
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
 		
 		$audit_files = get_option($pfms_wp->prefix . "audit_files",
 			array(
 				'last_execution' => null,
 				'status' => null));
 		
-		$files = $pfms_wp->get_files();
+		$filesystem = $pfms_wp->get_filesystem_status();
 		
 		$not_changes_filesystem = true;
 		
 		if (is_null($audit_files['last_execution'])) {
 			// Save the files only
-			foreach ($files as $file) {
+			foreach ($filesystem as $entry) {
 				$value = array(
-					'path' => $file['file'],
-					'status' => '',
-					'sha1' => $file['sha1']);
+					'path' => $entry['path'],
+					'writable_others' => $entry['writable_others'],
+					'type' => $entry['type'],
+					'status' => 'new',
+					'sha1' => $entry['sha1']);
 				
 				$wpdb->insert(
 					$tablename,
@@ -1097,55 +1110,55 @@ class PandoraFMS_WP {
 			}
 		}
 		else {
-			//~ // Clean the audit_files table from the last execution
-			$store_files = $wpdb->get_results("
+			// Clean the audit_files table from the last execution
+			$store_filesystem = $wpdb->get_results("
 				SELECT * FROM `" . $tablename . "`");
 			
-			foreach ($store_files as $i => $store_file) {
-				$store_file = (array)$store_file;
+			foreach ($store_filesystem as $i => $store_entry) {
+				$store_entry = (array)$store_entry;
 				
-				switch ($store_file['status']) {
+				switch ($store_entry['status']) {
 					case 'deleted':
 						$wpdb->delete(
 							$tablename,
-							array('id' => $store_file['id']));
-						unset($store_files[$i]);
+							array('id' => $store_entry['id']));
+						unset($store_filesystem[$i]);
 						break;
 					case 'changed':
 					case 'new':
 						$wpdb->update(
 							$tablename,
 							array('status' => ""),
-							array('id' => $store_file['id']),
+							array('id' => $store_entry['id']),
 							array('%s'),
 							array('%d'));
-						$store_files[$i]->status = "";
+						$store_filesystem[$i]->status = "";
 						break;
 				}
 			}
 			
-			foreach ($files as $file) {
+			foreach ($filesystem as $entry) {
 				$found = false;
-				foreach ($store_files as $i => $store_file) {
-					$store_file = (array)$store_file;
+				foreach ($store_filesystem as $i => $store_entry) {
+					$store_entry = (array)$store_entry;
 					
-					if ($file['file'] === $store_file['path']) {
+					if ($entry['path'] === $store_entry['path']) {
 						$found = true;
 						
-						if ($store_file['sha1'] !== $file['sha1']) {
+						if ($store_entry['sha1'] !== $entry['sha1']) {
 							// Changed
 							
 							$wpdb->update(
 								$tablename,
 								array('status' => "changed"),
-								array('id' => $store_file['id']),
+								array('id' => $store_entry['id']),
 								array('%s'),
 								array('%d'));
 							
 							$not_changes_filesystem = false;
 						}
 						
-						unset($store_files[$i]);
+						unset($store_filesystem[$i]);
 						
 						break;
 					}
@@ -1154,9 +1167,9 @@ class PandoraFMS_WP {
 				if (!$found) {
 					// New
 					$value = array(
-						'path' => $file['file'],
+						'path' => $entry['path'],
 						'status' => 'new',
-						'sha1' => $file['sha1']);
+						'sha1' => $entry['sha1']);
 					
 					$wpdb->insert(
 						$tablename,
@@ -1167,14 +1180,15 @@ class PandoraFMS_WP {
 			}
 			
 			
+			
 			// Check the files unpaired because they are deleted files
-			foreach ($store_files as $store_file) {
+			foreach ($store_filesystem as $store_entry) {
 				// Deleted
 				
 				$wpdb->update(
 					$tablename,
 					array('status' => "deleted"),
-					array('id' => $store_file->id),
+					array('id' => $store_entry->id),
 					array('%s'),
 					array('%d'));
 				
@@ -1266,12 +1280,6 @@ class PandoraFMS_WP {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
 		$pfms_wp->audit_files();
-	}
-	
-	public static function cron_audit_public_write_dirs() {
-		$pfms_wp = PandoraFMS_WP::getInstance();
-		
-		$pfms_wp->audit_public_write_dirs();
 	}
 	//=== END ==== CRON HOOKS CODE =====================================
 	
@@ -1424,19 +1432,23 @@ class PandoraFMS_WP {
 				jQuery.post(ajaxurl, data, function(response) {
 					var list_files = jQuery.makeArray(response.list_files);
 					
-					console.log(list_files);
-					
 					jQuery("#audit_files_status").empty();
 					jQuery("#audit_files_status").append(
 							jQuery("#ajax_result_fail").clone());
 					
-					var $table = jQuery("<table>")
-						.append("<thead><tr><th><?php esc_html_e("Path");?></th><th><?php esc_html_e("Status");?></th></tr></thead>");
+					var $table = jQuery("<table width='100%'>")
+						.append("<thead><tr><th><?php esc_html_e("Path");?></th><th><?php esc_html_e("Status");?></th><th><?php esc_html_e("Writable others");?></th></tr></thead>");
 					jQuery.each(list_files, function(i, file) {
 						var tr = "<tr>";
 						
 						jQuery.each(file, function(i, item) {
-							tr = tr + "<td>" + item + "</td>";
+							if (i == "writable_others") {
+								tr = tr + "<td align='center'>";
+							}
+							else {
+								tr = tr + "<td>";
+							}
+							tr = tr + item + "</td>";
 						});
 						tr = tr + "</tr>";
 						
@@ -1451,7 +1463,7 @@ class PandoraFMS_WP {
 					dialog_weak_user.dialog({
 						'dialogClass' : 'wp-dialog',
 						'height': 200,
-						'minWidth': 700,
+						'minWidth': 900,
 						'modal' : true,
 						'autoOpen' : false,
 						'closeOnEscape' : true})
@@ -1465,6 +1477,8 @@ class PandoraFMS_WP {
 	}
 	
 	public static function ajax_force_cron_audit_files() {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
 		if ($pfms_wp->debug) {
 			$pfms_wp->ajax_check_audit_files();
 		}
@@ -1588,19 +1602,30 @@ class PandoraFMS_WP {
 		
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
-		$tablename = $wpdb->prefix . $pfms_wp->prefix . "list_files";
-		$list_files = $wpdb->get_results("
-			SELECT path, status
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
+		$filesystem = $wpdb->get_results("
+			SELECT path, status, writable_others
 			FROM `" . $tablename . "`
-			WHERE status != '' ");
-		if (empty($list_files))
-			$list_files = array();
+			WHERE status != '' or writable_others = 1
+			ORDER BY status DESC");
+		if (empty($filesystem))
+			$filesystem = array();
 		
 		$return = array();
-		foreach ($list_files as $file) {
+		foreach ($filesystem as $entry) {
+			$icon = "";
+			if ($entry->writable_others) {
+				$icon = "<img src='" . esc_url(admin_url( 'images/yes.png')) . "' alt='' />";
+			}
+			else {
+				$icon = "<img src='" . esc_url(admin_url( 'images/no.png')) . "' alt='' />";
+			}
+			
+			
 			$return[] = array(
-				'path' => $file->path,
-				'status' => $file->status);
+				'path' => $entry->path,
+				'status' => $entry->status,
+				'writable_others' => $icon);
 		}
 		
 		echo json_encode(array('list_files' => $return));
