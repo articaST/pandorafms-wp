@@ -313,6 +313,25 @@ class PFMS_AdminPages {
 									</span>
 								</td>
 							</tr>
+							<tr>
+								<td><?php esc_html_e('Wordpress is updated');?></td>
+								<td>
+									<span id="audit_password_status">
+										<?php
+										if ($data['monitoring']['wordpress_updated']) {
+											?>
+											<img src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
+											<?php
+										}
+										else {
+											?>
+											<img src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
+											<?php
+										}
+										?>
+									</span>
+								</td>
+							</tr>
 						</tbody>
 					</table>
 					<div style="display: none;">

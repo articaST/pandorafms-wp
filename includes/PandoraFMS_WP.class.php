@@ -457,8 +457,6 @@ class PandoraFMS_WP {
 				'timestamp' => date('Y-m-d H:i:s')),
 			array('%s', '%s', '%s'));
 		
-		$pfms_wp->debug($options_access_control);
-		
 		if (!$options_access_control['email_user_login'])
 			return;
 		
@@ -985,6 +983,8 @@ class PandoraFMS_WP {
 		
 		$return = array();
 		
+		// === Monitoring ==============================================
+		
 		$return['monitoring'] = array();
 		$return['monitoring']['check_admin'] = $this->check_admin_user_enabled();
 		
@@ -1002,6 +1002,24 @@ class PandoraFMS_WP {
 				'status' => null));
 		$return['monitoring']['audit_files'] = $audit_password;
 		
+		// Check is there any wordpress update.
+		wp_version_check(array(), true);
+		$update = get_site_transient('update_core');
+		
+		$return['monitoring']['wordpress_updated'] = 0;
+		if (!empty($update)) {
+			if (!empty($update->updates)) {
+				
+				$update->updates = (array)$update->updates;
+				$updates = reset($update->updates);
+				
+				if (version_compare($updates->version, $update->version_checked) == 0) {
+					$return['monitoring']['wordpress_updated'] = 1;
+				}
+			}
+		}
+		
+		// === System security =========================================
 		
 		$options_system_security = get_option('pfmswp-options-system_security');
 		$return['system_security'] = array();
