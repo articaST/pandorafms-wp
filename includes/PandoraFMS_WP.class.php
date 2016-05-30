@@ -222,6 +222,98 @@ class PandoraFMS_WP {
 		}
 	}
 	
+	
+	//=== INIT === API REST CODE =======================================
+	private function apirest_check_authentication() {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		$options = get_option('pfmswp-options');
+		$options = $pfms_wp->sanitize_options($options);
+		
+		$return = 0;
+		
+		$username = $_SERVER['PHP_AUTH_USER'];
+		$password = $_SERVER['PHP_AUTH_PW'];
+		
+		if (($options['api_password'] === $password)
+			&& ('admin' === $username)) {
+			
+			$remote_ip = $_SERVER['REMOTE_ADDR'];
+			
+			$list_api_ips = $options['api_ip'];
+			
+			$list_api_ips = str_replace("\r", "\n", $list_api_ips);
+			$list_api_ips = explode("\n", $list_api_ips);
+			if (empty($list_api_ips))
+				$list_api_ips = array();
+			$list_api_ips = array_filter($list_api_ips);
+			
+			if (array_search("*", $list_api_ips) !== false) {
+				$return = 1;
+			}
+			elseif (array_search($remote_ip, $list_api_ips) !== false) {
+				$return = 1;
+			}
+		}
+		
+		return $return;
+	}
+	
+	private function apirest_error_authentication() {
+		$error = new WP_Error(
+			'Unauthorized',
+			'Unauthorized',
+			array( 'status' => 401 ));
+		
+		return $error;
+	}
+	
+	public static function apirest_online($data) {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		if (!$pfms_wp->apirest_check_authentication()) {
+			return $pfms_wp->apirest_error_authentication();
+		}
+		else {
+			return 1;
+		}
+	}
+	
+	public static function apirest_site_name($data) {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		if (!$pfms_wp->apirest_check_authentication()) {
+			return $pfms_wp->apirest_error_authentication();
+		}
+		else {
+			return get_bloginfo('name');
+		}
+	}
+	
+	public static function apirest_version($data) {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		if (!$pfms_wp->apirest_check_authentication()) {
+			return $pfms_wp->apirest_error_authentication();
+		}
+		else {
+			$plugins = get_plugins();
+			return $plugins['pandorafms-wp/pandorafms-wp.php']['Version'];
+		}
+	}
+	
+	public static function apirest_wp_version($data) {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		if (!$pfms_wp->apirest_check_authentication()) {
+			return $pfms_wp->apirest_error_authentication();
+		}
+		else {
+			return get_bloginfo('version');
+		}
+	}
+	//=== END ==== API REST CODE =======================================
+	
+	
 	//=== INIT === HOOKS CODE ==========================================
 	public static function activation() {
 		$pfms_wp = PandoraFMS_WP::getInstance();
@@ -239,6 +331,62 @@ class PandoraFMS_WP {
 	public static function uninstall() {
 		PandoraFMS_WP::deactivation();
 		error_log( "Uninstall" );
+	}
+	
+	public static function rest_api_init() {
+		error_log("rest_api_init");
+		
+		/*
+		 * EXAMPLE A PHP CALL OF API
+		 * 
+		
+		$process = curl_init("https://192.168.70.155/wordpress/wp-json/pandorafms_wp/online");
+		$headers = array(
+			'Content-Type:application/json',
+			'Authorization: Basic '. base64_encode("admin:password") // <---
+		);
+		curl_setopt($process, CURLOPT_HTTPHEADER, $headers);
+		curl_setopt($process, CURLOPT_TIMEOUT, 30);
+		curl_setopt($process, CURLOPT_RETURNTRANSFER, TRUE);
+		$return = curl_exec($process);
+		var_dump(curl_getinfo($process));
+		curl_close($process);
+		
+		var_dump($return);
+		
+		*/
+		
+		
+		// https://<URL_WORDPRESS>/wp-json/pandorafms_wp/online
+		// HTTP header
+		// Authentication: Basic ' . base64_encode( 'admin' . ':' . '<PANDORA FMS API PASSWORD>' ),
+		register_rest_route('pandorafms_wp', '/online',
+			array(
+				'methods' => 'GET',
+				'callback' => array('PandoraFMS_WP', 'apirest_online')
+			)
+		);
+		
+		register_rest_route('pandorafms_wp', '/site_name',
+			array(
+				'methods' => 'GET',
+				'callback' => array('PandoraFMS_WP', 'apirest_site_name')
+			)
+		);
+		
+		register_rest_route('pandorafms_wp', '/version',
+			array(
+				'methods' => 'GET',
+				'callback' => array('PandoraFMS_WP', 'apirest_version')
+			)
+		);
+		
+		register_rest_route('pandorafms_wp', '/wp_version',
+			array(
+				'methods' => 'GET',
+				'callback' => array('PandoraFMS_WP', 'apirest_wp_version')
+			)
+		);
 	}
 	
 	public static function init() {
@@ -1037,11 +1185,11 @@ class PandoraFMS_WP {
 		}
 		
 		
-		$pfms_wp = PandoraFMS_WP::getInstance();
 		$pending_plugins_update = $pfms_wp->check_plugins_pending_update();
-		
 		$return['monitoring']['plugins_updated'] = empty($pending_plugins_update);
 		
+		
+		$return['monitoring']['api_rest_plugin'] = $pfms_wp->check_api_rest_plugin();
 		
 		// === System security =========================================
 		
@@ -1360,6 +1508,22 @@ class PandoraFMS_WP {
 		
 		return $pending_update_plugins;
 	}
+	
+	private function check_api_rest_plugin() {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$plugins = get_plugins();
+		
+		$return = 0;
+		foreach ($plugins as $plugin) {
+			if ($plugin['Name'] == "WP REST API") {
+				$return = 1;
+				break;
+			}
+		}
+		
+		return $return;
+	}
 	//=== END ==== CHECKS ==============================================
 	
 	
@@ -1432,12 +1596,12 @@ class PandoraFMS_WP {
 							jQuery("#ajax_result_fail").clone());
 					}
 					
-					var dialog_weak_user =
+					var dialog_plugins_pending_update =
 						jQuery("<div id='dialog_plugins_pending_update' title='<?php esc_attr_e("List plugins pending update");?>' />")
 							.html(response.plugins.join('<br />'))
 							.appendTo("body");
 					
-					dialog_weak_user.dialog({
+					dialog_plugins_pending_update.dialog({
 						'dialogClass' : 'wp-dialog',
 						'height': 200,
 						'modal' : true,
@@ -1446,6 +1610,23 @@ class PandoraFMS_WP {
 						.dialog('open');
 				},
 				"json");
+			}
+			
+			function show_api_rest_plugin() {
+				var dialog_weak_user =
+					jQuery("<div id='dialog_' title='<?php esc_attr_e("API REST Plugin Installation");?>' />")
+						.html('<?php
+						esc_attr_e("The REST API is the newest WordPress API. You can install the JSON REST API plugin. There are plans for the REST API to be included in the core of WordPress, but for now it lives in a plugin.")
+						?>')
+						.appendTo("body");
+				
+				dialog_weak_user.dialog({
+					'dialogClass' : 'wp-dialog',
+					'height': 200,
+					'modal' : true,
+					'autoOpen' : false,
+					'closeOnEscape' : true})
+					.dialog('open');
 			}
 			
 			function force_cron_audit_password() {

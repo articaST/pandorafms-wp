@@ -355,6 +355,29 @@ class PFMS_AdminPages {
 									</a>
 								</td>
 							</tr>
+							<tr>
+								<td><?php esc_html_e('API Rest enabled');?></td>
+								<td>
+									<a href="#" onclick="show_api_rest_plugin();">
+										<span id="api_rest_plugin">
+											<?php
+											if ($data['monitoring']['api_rest_plugin']) {
+												?>
+												<img id ="ajax_result_ok"
+													src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
+												<?php
+											}
+											else {
+												?>
+												<img id ="ajax_result_fail"
+													src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
+												<?php
+											}
+											?>
+										</span>
+									</a>
+								</td>
+							</tr>
 						</tbody>
 					</table>
 					<div style="display: none;">

@@ -55,6 +55,11 @@ add_action('cron_audit_files', array('PandoraFMS_WP', 'cron_audit_files'));
 //=== END ==== CRON HOOKS ==============================================
 
 
+//=== INIT === API REST HOOKS ==========================================
+add_action('rest_api_init', array('PandoraFMS_WP', 'rest_api_init'));
+//=== END ==== API REST HOOKS ==========================================
+
+
 //=== INIT === ANOTHER HOOKS ===========================================
 add_action('init', array('PandoraFMS_WP', 'init'));
 add_action('admin_init', array('PandoraFMS_WP', 'admin_init'));
