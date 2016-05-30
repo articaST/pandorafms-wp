@@ -350,6 +350,10 @@ class PandoraFMS_WP {
 			"pfmswp-settings-group-system_security",
 			"pfmswp-options-system_security",
 			array("PandoraFMS_WP", "sanitize_options_system_security"));
+		register_setting(
+			"pfmswp-settings-group-options-monitoring",
+			"pfmswp-options-monitoring",
+			array("PandoraFMS_WP", "sanitize_options_monitoring"));
 		
 		
 		// Added script
@@ -838,6 +842,7 @@ class PandoraFMS_WP {
 		$default_options['upload_robots_txt'] = 0;
 		$default_options['directory_robot_txt'] = "";
 		$default_options['wp_generator_disable'] = 0;
+		$default_options['blacklist_plugins_check_update'] = "";
 		
 		return $default_options;
 	}
@@ -891,6 +896,18 @@ class PandoraFMS_WP {
 			
 		if (!isset($options['wp_generator_disable']))
 			$options['wp_generator_disable'] = 0;
+		
+		return $options;
+	}
+	
+	public static function sanitize_options_monitoring($options) {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		if (!is_array($options) || empty($options) || (false === $options))
+			return $pfms_wp->set_default_options();
+		
+		if (!isset($options['blacklist_plugins_check_update']))
+			$options['blacklist_plugins_check_update'] = "";
 		
 		return $options;
 	}
