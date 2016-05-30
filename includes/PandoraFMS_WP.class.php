@@ -231,8 +231,12 @@ class PandoraFMS_WP {
 		
 		$return = 0;
 		
-		$username = $_SERVER['PHP_AUTH_USER'];
-		$password = $_SERVER['PHP_AUTH_PW'];
+		$username = "";
+		if (isset($_SERVER['PHP_AUTH_USER']))
+			$username = $_SERVER['PHP_AUTH_USER'];
+		$password = "";
+		if (isset($_SERVER['PHP_AUTH_PW']))
+			$password = $_SERVER['PHP_AUTH_PW'];
 		
 		if (($options['api_password'] === $password)
 			&& ('admin' === $username)) {
