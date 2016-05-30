@@ -438,7 +438,6 @@ class PandoraFMS_WP {
 		add_action("user_register", array('PandoraFMS_WP', 'user_register'));
 		add_action("wp_login", array('PandoraFMS_WP', 'user_login'));
 		add_action("profile_update", array('PandoraFMS_WP', 'user_change_email'), 10, 2);
-		//~ add_action("activated_plugin", array('PandoraFMS_WP', 'activate_plugin'));
 		add_action("wp_login_failed", array('PandoraFMS_WP', 'user_login_failed'));
 		//=== END ==== EVENT HOOKS =====================================
 		
@@ -683,59 +682,6 @@ class PandoraFMS_WP {
 		
 		$result = wp_mail($email_to,
 			sprintf(__('[%s] %s change the email'), $blog, $user->user_login),
-			$message);
-	}
-	
-	public static function activate_plugin($plugin) {
-		global $wpdb;
-		
-		$pfms_wp = PandoraFMS_WP::getInstance();
-		
-		$options = get_option('pfmswp-options');
-		$options = $pfms_wp->sanitize_options($options);
-		
-		$options_access_control = get_option('pfmswp-options-access_control');
-		$options_access_control = $pfms_wp->sanitize_options_access_control($options_access_control);
-		
-		$plugins = get_plugins();
-		if (empty($plugins))
-			$plugins = array();
-		
-		$plugin_name = "";
-		foreach ($plugins as $file => $p) {
-			if ($file === $plugin) {
-				$plugin_name = $p['Name'];
-			}
-		}
-		
-		$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
-		$return = $wpdb->insert(
-			$tablename,
-			array(
-				'type' => 'activate_plugin',
-				'data' =>
-					sprintf(
-						esc_sql(__("Activate plugin [%s].")),
-						$plugin_name),
-				'timestamp' => date('Y-m-d H:i:s')),
-			array('%s', '%s', '%s'));
-		
-		if (!$options_access_control['email_activate_plugin'])
-			return;
-		
-		$blog = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
-		
-		if (empty($options['email_notifications']))
-			$email_to = get_option('admin_email');
-		else
-			$email_to = $options['email_notifications'];
-		
-		
-		$message  = sprintf(__('Activate plugin in %s:'), $blog) . "\r\n\r\n";
-		$message .= sprintf(__('Plugin: %s'), $plugin_name) . "\r\n\r\n";
-		
-		$result = wp_mail($email_to,
-			sprintf(__('[%s] activate plugin'), $blog),
 			$message);
 	}
 	//=== END ==== HOOKS CODE ==========================================
