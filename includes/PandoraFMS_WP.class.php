@@ -1019,6 +1019,13 @@ class PandoraFMS_WP {
 			}
 		}
 		
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		$pending_plugins_update = $pfms_wp->check_plugins_pending_update();
+		
+		$return['monitoring']['plugins_updated'] = empty($pending_plugins_update);
+		
+		
 		// === System security =========================================
 		
 		$options_system_security = get_option('pfmswp-options-system_security');
@@ -1296,6 +1303,46 @@ class PandoraFMS_WP {
 		
 		return empty($user);
 	}
+	
+	private function check_plugins_pending_update() {
+		
+		$pending_update_plugins = array();
+		
+		wp_update_plugins();
+		$update_plugins = get_site_transient( 'update_plugins' );
+		
+		if (!empty($update_plugins)) {
+			if (!empty($update_plugins->response)) {
+				$plugins = (array)$update_plugins->response;
+				
+				$options = get_option('pfmswp-options-monitoring');
+				$blacklist_plugins_check_update =
+					$options['blacklist_plugins_check_update'];
+				$blacklist_plugins_check_update = str_replace(
+					"\r", "\n", $blacklist_plugins_check_update);
+				$blacklist_plugins_check_update = explode("\n",
+					$blacklist_plugins_check_update);
+				if (empty($blacklist_plugins_check_update))
+					$blacklist_plugins_check_update = array();
+				$blacklist_plugins_check_update =
+					array_filter($blacklist_plugins_check_update);
+				
+				foreach ($plugins as $plugin) {
+					$plugin = (array)$plugin;
+					$plugin_data = get_plugin_data(WP_PLUGIN_DIR . '/' . $plugin['plugin']);
+					$plugin_name = $plugin_data['Name'];
+					
+					if (array_search($plugin_name, $blacklist_plugins_check_update) !== false) {
+						continue;
+					}
+					
+					$pending_update_plugins[] = $plugin_name;
+				}
+			}
+		}
+		
+		return $pending_update_plugins;
+	}
 	//=== END ==== CHECKS ==============================================
 	
 	
@@ -1343,6 +1390,43 @@ class PandoraFMS_WP {
 						jQuery("#admin_user_enabled").append(
 							jQuery("#ajax_result_fail").clone());
 					}
+				},
+				"json");
+			}
+			
+			function check_plugins_pending_update() {
+				var data = {
+					'action': 'check_plugins_pending_update'
+				};
+				
+				jQuery("#plugins_are_updated").empty();
+				jQuery("#plugins_are_updated").append(
+					jQuery("#ajax_loading").clone());
+				
+				jQuery.post(ajaxurl, data, function(response) {
+					jQuery("#plugins_are_updated").empty();
+					
+					if (response.result) {
+						jQuery("#plugins_are_updated").append(
+							jQuery("#ajax_result_ok").clone());
+					}
+					else {
+						jQuery("#plugins_are_updated").append(
+							jQuery("#ajax_result_fail").clone());
+					}
+					
+					var dialog_weak_user =
+						jQuery("<div id='dialog_plugins_pending_update' title='<?php esc_attr_e("List plugins pending update");?>' />")
+							.html(response.plugins.join('<br />'))
+							.appendTo("body");
+					
+					dialog_weak_user.dialog({
+						'dialogClass' : 'wp-dialog',
+						'height': 200,
+						'modal' : true,
+						'autoOpen' : false,
+						'closeOnEscape' : true})
+						.dialog('open');
 				},
 				"json");
 			}
@@ -1428,9 +1512,9 @@ class PandoraFMS_WP {
 							jQuery("#ajax_result_fail").clone());
 					
 					var dialog_weak_user =
-					jQuery("<div id='dialog_weak_user' title='<?php esc_attr_e("List weak users");?>' />")
-						.html(list_users.join('<br />'))
-						.appendTo("body");
+						jQuery("<div id='dialog_weak_user' title='<?php esc_attr_e("List weak users");?>' />")
+							.html(list_users.join('<br />'))
+							.appendTo("body");
 					
 					dialog_weak_user.dialog({
 						'dialogClass' : 'wp-dialog',
@@ -1486,9 +1570,9 @@ class PandoraFMS_WP {
 					});
 					
 					var dialog_weak_user =
-					jQuery("<div id='dialog_list_files' title='<?php esc_attr_e("List change or new files");?>' />")
-						.append($table)
-						.appendTo("body");
+						jQuery("<div id='dialog_list_files' title='<?php esc_attr_e("List change or new files");?>' />")
+							.append($table)
+							.appendTo("body");
 					
 					dialog_weak_user.dialog({
 						'dialogClass' : 'wp-dialog',
@@ -1602,6 +1686,21 @@ class PandoraFMS_WP {
 		}
 		else {
 			echo json_encode(array('result' => 0));
+		}
+		
+		wp_die();
+	}
+	
+	public static function ajax_check_plugins_pending_update() {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$plugins = $pfms_wp->check_plugins_pending_update();
+		
+		if (empty($plugins)) {
+			echo json_encode(array('result' => 1, 'plugins' => $plugins));
+		}
+		else {
+			echo json_encode(array('result' => 0, 'plugins' => $plugins));
 		}
 		
 		wp_die();

@@ -316,7 +316,7 @@ class PFMS_AdminPages {
 							<tr>
 								<td><?php esc_html_e('Wordpress is updated');?></td>
 								<td>
-									<span id="audit_password_status">
+									<span id="wordpress_is_updated">
 										<?php
 										if ($data['monitoring']['wordpress_updated']) {
 											?>
@@ -330,6 +330,29 @@ class PFMS_AdminPages {
 										}
 										?>
 									</span>
+								</td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e('Plugins are updated');?></td>
+								<td>
+									<a href="#" onclick="check_plugins_pending_update();">
+										<span id="plugins_are_updated">
+											<?php
+											if ($data['monitoring']['plugins_updated']) {
+												?>
+												<img id ="ajax_result_ok"
+													src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
+												<?php
+											}
+											else {
+												?>
+												<img id ="ajax_result_fail"
+													src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
+												<?php
+											}
+											?>
+										</span>
+									</a>
 								</td>
 							</tr>
 						</tbody>

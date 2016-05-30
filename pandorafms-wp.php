@@ -38,6 +38,7 @@ add_action('wp_ajax_force_cron_audit_password', array('PandoraFMS_WP', 'ajax_for
 add_action('wp_ajax_force_cron_audit_files', array('PandoraFMS_WP', 'ajax_force_cron_audit_files'));
 add_action('wp_ajax_get_list_users_with_weak_password', array('PandoraFMS_WP', 'ajax_get_list_users_with_weak_password'));
 add_action('wp_ajax_get_list_audit_files', array('PandoraFMS_WP', 'ajax_get_list_audit_files'));
+add_action('wp_ajax_check_plugins_pending_update', array('PandoraFMS_WP', 'ajax_check_plugins_pending_update'));
 //=== END ==== AJAX HOOKS ==============================================
 
 
