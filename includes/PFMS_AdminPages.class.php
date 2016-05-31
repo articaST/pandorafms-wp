@@ -168,6 +168,27 @@ class PFMS_AdminPages {
 									?>
 								</td>
 							</tr>
+							<tr>
+								<td><?php esc_html_e("Activated rename login");?></td>
+								<td>
+									<?php
+									if ($data['system_security']['activated_rename_login']) {
+										?>
+										<img
+											src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
+										<?php
+									}
+									else {
+										?>
+										<a href="#" onclick="show_activated_rename_login();">
+											<img
+												src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
+										</a>
+										<?php
+									}
+									?>
+								</td>
+							</tr>
 						</tbody>
 					</table>
 				</div>
@@ -846,6 +867,11 @@ class PFMS_AdminPages {
 	}
 	
 	public static function show_system_security() {
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		$pfms_ap = PFMS_AdminPages::getInstance();
+		
 		?>
 		<div class="wrap">
 			<h2><?php esc_html_e("System security");?></h2>
@@ -855,10 +881,6 @@ class PFMS_AdminPages {
 		<div class="wrap">
 			<h2><?php esc_html_e("Filesystem status");?></h2>
 			<?php
-			global $wpdb;
-			
-			$pfms_wp = PandoraFMS_WP::getInstance();
-			
 			$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
 			
 			$list = $wpdb->get_results("
@@ -891,7 +913,7 @@ class PFMS_AdminPages {
 								$icon = "<img src='" . esc_url(admin_url( 'images/yes.png')) . "' alt='' />";
 							}
 							else {
-								$icon = "<img src='" . esc_url(admin_url( 'images/no.png')) . "' alt='' />";
+								$icon = "<img  src='" . esc_url(admin_url( 'images/no.png')) . "' alt='' />";
 							}
 							?>
 							<tr>
@@ -1037,6 +1059,67 @@ class PFMS_AdminPages {
 							</fieldset>
 						</td>
 					</tr>
+					<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("Activate login rename");?>
+						</th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Activate login rename");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options-system_security[activate_login_rename]">
+									<input
+										type="checkbox"
+										name="pfmswp-options-system_security[activate_login_rename]"
+										value="1"
+										<?php
+										checked($options['activate_login_rename'], 1, true);
+										?>
+										/>
+									<?php esc_html_e("Activate the plugin 'Rename wp-login.php' and install.");?>
+								</label>
+							</fieldset>
+							<br />
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Directory to save the Robots.txt");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options-system_security[directory_robot_txt]">
+									<?php
+									if (get_option('permalink_structure')) {
+										echo '<code>' .
+											trailingslashit(home_url()) .
+											'</code> ' .
+											'<input
+												type="text" name="pfmswp-options-system_security[login_rename_page]"
+												value="' . esc_attr($options['login_rename_page']) . '">' .
+											($pfms_ap->use_trailing_slashes() ?
+												' <code>/</code>' :
+												'');
+									}
+									else {
+										echo '<code>' .
+											trailingslashit(home_url()) .
+											'?</code> ' .
+											'<input
+												type="text" name="pfmswp-options-system_security[login_rename_page]"
+												value="' . esc_attr($options['login_rename_page'])  . '">';
+									}
+									?>
+									<p class="description">
+										<?php
+										esc_html_e("The rename login page.");
+										?>
+									</p>
+								</label>
+							</fieldset>
+						</td>
+					</tr>
 				</table>
 				<p class="submit">
 					<input
@@ -1047,6 +1130,10 @@ class PFMS_AdminPages {
 			</form>
 		</div>
 		<?php
+	}
+	
+	private function use_trailing_slashes() {
+		return '/' === substr( get_option( 'permalink_structure' ), -1, 1 );
 	}
 }
 ?>

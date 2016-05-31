@@ -479,6 +479,13 @@ class PandoraFMS_WP {
 				remove_action('wp_head', 'wp_generator', $i);
 			}
 		}
+		
+		if ($options_system_security['activate_login_rename']) {
+			$pfms_wp->activate_login_rename($options_system_security['login_rename_page']);
+		}
+		else {
+			$pfms_wp->deactivate_login_rename();
+		}
 	}
 	
 	public static function admin_init() {
@@ -922,6 +929,94 @@ class PandoraFMS_WP {
 		}
 	}
 	
+	private function installed_login_rename() {
+		$plugins = get_plugins();
+		
+		$return = 0;
+		foreach ($plugins as $plugin) {
+			if ($plugin['Name'] == "Rename wp-login.php") {
+				$return = 1;
+				break;
+			}
+		}
+		
+		return $return;
+	}
+	
+	private function activate_login_rename($login_page) {
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		if (!$pfms_wp->installed_login_rename()) {
+			update_option($pfms_wp->prefix . "activated_rename_login",
+				array('status' => 0));
+		}
+		else {
+			$rename_plugin = null;
+			
+			$plugins = get_plugins();
+			foreach ($plugins as $dir => $plugin) {
+				if ($plugin['Name'] == "Rename wp-login.php") {
+					$rename_plugin[$dir] = $plugin;
+					break;
+				}
+			}
+			
+			if (empty($rename_plugin)) {
+				update_option($pfms_wp->prefix . "activated_rename_login",
+					array('status' => 0));
+			}
+			else {
+				$dir_rename_plugin = reset(array_keys($rename_plugin));
+				
+				$actived = activate_plugin($dir_rename_plugin, '', false, true);
+				if (empty($actived)) {
+					// Correct
+					
+					$wpdb->replace("wp_options",
+						array(
+							"option_name" => "rwl_page",
+							"option_value" => $login_page,
+							"autoload" => "yes"),
+						array("%s", "%s", "%s"));
+					
+					update_option($pfms_wp->prefix . "activated_rename_login",
+						array('status' => 1));
+				}
+				else {
+					// Incorrect
+					
+					update_option($pfms_wp->prefix . "activated_rename_login",
+						array('status' => 0));
+				}
+			}
+		}
+	}
+	
+	private function deactivate_login_rename() {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$rename_plugin = null;
+		
+		$plugins = get_plugins();
+		foreach ($plugins as $dir => $plugin) {
+			if ($plugin['Name'] == "Rename wp-login.php") {
+				$rename_plugin[$dir] = $plugin;
+				break;
+			}
+		}
+		
+		if (!empty($rename_plugin)) {
+			$dir_rename_plugin = reset(array_keys($rename_plugin));
+			
+			deactivate_plugins($dir_rename_plugin, true);
+		}
+		
+		update_option($pfms_wp->prefix . "activated_rename_login",
+			array('status' => 0));
+	}
+	
 	
 	private function set_default_options() {
 		$default_options = array();
@@ -940,6 +1035,8 @@ class PandoraFMS_WP {
 		$default_options['upload_robots_txt'] = 0;
 		$default_options['directory_robot_txt'] = "";
 		$default_options['wp_generator_disable'] = 0;
+		$default_options['activate_login_rename'] = 0;
+		$default_options['login_rename_page'] = "login";
 		$default_options['blacklist_plugins_check_update'] = "";
 		
 		return $default_options;
@@ -994,6 +1091,12 @@ class PandoraFMS_WP {
 			
 		if (!isset($options['wp_generator_disable']))
 			$options['wp_generator_disable'] = 0;
+		
+		if (!isset($options['activate_login_rename']))
+			$options['activate_login_rename'] = 0;
+		
+		if (!isset($options['login_rename_page']))
+			$options['login_rename_page'] = "login";
 		
 		return $options;
 	}
@@ -1151,6 +1254,12 @@ class PandoraFMS_WP {
 			(int)get_option($pfms_wp->prefix . "installed_robot_txt", 0);
 		$return['system_security']['wp_generator_disable'] =
 			$options_system_security['wp_generator_disable'];
+		
+		$activated_rename_login = get_option(
+			$pfms_wp->prefix . "activated_rename_login",
+			array('status' => 0));
+		$return['system_security']['activated_rename_login'] =
+			$activated_rename_login['status'];
 		
 		return $return;
 	}
@@ -1567,6 +1676,26 @@ class PandoraFMS_WP {
 					jQuery("<div id='dialog_' title='<?php esc_attr_e("API REST Plugin Installation");?>' />")
 						.html('<?php
 						esc_attr_e("The REST API is the newest WordPress API. You can install the JSON REST API plugin. There are plans for the REST API to be included in the core of WordPress, but for now it lives in a plugin.")
+						?>')
+						.appendTo("body");
+				
+				dialog_weak_user.dialog({
+					'dialogClass' : 'wp-dialog',
+					'height': 200,
+					'modal' : true,
+					'autoOpen' : false,
+					'closeOnEscape' : true})
+					.dialog('open');
+			}
+			
+			function show_activated_rename_login() {
+				var dialog_weak_user =
+					jQuery("<div id='dialog_' title='<?php esc_attr_e("Help rename login plugin");?>' />")
+						.html('<?php
+						$url = home_url("/wp-admin/plugin-install.php?tab=search&type=term&s=Rename+wp-login.php");
+						
+						echo sprintf(esc_html("Must install %sRename wp-login.php%s."),
+							"<a href=\"" . $url . "\">", "</a>");
 						?>')
 						.appendTo("body");
 				
