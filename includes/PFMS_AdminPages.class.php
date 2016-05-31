@@ -1120,6 +1120,35 @@ class PFMS_AdminPages {
 							</fieldset>
 						</td>
 					</tr>
+					
+					
+					<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("Check file hash to the svn files.");?>
+						</th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Check file hash to the svn files.");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options-system_security[check_filehash_svn]">
+									<input
+										type="checkbox"
+										name="pfmswp-options-system_security[check_filehash_svn]"
+										value="1"
+										<?php
+										checked($options['check_filehash_svn'], 1, true);
+										?>
+										/>
+									<?php esc_html_e("Each 24h (cron) check the file hash of svn files.");?>
+								</label>
+							</fieldset>
+						</td>
+					</tr>
+					
+					
 				</table>
 				<p class="submit">
 					<input

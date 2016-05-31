@@ -113,6 +113,7 @@ class PandoraFMS_WP {
 			`writable_others` INT NOT NULL DEFAULT 0,
 			`type` varchar(60) NOT NULL DEFAULT '',
 			`status` varchar(60) NOT NULL DEFAULT '',
+			`original` varchar(60) NOT NULL DEFAULT '',
 			`sha1` varchar(60) NOT NULL DEFAULT '',
 			PRIMARY KEY (`id`)
 			);";
@@ -1037,6 +1038,7 @@ class PandoraFMS_WP {
 		$default_options['wp_generator_disable'] = 0;
 		$default_options['activate_login_rename'] = 0;
 		$default_options['login_rename_page'] = "login";
+		$default_options['check_filehash_svn'] = 0;
 		$default_options['blacklist_plugins_check_update'] = "";
 		
 		return $default_options;
@@ -1097,6 +1099,9 @@ class PandoraFMS_WP {
 		
 		if (!isset($options['login_rename_page']))
 			$options['login_rename_page'] = "login";
+		
+		if (!isset($options['check_filehash_svn']))
+			$options['check_filehash_svn'] = 0;
 		
 		return $options;
 	}
@@ -1337,6 +1342,74 @@ class PandoraFMS_WP {
 		$count = $wpdb->get_results($sql);
 		
 		return $count[0]->count;
+	}
+	
+	private function audit_files_svn_repository() {
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
+		
+		$url = "http://core.svn.wordpress.org/tags/" .
+			get_bloginfo('version') . "/";
+		
+		$store_filesystem = $wpdb->get_results("
+				SELECT * FROM `" . $tablename . "`");
+		
+		foreach ($store_filesystem as $i => $store_entry) {
+			$store_entry = (array)$store_entry;
+			
+			if ($store_entry['type'] != "file")
+				continue;
+			
+			$file = str_replace(ABSPATH, "", $store_entry['path']);
+			
+			$remote_file = $url . $file;
+			
+			$tmpfname = tempnam(sys_get_temp_dir(), "file");
+			
+			$fp = fopen($tmpfname, "w");
+				$ch = curl_init($remote_file);
+				curl_setopt($ch, CURLOPT_TIMEOUT, 50);
+				curl_setopt($ch, CURLOPT_FILE, $fp);
+				curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+				curl_exec($ch);
+				$r = curl_getinfo($ch);
+				curl_close($ch);
+			fclose($fp);
+			
+			$wpdb->update(
+				$tablename,
+				array('original' => "yes"),
+				array('id' => $store_entry['id']),
+				array('%s'),
+				array('%d'));
+			
+			if ($r['http_code'] != 404) {
+				
+				$sha1_remote_file = sha1_file($tmpfname);
+				
+				//~ error_log($remote_file);
+				
+				if ($sha1_remote_file != $store_entry['sha1']) {
+					
+					//~ error_log("no original");
+					
+					$wpdb->update(
+						$tablename,
+						array('original' => "no"),
+						array('id' => $store_entry['id']),
+						array('%s'),
+						array('%d'));
+				}
+				else {
+					//~ error_log("original");
+				}
+			}
+			
+			unlink($tmpfname);
+		}
 	}
 	
 	private function audit_files() {
@@ -1594,9 +1667,17 @@ class PandoraFMS_WP {
 	}
 	
 	public static function cron_audit_files() {
+		error_log("cron_audit_files");
+		
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
 		$pfms_wp->audit_files();
+		
+		$options_system_security = get_option('pfmswp-options-system_security');
+		
+		if ($options_system_security['check_filehash_svn']) {
+			$pfms_wp->audit_files_svn_repository();
+		}
 	}
 	//=== END ==== CRON HOOKS CODE =====================================
 	
@@ -1828,12 +1909,19 @@ class PandoraFMS_WP {
 							jQuery("#ajax_result_fail").clone());
 					
 					var $table = jQuery("<table width='100%'>")
-						.append("<thead><tr><th><?php esc_html_e("Path");?></th><th><?php esc_html_e("Status");?></th><th><?php esc_html_e("Writable others");?></th></tr></thead>");
+						.append("<thead>" +
+							"<tr>" +
+								"<th><?php esc_html_e("Path");?></th>" +
+								"<th><?php esc_html_e("Status");?></th>" +
+								"<th><?php esc_html_e("Writable others");?></th>" +
+								"<th><?php esc_html_e("Original");?></th>" +
+							"</tr>" +
+							"</thead>");
 					jQuery.each(list_files, function(i, file) {
 						var tr = "<tr>";
 						
 						jQuery.each(file, function(i, item) {
-							if (i == "writable_others") {
+							if ((i == "writable_others") || (i == "original")){
 								tr = tr + "<td align='center'>";
 							}
 							else {
@@ -2027,11 +2115,19 @@ class PandoraFMS_WP {
 				$icon = "<img src='" . esc_url(admin_url( 'images/no.png')) . "' alt='' />";
 			}
 			
+			$icon_original = "";
+			if ($entry->original == "no") {
+				$icon_original = "<img src='" . esc_url(admin_url( 'images/no.png')) . "' alt='' />";
+			}
+			else {
+				$icon_original = "<img src='" . esc_url(admin_url( 'images/yes.png')) . "' alt='' />";
+			}
 			
 			$return[] = array(
 				'path' => $entry->path,
 				'status' => $entry->status,
-				'writable_others' => $icon);
+				'writable_others' => $icon,
+				'original' => $icon_original);
 		}
 		
 		echo json_encode(array('list_files' => $return));
