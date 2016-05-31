@@ -29,6 +29,8 @@ class PandoraFMS_WP {
 	 *  - The force the cron task for to execute the next time
 	 */
 	public $debug = 1;
+	
+	public $wp_login_php;
 	//=== END ==== ATRIBUTES ===========================================
 	
 	
@@ -944,75 +946,250 @@ class PandoraFMS_WP {
 		return $return;
 	}
 	
+	public function use_trailing_slashes() {
+			return '/' === substr( get_option( 'permalink_structure' ), -1, 1 );
+		}
+	
+	public function user_trailingslashit( $string ) {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		return $pfms_wp->use_trailing_slashes() ?
+			trailingslashit( $string ) : untrailingslashit( $string );
+	}
+	
+	public function new_url_login($url, $scheme = null) {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$options = get_option('pfmswp-options-system_security');
+		
+		if (get_option('permalink_structure')) {
+			$new_url =
+				$pfms_wp->user_trailingslashit(home_url('/', $scheme) .
+				$options['login_rename_page']);
+		}
+		else {
+			$new_url = home_url('/', $scheme) . '?' .
+				$options['login_rename_page'];
+		}
+		
+		
+		if (strpos($url, 'wp-login.php') !== false) {
+			if (is_ssl()) {
+				$scheme = 'https';
+			}
+			
+			$args = explode('?', $url);
+			
+			if (isset($args[1])) {
+				parse_str($args[1], $args);
+				$url = add_query_arg($args, $new_url);
+			}
+			else {
+				$url = $new_url;
+			}
+		}
+		
+		return $url;
+	}
+	
+	public function login_rename_wp_loaded() {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$options = get_option('pfmswp-options-system_security');
+		
+		if (get_option('permalink_structure')) {
+			$index_wp = 
+				$pfms_wp->user_trailingslashit(home_url('/'));
+			
+			$new_url =
+				$pfms_wp->user_trailingslashit(home_url('/') .
+				$options['login_rename_page']);
+		}
+		else {
+			$index_wp = 
+				home_url('/');
+			
+			$new_url = home_url('/') . '?' .
+				$options['login_rename_page'];
+		}
+		
+		
+		if (get_option('permalink_structure')) {
+			$new_url =
+				$pfms_wp->user_trailingslashit(home_url('/') .
+				$options['login_rename_page']);
+		}
+		else {
+			$new_url = home_url('/') . '?' .
+				$options['login_rename_page'];
+		}
+		
+		global $pagenow;
+		
+		$pfms_wp->debug($pagenow);
+		$pfms_wp->debug('$pfms_wp->wp_login_php');
+		$pfms_wp->debug($pfms_wp->wp_login_php);
+		
+		if (is_admin() &&
+			!is_user_logged_in() &&
+			!defined('DOING_AJAX')) {
+			wp_die(
+				__( 'You must log in to access the admin area.'));
+		}
+		
+		$request = parse_url( $_SERVER['REQUEST_URI'] );
+		
+		if (
+			$pagenow === 'wp-login.php' &&
+			$request['path'] !==
+				$pfms_wp->user_trailingslashit($request['path']) &&
+			get_option('permalink_structure')
+		) {
+			wp_safe_redirect(
+				$pfms_wp->user_trailingslashit($index_wp) .
+					(!empty($_SERVER['QUERY_STRING']) ?
+						'?' . $_SERVER['QUERY_STRING'] :
+						''));
+			die;
+		}
+		elseif ($pfms_wp->wp_login_php) {
+			if (
+				($referer = wp_get_referer()) &&
+				strpos($referer, 'wp-activate.php') !== false &&
+				($referer = parse_url($referer)) &&
+				! empty($referer['query'])
+			) {
+				parse_str($referer['query'], $referer );
+				
+				if (
+					! empty($referer['key']) &&
+					( $result = wpmu_activate_signup($referer['key']))  &&
+					is_wp_error($result) && (
+						$result->get_error_code() === 'already_active' ||
+						$result->get_error_code() === 'blog_taken'
+				)) {
+					wp_safe_redirect(
+						$new_url .
+						(!empty($_SERVER['QUERY_STRING']) ?
+							'?' . $_SERVER['QUERY_STRING'] :
+							''));
+					die;
+				}
+			}
+			
+			$pagenow = 'index.php';
+			
+			if ( ! defined( 'WP_USE_THEMES' ) ) {
+				define( 'WP_USE_THEMES', true );
+			}
+			
+			wp();
+			
+			if ($_SERVER['REQUEST_URI'] ===
+				$pfms_wp->user_trailingslashit(str_repeat('-/', 10))) {
+				
+				$_SERVER['REQUEST_URI'] =
+					$pfms_wp->user_trailingslashit('/wp-login-php/');
+			}
+			
+			require_once(ABSPATH . WPINC . '/template-loader.php');
+			
+			die;
+		}
+		elseif ($pagenow === 'wp-login.php' ) {
+			global $error, $interim_login, $action, $user_login;
+			
+			@require_once ABSPATH . 'wp-login.php';
+			
+			die;
+		}
+	}
+	
+	public static function login_rename_plugins_loaded() {
+		$options = get_option('pfmswp-options-system_security');
+		if (!$options['activate_login_rename']) {
+			return;
+		}
+		
+		global $pagenow;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$options = get_option('pfmswp-options-system_security');
+		
+		$request = parse_url( $_SERVER['REQUEST_URI'] );
+		
+		if ((
+			strpos($_SERVER['REQUEST_URI'], 'wp-login.php') !== false ||
+			untrailingslashit($request['path']) ===
+				site_url('wp-login', 'relative')
+			) &&
+			! is_admin()
+		) {
+			$pfms_wp->wp_login_php = true;
+			$_SERVER['REQUEST_URI'] =
+				$pfms_wp->user_trailingslashit('/' . str_repeat('-/', 10));
+			$pagenow = 'index.php';
+		}
+		elseif (
+			untrailingslashit($request['path']) ===
+				home_url($options['login_rename_page'], 'relative') || (
+					! get_option( 'permalink_structure' ) &&
+					isset( $_GET[$options['login_rename_page']] ) &&
+					empty( $_GET[$options['login_rename_page']])
+			)) {
+			$pagenow = 'wp-login.php';
+		}
+	}
+	
 	private function activate_login_rename($login_page) {
 		global $wpdb;
 		
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
-		if (!$pfms_wp->installed_login_rename()) {
-			update_option($pfms_wp->prefix . "activated_rename_login",
-				array('status' => 0));
-		}
-		else {
-			$rename_plugin = null;
-			
-			$plugins = get_plugins();
-			foreach ($plugins as $dir => $plugin) {
-				if ($plugin['Name'] == "Rename wp-login.php") {
-					$rename_plugin[$dir] = $plugin;
-					break;
-				}
-			}
-			
-			if (empty($rename_plugin)) {
-				update_option($pfms_wp->prefix . "activated_rename_login",
-					array('status' => 0));
-			}
-			else {
-				$dir_rename_plugin = reset(array_keys($rename_plugin));
+		// === INIT === Custom hooks ===================================
+		add_filter('site_url', 
+			function($url, $path, $scheme, $blog_id) {
+				$pfms_wp = PandoraFMS_WP::getInstance();
 				
-				$actived = activate_plugin($dir_rename_plugin, '', false, true);
-				if (empty($actived)) {
-					// Correct
-					
-					$wpdb->replace("wp_options",
-						array(
-							"option_name" => "rwl_page",
-							"option_value" => $login_page,
-							"autoload" => "yes"),
-						array("%s", "%s", "%s"));
-					
-					update_option($pfms_wp->prefix . "activated_rename_login",
-						array('status' => 1));
-				}
-				else {
-					// Incorrect
-					
-					update_option($pfms_wp->prefix . "activated_rename_login",
-						array('status' => 0));
-				}
-			}
-		}
+				return $pfms_wp->new_url_login($url, $scheme);
+			}, 10, 4 );
+		
+		add_filter('network_site_url',
+			function($url, $path, $scheme) {
+				$pfms_wp = PandoraFMS_WP::getInstance();
+				
+				return $pfms_wp->new_url_login($url, $scheme);
+			}, 10, 3 );
+		
+		add_filter('wp_redirect',
+			function($location, $status) {
+				$pfms_wp = PandoraFMS_WP::getInstance();
+				
+				return $pfms_wp->new_url_login($location);
+			}, 10, 2 );
+		
+		add_filter('site_option_welcome_email',
+			function($value) {
+				$options = get_option('pfmswp-options-system_security');
+				
+				return $value =
+					str_replace( 'wp-login.php',
+						trailingslashit($options['login_rename_page']),
+						$value );
+			});
+		
+		add_action('wp_loaded',
+			function() {
+				$pfms_wp = PandoraFMS_WP::getInstance();
+				
+				$pfms_wp->login_rename_wp_loaded();
+			});
+		// === END ==== Custom hooks ===================================
 	}
 	
 	private function deactivate_login_rename() {
 		$pfms_wp = PandoraFMS_WP::getInstance();
-		
-		$rename_plugin = null;
-		
-		$plugins = get_plugins();
-		foreach ($plugins as $dir => $plugin) {
-			if ($plugin['Name'] == "Rename wp-login.php") {
-				$rename_plugin[$dir] = $plugin;
-				break;
-			}
-		}
-		
-		if (!empty($rename_plugin)) {
-			$dir_rename_plugin = reset(array_keys($rename_plugin));
-			
-			deactivate_plugins($dir_rename_plugin, true);
-		}
 		
 		update_option($pfms_wp->prefix . "activated_rename_login",
 			array('status' => 0));
@@ -1389,8 +1566,6 @@ class PandoraFMS_WP {
 			if ($r['http_code'] != 404) {
 				
 				$sha1_remote_file = sha1_file($tmpfname);
-				
-				//~ error_log($remote_file);
 				
 				if ($sha1_remote_file != $store_entry['sha1']) {
 					
