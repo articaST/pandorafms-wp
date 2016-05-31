@@ -1120,8 +1120,6 @@ class PFMS_AdminPages {
 							</fieldset>
 						</td>
 					</tr>
-					
-					
 					<tr valign="top">
 						<th scope="row">
 							<?php esc_html_e("Check file hash to the svn files.");?>
@@ -1147,8 +1145,52 @@ class PFMS_AdminPages {
 							</fieldset>
 						</td>
 					</tr>
-					
-					
+					<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("Limit login attempts (bruteforce attack protection).");?>
+						</th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Limit login attempts (bruteforce attack protection).");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options-system_security[bruteforce_attack_protection]">
+									<input
+										type="checkbox"
+										name="pfmswp-options-system_security[bruteforce_attack_protection]"
+										value="1"
+										<?php
+										checked($options['bruteforce_attack_protection'], 1, true);
+										?>
+										/>
+									<?php esc_html_e("Active to attack protection.");?>
+								</label>
+							</fieldset>
+							<br />
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Directory to save the Robots.txt");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options-system_security[bruteforce_attack_attempts]">
+									<input
+										class="small-text"
+										type="text"
+										name="pfmswp-options-system_security[bruteforce_attack_attempts]"
+										value="<?php echo esc_attr($options['bruteforce_attack_attempts']);?>"
+										/>
+									<span class="description">
+										<?php
+										esc_html_e("Number of attempts to enable.");
+										?>
+									</span>
+								</label>
+							</fieldset>
+						</td>
+					</tr>
 				</table>
 				<p class="submit">
 					<input

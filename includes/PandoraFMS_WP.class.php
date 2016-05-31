@@ -30,7 +30,9 @@ class PandoraFMS_WP {
 	 */
 	public $debug = 1;
 	
-	public $wp_login_php;
+	public $wp_login_php = false;
+	
+	public wait_protect_bruteforce_login_seconds = 5;
 	//=== END ==== ATRIBUTES ===========================================
 	
 	
@@ -442,6 +444,7 @@ class PandoraFMS_WP {
 		add_action("wp_login", array('PandoraFMS_WP', 'user_login'));
 		add_action("profile_update", array('PandoraFMS_WP', 'user_change_email'), 10, 2);
 		add_action("wp_login_failed", array('PandoraFMS_WP', 'user_login_failed'));
+		add_action('login_init', array('PandoraFMS_WP', 'login_init'));
 		//=== END ==== EVENT HOOKS =====================================
 		
 		$pfms_wp = PandoraFMS_WP::getInstance();
@@ -592,6 +595,21 @@ class PandoraFMS_WP {
 		
 		$pfms_wp->store_user_login($user_login, false);
 		
+		
+		$options_system_security = get_option('pfmswp-options-system_security');
+		if ($options_system_security['bruteforce_attack_protection']) {
+			
+			$attempts = get_transient("pfms_wp::bruteforce_attempts");
+			if ($attempts === false)
+				$attempts = 0;
+			else
+				$attempts = (int)$attempts;
+			
+			$attempts++;
+			
+			set_transient("pfms_wp::bruteforce_attempts", $attempts, DAY_IN_SECONDS);
+		}
+		
 		error_log("user_login_failed");
 	}
 	
@@ -601,6 +619,11 @@ class PandoraFMS_WP {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
 		$pfms_wp->store_user_login($user_login, true);
+		
+		$options_system_security = get_option('pfmswp-options-system_security');
+		if ($options_system_security['bruteforce_attack_protection']) {
+			set_transient("pfms_wp::bruteforce_attempts", 0, DAY_IN_SECONDS);
+		}
 		
 		$options = get_option('pfmswp-options');
 		$options = $pfms_wp->sanitize_options($options);
@@ -693,6 +716,26 @@ class PandoraFMS_WP {
 		$result = wp_mail($email_to,
 			sprintf(__('[%s] %s change the email'), $blog, $user->user_login),
 			$message);
+	}
+	
+	public static function login_init() {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$options_system_security = get_option('pfmswp-options-system_security');
+		if ($options_system_security['bruteforce_attack_protection']) {
+			
+			$attempts = get_transient("pfms_wp::bruteforce_attempts");
+			if ($attempts === false)
+				$attempts = 0;
+			else
+				$attempts = (int)$attempts;
+			
+			if ($attempts >= $options_system_security['bruteforce_attack_attempts']) {
+				error_log("protect bruteforce");
+				sleep($pfms_wp->wait_protect_bruteforce_login_seconds);
+			}
+		}
+		
 	}
 	//=== END ==== HOOKS CODE ==========================================
 	
@@ -1026,10 +1069,6 @@ class PandoraFMS_WP {
 		
 		global $pagenow;
 		
-		$pfms_wp->debug($pagenow);
-		$pfms_wp->debug('$pfms_wp->wp_login_php');
-		$pfms_wp->debug($pfms_wp->wp_login_php);
-		
 		if (is_admin() &&
 			!is_user_logged_in() &&
 			!defined('DOING_AJAX')) {
@@ -1216,6 +1255,8 @@ class PandoraFMS_WP {
 		$default_options['activate_login_rename'] = 0;
 		$default_options['login_rename_page'] = "login";
 		$default_options['check_filehash_svn'] = 0;
+		$default_options['bruteforce_attack_protection'] = 0;
+		$default_options['bruteforce_attack_attempts'] = 3;
 		$default_options['blacklist_plugins_check_update'] = "";
 		
 		return $default_options;
@@ -1279,6 +1320,12 @@ class PandoraFMS_WP {
 		
 		if (!isset($options['check_filehash_svn']))
 			$options['check_filehash_svn'] = 0;
+		
+		if (!isset($options['bruteforce_attack_protection']))
+			$options['bruteforce_attack_protection'] = 0;
+		
+		if (!isset($options['bruteforce_attack_attempts']))
+			$options['bruteforce_attack_attempts'] = 3;
 		
 		return $options;
 	}
