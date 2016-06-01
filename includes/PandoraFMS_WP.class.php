@@ -118,6 +118,7 @@ class PandoraFMS_WP {
 			`type` varchar(60) NOT NULL DEFAULT '',
 			`status` varchar(60) NOT NULL DEFAULT '',
 			`original` varchar(60) NOT NULL DEFAULT '',
+			`infected` varchar(60) NOT NULL DEFAULT '',
 			`sha1` varchar(60) NOT NULL DEFAULT '',
 			PRIMARY KEY (`id`)
 			);";
@@ -1274,6 +1275,7 @@ class PandoraFMS_WP {
 		$default_options['bruteforce_attack_attempts'] = 3;
 		$default_options['blacklist_plugins_check_update'] = "";
 		$default_options['blacklist_ips'] = "";
+		$default_options['scan_infected_files'] = "";
 		
 		return $default_options;
 	}
@@ -1342,9 +1344,12 @@ class PandoraFMS_WP {
 		
 		if (!isset($options['bruteforce_attack_attempts']))
 			$options['bruteforce_attack_attempts'] = 3;
-			
+		
 		if (!isset($options['blacklist_ips']))
 			$options['blacklist_ips'] = "";
+		
+		if (!isset($options['scan_infected_files']))
+			$options['scan_infected_files'] = 0;
 		
 		return $options;
 	}
@@ -1585,6 +1590,47 @@ class PandoraFMS_WP {
 		$count = $wpdb->get_results($sql);
 		
 		return $count[0]->count;
+	}
+	
+	private function audit_files_infected() {
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
+		
+		$store_filesystem = $wpdb->get_results("
+			SELECT * FROM `" . $tablename . "`");
+		
+		foreach ($store_filesystem as $i => $store_entry) {
+			$store_entry = (array)$store_entry;
+			
+			if ($store_entry['type'] != "file")
+				continue;
+			
+			$file = file_get_contents($store_entry['path']);
+			
+			$wpdb->update(
+				$tablename,
+				array('infected' => "no"),
+				array('id' => $store_entry['id']),
+				array('%s'),
+				array('%d'));
+			
+			if ((strstr($file, "eval") !== false) ||
+				(strstr($file, "base64_decode") !== false) ||
+				(strstr($file, '\x5f') !== false) ||
+				(strstr($file, '\x65') !== false)) {
+				
+				// Infected
+				$wpdb->update(
+					$tablename,
+					array('infected' => "yes"),
+					array('id' => $store_entry['id']),
+					array('%s'),
+					array('%d'));
+			}
+		}
 	}
 	
 	private function audit_files_svn_repository() {
@@ -1916,9 +1962,14 @@ class PandoraFMS_WP {
 		
 		$options_system_security = get_option('pfmswp-options-system_security');
 		
-		if ($options_system_security['check_filehash_svn']) {
-			$pfms_wp->audit_files_svn_repository();
+		//~ if ($options_system_security['check_filehash_svn']) {
+			//~ $pfms_wp->audit_files_svn_repository();
+		//~ }
+		if ($options_system_security['scan_infected_files']) {
+			$pfms_wp->audit_files_infected();
 		}
+		
+		
 	}
 	//=== END ==== CRON HOOKS CODE =====================================
 	
@@ -2156,13 +2207,16 @@ class PandoraFMS_WP {
 								"<th><?php esc_html_e("Status");?></th>" +
 								"<th><?php esc_html_e("Writable others");?></th>" +
 								"<th><?php esc_html_e("Original");?></th>" +
+								"<th><?php esc_html_e("Infected");?></th>" +
 							"</tr>" +
 							"</thead>");
 					jQuery.each(list_files, function(i, file) {
 						var tr = "<tr>";
 						
 						jQuery.each(file, function(i, item) {
-							if ((i == "writable_others") || (i == "original")){
+							if ((i == "writable_others") || (i == "original") ||
+								(i == "infected")) {
+								
 								tr = tr + "<td align='center'>";
 							}
 							else {
@@ -2339,7 +2393,7 @@ class PandoraFMS_WP {
 		
 		$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
 		$filesystem = $wpdb->get_results("
-			SELECT path, status, writable_others
+			SELECT path, status, writable_others, original, infected
 			FROM `" . $tablename . "`
 			WHERE status != '' or writable_others = 1
 			ORDER BY status DESC");
@@ -2364,11 +2418,20 @@ class PandoraFMS_WP {
 				$icon_original = "<img src='" . esc_url(admin_url( 'images/yes.png')) . "' alt='' />";
 			}
 			
+			$icon_infected = "";
+			if ($entry->infected == "yes") {
+				$icon_infected = "<img src='" . esc_url(admin_url( 'images/no.png')) . "' alt='' />";
+			}
+			else {
+				$icon_infected = "<img src='" . esc_url(admin_url( 'images/yes.png')) . "' alt='' />";
+			}
+			
 			$return[] = array(
 				'path' => $entry->path,
 				'status' => $entry->status,
 				'writable_others' => $icon,
-				'original' => $icon_original);
+				'original' => $icon_original,
+				'infected' => $icon_original);
 		}
 		
 		echo json_encode(array('list_files' => $return));

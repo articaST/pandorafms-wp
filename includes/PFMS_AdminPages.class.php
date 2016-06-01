@@ -1213,6 +1213,31 @@ class PFMS_AdminPages {
 							</fieldset>
 						</td>
 					</tr>
+					<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("Scan for infected files.");?>
+						</th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Scan for infected files.");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options-system_security[scan_infected_files]">
+									<input
+										type="checkbox"
+										name="pfmswp-options-system_security[scan_infected_files]"
+										value="1"
+										<?php
+										checked($options['scan_infected_files'], 1, true);
+										?>
+										/>
+									<?php esc_html_e("Active to scan each 24h in the cron.");?>
+								</label>
+							</fieldset>
+						</td>
+					</tr>
 				</table>
 				<p class="submit">
 					<input
