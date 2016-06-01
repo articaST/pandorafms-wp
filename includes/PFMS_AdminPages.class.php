@@ -1231,6 +1231,27 @@ class PFMS_AdminPages {
 										?></textarea>
 								</p>
 							</fieldset>
+							<br />
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Redirect URL if the ip is banned.");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options-system_security[url_redirect_ip_banned]">
+									<input
+										class="regular-text"
+										type="text"
+										name="pfmswp-options-system_security[url_redirect_ip_banned]"
+										value="<?php echo esc_attr($options['url_redirect_ip_banned']);?>"
+										/>
+									<p class="description">
+										<?php
+										esc_html_e("Full URL starting with the 'http://'");
+										?>
+									</p>
+								</label>
+							</fieldset>
 						</td>
 					</tr>
 					<tr valign="top">

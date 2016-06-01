@@ -418,7 +418,10 @@ class PandoraFMS_WP {
 			$blacklist_ips = array();
 		$blacklist_ips = array_filter($blacklist_ips);
 		if (array_search($ip, $blacklist_ips) !== false) {
-			die("Banned IP : " . $ip);
+			if (empty($options_system_security['url_redirect_ip_banned']))
+				die("Banned IP : " . $ip);
+			else
+				wp_redirect($options_system_security['url_redirect_ip_banned']);
 		}
 		// === END ==== Ban the IPs blacklist_ips ======================
 		
@@ -1275,6 +1278,7 @@ class PandoraFMS_WP {
 		$default_options['bruteforce_attack_attempts'] = 3;
 		$default_options['blacklist_plugins_check_update'] = "";
 		$default_options['blacklist_ips'] = "";
+		$default_options['url_redirect_ip_banned'] = "";
 		$default_options['scan_infected_files'] = "";
 		
 		return $default_options;
@@ -1347,6 +1351,9 @@ class PandoraFMS_WP {
 		
 		if (!isset($options['blacklist_ips']))
 			$options['blacklist_ips'] = "";
+		
+		if (!isset($options['url_redirect_ip_banned']))
+			$options['url_redirect_ip_banned'] = "";
 		
 		if (!isset($options['scan_infected_files']))
 			$options['scan_infected_files'] = 0;
