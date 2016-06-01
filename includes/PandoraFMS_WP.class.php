@@ -1593,6 +1593,8 @@ class PandoraFMS_WP {
 	}
 	
 	private function audit_files_infected() {
+		error_log("audit_files_infected");
+		
 		global $wpdb;
 		
 		$pfms_wp = PandoraFMS_WP::getInstance();
@@ -1606,6 +1608,12 @@ class PandoraFMS_WP {
 			$store_entry = (array)$store_entry;
 			
 			if ($store_entry['type'] != "file")
+				continue;
+			
+			$fileinfo = pathinfo($store_entry['path']);
+			if (!isset($fileinfo['extension']))
+				continue;
+			if ($fileinfo['extension'] !== 'php')
 				continue;
 			
 			$file = file_get_contents($store_entry['path']);
@@ -1962,9 +1970,9 @@ class PandoraFMS_WP {
 		
 		$options_system_security = get_option('pfmswp-options-system_security');
 		
-		//~ if ($options_system_security['check_filehash_svn']) {
-			//~ $pfms_wp->audit_files_svn_repository();
-		//~ }
+		if ($options_system_security['check_filehash_svn']) {
+			$pfms_wp->audit_files_svn_repository();
+		}
 		if ($options_system_security['scan_infected_files']) {
 			$pfms_wp->audit_files_infected();
 		}
@@ -2205,7 +2213,7 @@ class PandoraFMS_WP {
 							"<tr>" +
 								"<th><?php esc_html_e("Path");?></th>" +
 								"<th><?php esc_html_e("Status");?></th>" +
-								"<th><?php esc_html_e("Writable others");?></th>" +
+								"<th><?php esc_html_e("No writable others");?></th>" +
 								"<th><?php esc_html_e("Original");?></th>" +
 								"<th><?php esc_html_e("Infected");?></th>" +
 							"</tr>" +

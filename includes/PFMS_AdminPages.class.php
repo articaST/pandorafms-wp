@@ -884,7 +884,7 @@ class PFMS_AdminPages {
 			$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
 			
 			$list = $wpdb->get_results("
-				SELECT path, status, writable_others
+				SELECT path, status, writable_others, original, infected
 				FROM `" . $tablename . "`
 				WHERE status != '' or writable_others = 1
 				ORDER BY status DESC");
@@ -903,7 +903,9 @@ class PFMS_AdminPages {
 						<tr>
 							<th><?php esc_html_e("Path");?></th>
 							<th><?php esc_html_e("Status");?></th>
-							<th><?php esc_html_e("Writable others");?></th>
+							<th><?php esc_html_e("No Writable others");?></th>
+							<th><?php esc_html_e("Original");?></th>
+							<th><?php esc_html_e("Infected");?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -915,11 +917,29 @@ class PFMS_AdminPages {
 							else {
 								$icon = "<img  src='" . esc_url(admin_url( 'images/no.png')) . "' alt='' />";
 							}
+							
+							$icon_original = "";
+							if ($entry->original == "no") {
+								$icon_original = "<img src='" . esc_url(admin_url( 'images/no.png')) . "' alt='' />";
+							}
+							else {
+								$icon_original = "<img src='" . esc_url(admin_url( 'images/yes.png')) . "' alt='' />";
+							}
+							
+							$icon_infected = "";
+							if ($entry->infected == "yes") {
+								$icon_infected = "<img src='" . esc_url(admin_url( 'images/no.png')) . "' alt='' />";
+							}
+							else {
+								$icon_infected = "<img src='" . esc_url(admin_url( 'images/yes.png')) . "' alt='' />";
+							}
 							?>
 							<tr>
 								<td><?php esc_html_e($entry->path);?></td>
 								<td><?php esc_html_e($entry->status);?></td>
 								<td><?php echo $icon;?></td>
+								<td><?php echo $icon_original;?></td>
+								<td><?php echo $icon_infected;?></td>
 							</tr>
 							<?php
 						}
