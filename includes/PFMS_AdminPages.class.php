@@ -1191,6 +1191,28 @@ class PFMS_AdminPages {
 							</fieldset>
 						</td>
 					</tr>
+					<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("Black list IPs.");?>
+						</th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Black list IPs.");?>
+									</span>
+								</legend>
+								<p>
+									<textarea
+										name="pfmswp-options-system_security[blacklist_ips]"
+										class="large-text code"
+										rows="10"><?php
+										echo esc_textarea($options['blacklist_ips']);
+										?></textarea>
+								</p>
+							</fieldset>
+						</td>
+					</tr>
 				</table>
 				<p class="submit">
 					<input

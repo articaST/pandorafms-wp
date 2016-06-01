@@ -401,6 +401,26 @@ class PandoraFMS_WP {
 	public static function init() {
 		error_log( "Init" );
 		
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		$pfms_wp->check_new_themes();
+		$pfms_wp->check_new_plugins();
+		
+		$options_system_security = get_option('pfmswp-options-system_security');
+		
+		// === INIT === Ban the IPs blacklist_ips ======================
+		$ip = $_SERVER['REMOTE_ADDR'];
+		$blacklist_ips = $options_system_security['blacklist_ips'];
+		$blacklist_ips = str_replace("\r", "\n", $blacklist_ips);
+		$blacklist_ips = explode("\n", $blacklist_ips);
+		if (empty($blacklist_ips))
+			$blacklist_ips = array();
+		$blacklist_ips = array_filter($blacklist_ips);
+		if (array_search($ip, $blacklist_ips) !== false) {
+			die("Banned IP : " . $ip);
+		}
+		// === END ==== Ban the IPs blacklist_ips ======================
+		
 		//Code copied from footer-putter plugin
 		switch (basename( TEMPLATEPATH ) ) {  
 			case 'twentyten':
@@ -447,11 +467,6 @@ class PandoraFMS_WP {
 		add_action('login_init', array('PandoraFMS_WP', 'login_init'));
 		//=== END ==== EVENT HOOKS =====================================
 		
-		$pfms_wp = PandoraFMS_WP::getInstance();
-		$pfms_wp->check_new_themes();
-		$pfms_wp->check_new_plugins();
-		
-		$options_system_security = get_option('pfmswp-options-system_security');
 		if ($options_system_security['upload_htaccess']) {
 			$pfms_wp->install_htaccess();
 		}
@@ -1258,6 +1273,7 @@ class PandoraFMS_WP {
 		$default_options['bruteforce_attack_protection'] = 0;
 		$default_options['bruteforce_attack_attempts'] = 3;
 		$default_options['blacklist_plugins_check_update'] = "";
+		$default_options['blacklist_ips'] = "";
 		
 		return $default_options;
 	}
@@ -1326,6 +1342,9 @@ class PandoraFMS_WP {
 		
 		if (!isset($options['bruteforce_attack_attempts']))
 			$options['bruteforce_attack_attempts'] = 3;
+			
+		if (!isset($options['blacklist_ips']))
+			$options['blacklist_ips'] = "";
 		
 		return $options;
 	}
