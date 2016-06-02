@@ -94,7 +94,6 @@ class PFMS_AdminPages {
 				
 				<div class="card">
 					<h2 class="title"><?php esc_html_e("Access control");?></h2>
-					<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
 					<?php
 					$pfms_ap->print_access_control_list_dashboard();
 					?>
@@ -102,7 +101,6 @@ class PFMS_AdminPages {
 				
 				<div class="card">
 					<h2 class="title"><?php esc_html_e("System security");?></h2>
-					<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
 					<table class="widefat striped">
 						<thead>
 							<tr>
@@ -200,11 +198,6 @@ class PFMS_AdminPages {
 			<div class="col-wrap">
 				<div class="card">
 					<h2 class="title"><?php esc_html_e("Monitoring");?></h2>
-					<p>
-						<?php
-						esc_html_e("Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
-						?>
-					</p>
 					<table class="widefat striped">
 						<thead>
 							<tr>
