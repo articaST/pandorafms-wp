@@ -844,7 +844,7 @@ class PandoraFMS_WP {
 	private function uninstall_robots_txt() {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
-		$installed_file = get_option($pfms_wp->prefix . "installed_robot_txt",
+		$installed_file = get_option($pfms_wp->prefix . "installed_robots_txt_file",
 			null);
 		
 		$install = 0;
