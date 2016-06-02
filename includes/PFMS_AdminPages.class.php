@@ -1007,28 +1007,7 @@ class PFMS_AdminPages {
 										checked($options['upload_robots_txt'], 1, true);
 										?>
 										/>
-									<?php esc_html_e("Active and set a Robots.txt from data plugin directory.");?>
-								</label>
-							</fieldset>
-							<br />
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("Directory to save the Robots.txt");?>
-									</span>
-								</legend>
-								<label for="pfmswp-options-system_security[directory_robot_txt]">
-									<input
-										class="regular-text"
-										type="text"
-										name="pfmswp-options-system_security[directory_robot_txt]"
-										value="<?php echo esc_attr($options['directory_robot_txt']);?>"
-										/>
-									<p class="description">
-										<?php
-										esc_html_e("The directory to save the Robot.txt.");
-										?>
-									</p>
+									<?php esc_html_e("Active and set a custom Robots.txt.");?>
 								</label>
 							</fieldset>
 						</td>

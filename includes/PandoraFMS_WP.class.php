@@ -813,7 +813,7 @@ class PandoraFMS_WP {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
 		$options_system_security = get_option('pfmswp-options-system_security');
-		$destination_dir = $options_system_security['directory_robot_txt'];
+		$destination_dir = ABSPATH;
 		
 		$robots_txt_file = plugin_dir_path(__FILE__) .
 			"../data/robots_txt_file";
@@ -1270,7 +1270,6 @@ class PandoraFMS_WP {
 		$default_options['email_theme_new'] = 1;
 		$default_options['upload_htaccess'] = 0;
 		$default_options['upload_robots_txt'] = 0;
-		$default_options['directory_robot_txt'] = "";
 		$default_options['wp_generator_disable'] = 0;
 		$default_options['activate_login_rename'] = 0;
 		$default_options['login_rename_page'] = "login";
