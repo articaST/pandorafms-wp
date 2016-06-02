@@ -762,7 +762,9 @@ class PandoraFMS_WP {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
 		$options_system_security = get_option('pfmswp-options-system_security');
-		$destination_dir = $options_system_security['directory_htaccess'];
+		$upload_dir = wp_upload_dir();
+		$upload_dir = $upload_dir['basedir'];
+		$destination_dir = $upload_dir;
 		
 		$htacess_file = plugin_dir_path(__FILE__) .
 			"../data/htaccess_file";
@@ -1267,7 +1269,6 @@ class PandoraFMS_WP {
 		$default_options['email_plugin_new'] = 1;
 		$default_options['email_theme_new'] = 1;
 		$default_options['upload_htaccess'] = 0;
-		$default_options['directory_htaccess'] = "";
 		$default_options['upload_robots_txt'] = 0;
 		$default_options['directory_robot_txt'] = "";
 		$default_options['wp_generator_disable'] = 0;

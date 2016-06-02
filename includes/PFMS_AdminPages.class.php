@@ -982,28 +982,7 @@ class PFMS_AdminPages {
 										checked($options['upload_htaccess'], 1, true);
 										?>
 										/>
-									<?php esc_html_e("Active and set a .htaccess from data plugin directory.");?>
-								</label>
-							</fieldset>
-							<br />
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("Directory to save the .htaccess");?>
-									</span>
-								</legend>
-								<label for="pfmswp-options-system_security[directory_htaccess]">
-									<input
-										class="regular-text"
-										type="text"
-										name="pfmswp-options-system_security[directory_htaccess]"
-										value="<?php echo esc_attr($options['directory_htaccess']);?>"
-										/>
-									<p class="description">
-										<?php
-										esc_html_e("The directory to save the .htaccess.");
-										?>
-									</p>
+									<?php esc_html_e("Active and set a .htaccess in upload directory.");?>
 								</label>
 							</fieldset>
 						</td>
