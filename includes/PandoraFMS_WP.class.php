@@ -1409,13 +1409,16 @@ class PandoraFMS_WP {
 	public static function add_admin_menu_entries() {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
+		$icon = plugins_url("images/icon.png", str_replace( "includes/", "", __FILE__));
+		error_log($icon);
+		
 		add_menu_page(
 			_("PandoraFMS WP : Dashboard"),
 			_("PandoraFMS WP"),
 			$pfms_wp->acl_user_menu_entry,
 			"pfms_wp_admin_menu",
 			array("PFMS_AdminPages", "show_dashboard"),
-			"dashicons-admin-tools",
+			$icon,
 			$pfms_wp->position_menu_entry);
 		
 		add_submenu_page(
