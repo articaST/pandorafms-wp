@@ -32,7 +32,7 @@ class PandoraFMS_WP {
 	
 	public $wp_login_php = false;
 	
-	public $wait_protect_bruteforce_login_seconds = 5;
+	public $wait_protect_bruteforce_login_seconds = 120;
 	//=== END ==== ATRIBUTES ===========================================
 	
 	

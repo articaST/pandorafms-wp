@@ -1125,13 +1125,13 @@ class PFMS_AdminPages {
 					</tr>
 					<tr valign="top">
 						<th scope="row">
-							<?php esc_html_e("Limit login attempts (bruteforce attack protection).");?>
+							<?php esc_html_e("Limit login attempts");?>
 						</th>
 						<td>
 							<fieldset>
 								<legend class="screen-reader-text">
 									<span>
-										<?php esc_html_e("Limit login attempts (bruteforce attack protection).");?>
+										<?php esc_html_e("Limit login attempts");?>
 									</span>
 								</legend>
 								<label for="pfmswp-options-system_security[bruteforce_attack_protection]">
@@ -1143,7 +1143,7 @@ class PFMS_AdminPages {
 										checked($options['bruteforce_attack_protection'], 1, true);
 										?>
 										/>
-									<?php esc_html_e("Active to attack protection.");?>
+									<?php esc_html_e("Active to enable bruteforce attack protection.");?>
 								</label>
 							</fieldset>
 							<br />
@@ -1162,7 +1162,7 @@ class PFMS_AdminPages {
 										/>
 									<span class="description">
 										<?php
-										esc_html_e("Number of attempts to enable.");
+										esc_html_e("Max. Number of attempts to login before freeze this user login for 120 seconds.");
 										?>
 									</span>
 								</label>
