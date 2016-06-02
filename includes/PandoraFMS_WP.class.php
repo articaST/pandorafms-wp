@@ -1213,21 +1213,21 @@ class PandoraFMS_WP {
 				$pfms_wp = PandoraFMS_WP::getInstance();
 				
 				return $pfms_wp->new_url_login($url, $scheme);
-			}, 10, 4 );
+			}, 10, 4);
 		
 		add_filter('network_site_url',
 			function($url, $path, $scheme) {
 				$pfms_wp = PandoraFMS_WP::getInstance();
 				
 				return $pfms_wp->new_url_login($url, $scheme);
-			}, 10, 3 );
+			}, 10, 3);
 		
 		add_filter('wp_redirect',
 			function($location, $status) {
 				$pfms_wp = PandoraFMS_WP::getInstance();
 				
 				return $pfms_wp->new_url_login($location);
-			}, 10, 2 );
+			}, 10, 2);
 		
 		add_filter('site_option_welcome_email',
 			function($value) {
@@ -1246,6 +1246,9 @@ class PandoraFMS_WP {
 				$pfms_wp->login_rename_wp_loaded();
 			});
 		// === END ==== Custom hooks ===================================
+		
+		update_option($pfms_wp->prefix . "activated_rename_login",
+			array('status' => 1));
 	}
 	
 	private function deactivate_login_rename() {
@@ -1518,6 +1521,9 @@ class PandoraFMS_WP {
 		$activated_rename_login = get_option(
 			$pfms_wp->prefix . "activated_rename_login",
 			array('status' => 0));
+		if ($activated_rename_login) {
+			$activated_rename_login['status'] = $pfms_wp->check_new_page_login_online();
+		}
 		$return['system_security']['activated_rename_login'] =
 			$activated_rename_login['status'];
 		
@@ -1896,6 +1902,43 @@ class PandoraFMS_WP {
 		update_option($pfms_wp->prefix . "audit_passwords", $audit_password);
 	}
 	
+	public function check_new_page_login_online() {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$options = get_option('pfmswp-options-system_security');
+		
+		if (get_option('permalink_structure')) {
+			
+			$new_login_url =
+				trailingslashit(home_url()) .
+				esc_attr($options['login_rename_page']) . 
+				($pfms_wp->use_trailing_slashes() ?
+					'/' :
+					'');
+		}
+		else {
+			$new_login_url = trailingslashit(home_url()) . '?' .
+				$options['login_rename_page'];
+		}
+		
+		$ch = curl_init($new_login_url);
+		curl_setopt($ch, CURLOPT_TIMEOUT, 50);
+		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_exec($ch);
+		$r = curl_getinfo($ch);
+		curl_close($ch);
+		
+		error_log($new_login_url);
+		
+		if ($r['http_code'] != 404) {
+			return 1;
+		}
+		else {
+			return 0;
+		}
+	}
+	
 	private function check_admin_user_enabled() {
 		//Check all users (included the disabled users because they can return to enabled)
 		$user = get_user_by('login', 'admin');
@@ -2079,12 +2122,7 @@ class PandoraFMS_WP {
 			function show_activated_rename_login() {
 				var dialog_weak_user =
 					jQuery("<div id='dialog_' title='<?php esc_attr_e("Help rename login plugin");?>' />")
-						.html('<?php
-						$url = home_url("/wp-admin/plugin-install.php?tab=search&type=term&s=Rename+wp-login.php");
-						
-						echo sprintf(esc_html("Must install %sRename wp-login.php%s."),
-							"<a href=\"" . $url . "\">", "</a>");
-						?>')
+						.html('<?php esc_html_e("If it is activated and there is a cross, maybe do you check the Apache (or whatever that installed as the http server) configuration for to enable AllowOverride.");?>')
 						.appendTo("body");
 				
 				dialog_weak_user.dialog({
