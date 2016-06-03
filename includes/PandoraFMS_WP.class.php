@@ -1271,6 +1271,8 @@ class PandoraFMS_WP {
 		$default_options['email_change_email'] = 1;
 		$default_options['email_plugin_new'] = 1;
 		$default_options['email_theme_new'] = 1;
+		$default_options['enabled_check_admin'] = 0;
+		$default_options['enabled_wordpress_updated'] = 0;
 		$default_options['upload_htaccess'] = 0;
 		$default_options['upload_robots_txt'] = 0;
 		$default_options['wp_generator_disable'] = 0;
@@ -1327,6 +1329,12 @@ class PandoraFMS_WP {
 		
 		if (!is_array($options) || empty($options) || (false === $options))
 			return $pfms_wp->set_default_options();
+		
+		if (!isset($options['enabled_check_admin']))
+			$options['enabled_check_admin'] = 0;
+		
+		if (!isset($options['enabled_wordpress_updated']))
+			$options['enabled_wordpress_updated'] = 0;
 		
 		if (!isset($options['upload_htaccess']))
 			$options['upload_htaccess'] = 0;
@@ -1465,12 +1473,19 @@ class PandoraFMS_WP {
 	public function get_dashboard_data() {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
+		$options_system_security = get_option('pfmswp-options-system_security');
+		
 		$return = array();
 		
 		// === Monitoring ==============================================
 		
+		
 		$return['monitoring'] = array();
-		$return['monitoring']['check_admin'] = $this->check_admin_user_enabled();
+		$return['monitoring']['enabled_check_admin'] =
+			$options_system_security['enabled_check_admin'];
+		if ($options_system_security['enabled_check_admin']) {
+			$return['monitoring']['check_admin'] = $this->check_admin_user_enabled();
+		}
 		
 		// audit_passwords_strength
 		$audit_password = get_option($pfms_wp->prefix . "audit_passwords",
@@ -1486,23 +1501,27 @@ class PandoraFMS_WP {
 				'status' => null));
 		$return['monitoring']['audit_files'] = $audit_password;
 		
-		// Check is there any wordpress update.
-		wp_version_check(array(), true);
-		$update = get_site_transient('update_core');
 		
-		$return['monitoring']['wordpress_updated'] = 0;
-		if (!empty($update)) {
-			if (!empty($update->updates)) {
-				
-				$update->updates = (array)$update->updates;
-				$updates = reset($update->updates);
-				
-				if (version_compare($updates->version, $update->version_checked) == 0) {
-					$return['monitoring']['wordpress_updated'] = 1;
+		// Check is there any wordpress update.
+		$return['monitoring']['enabled_wordpress_updated'] =
+			$options_system_security['enabled_wordpress_updated'];
+		if ($options_system_security['enabled_wordpress_updated']) {
+			wp_version_check(array(), true);
+			$update = get_site_transient('update_core');
+			
+			$return['monitoring']['wordpress_updated'] = 0;
+			if (!empty($update)) {
+				if (!empty($update->updates)) {
+					
+					$update->updates = (array)$update->updates;
+					$updates = reset($update->updates);
+					
+					if (version_compare($updates->version, $update->version_checked) == 0) {
+						$return['monitoring']['wordpress_updated'] = 1;
+					}
 				}
 			}
 		}
-		
 		
 		$pending_plugins_update = $pfms_wp->check_plugins_pending_update();
 		$return['monitoring']['plugins_updated'] = empty($pending_plugins_update);
@@ -1517,7 +1536,6 @@ class PandoraFMS_WP {
 		
 		// === System security =========================================
 		
-		$options_system_security = get_option('pfmswp-options-system_security');
 		$return['system_security'] = array();
 		$return['system_security']['protect_upload_php_code'] =
 			(int)get_option($pfms_wp->prefix . "installed_htaccess", 0);

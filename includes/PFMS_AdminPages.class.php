@@ -206,29 +206,35 @@ class PFMS_AdminPages {
 							</tr>
 						</thead>
 						<tbody>
-							<tr>
-								<td><?php esc_html_e('Check of "admin" user enabled');?></td>
-								<td>
-									<a href="javascript: check_admin_user_enabled();">
-										<div id="admin_user_enabled">
-											<?php
-											if ($data['monitoring']['check_admin']) {
-												?>
-												<img id ="ajax_result_ok"
-													src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
+							<?php
+							if ($data['monitoring']['enabled_check_admin']) {
+							?>
+								<tr>
+									<td><?php esc_html_e('Check of "admin" user enabled');?></td>
+									<td>
+										<a href="javascript: check_admin_user_enabled();">
+											<div id="admin_user_enabled">
 												<?php
-											}
-											else {
+												if ($data['monitoring']['check_admin']) {
+													?>
+													<img id ="ajax_result_ok"
+														src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
+													<?php
+												}
+												else {
+													?>
+													<img id ="ajax_result_fail"
+														src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
+													<?php
+												}
 												?>
-												<img id ="ajax_result_fail"
-													src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
-												<?php
-											}
-											?>
-										</div>
-									</a>
-								</td>
-							</tr>
+											</div>
+										</a>
+									</td>
+								</tr>
+							<?php
+							}
+							?>
 							<tr>
 								<td><?php esc_html_e('Audit of password strength');?></td>
 								<td>
@@ -329,25 +335,31 @@ class PFMS_AdminPages {
 									</span>
 								</td>
 							</tr>
-							<tr>
-								<td><?php esc_html_e('Wordpress is updated');?></td>
-								<td>
-									<span id="wordpress_is_updated">
-										<?php
-										if ($data['monitoring']['wordpress_updated']) {
-											?>
-											<img src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
+							<?php
+							if ($data['monitoring']['enabled_wordpress_updated']) {
+							?>
+								<tr>
+									<td><?php esc_html_e('Wordpress is updated');?></td>
+									<td>
+										<span id="wordpress_is_updated">
 											<?php
-										}
-										else {
+											if ($data['monitoring']['wordpress_updated']) {
+												?>
+												<img src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
+												<?php
+											}
+											else {
+												?>
+												<img src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
+												<?php
+											}
 											?>
-											<img src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
-											<?php
-										}
-										?>
-									</span>
-								</td>
-							</tr>
+										</span>
+									</td>
+								</tr>
+							<?php
+							}
+							?>
 							<tr>
 								<td><?php esc_html_e('Plugins are updated');?></td>
 								<td>
@@ -1032,6 +1044,56 @@ class PFMS_AdminPages {
 				<?php settings_fields('pfmswp-settings-group-system_security');?>
 				<?php $options = get_option('pfmswp-options-system_security');?>
 				<table class="form-table">
+					<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("Check of \"admin\" user enabled");?>
+						</th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Check of \"admin\" user enabled");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options-system_security[enabled_check_admin]">
+									<input
+										type="checkbox"
+										name="pfmswp-options-system_security[enabled_check_admin]"
+										value="1"
+										<?php
+										checked($options['enabled_check_admin'], 1, true);
+										?>
+										/>
+									<?php esc_html_e("Active to check if \"admin\" exists.");?>
+								</label>
+							</fieldset>
+						</td>
+					</tr>
+					<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("Check core updates enabled");?>
+						</th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Check core updates enabled");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options-system_security[enabled_wordpress_updated]">
+									<input
+										type="checkbox"
+										name="pfmswp-options-system_security[enabled_wordpress_updated]"
+										value="1"
+										<?php
+										checked($options['enabled_wordpress_updated'], 1, true);
+										?>
+										/>
+									<?php esc_html_e("Active to check the core updates available.");?>
+								</label>
+							</fieldset>
+						</td>
+					</tr>
 					<tr valign="top">
 						<th scope="row">
 							<?php esc_html_e("Protect upload of PHP Code");?>
