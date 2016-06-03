@@ -628,15 +628,24 @@ class PFMS_AdminPages {
 			
 			
 			<h2><?php esc_html_e("Posts in last 24h");?></h2>
-			<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+			<p>
+				<?php esc_html_e("Total post");?>
+				<strong><?php echo esc_html($pfms_wp->get_count_posts_last_day());?></strong>
+			</p>
 			<?php
 			
 			$tposts = $wpdb->prefix . "posts";
+			$tusers = $wpdb->prefix . "users";
 			$sql = "
-				SELECT posts.post_title AS post
+				SELECT posts.post_title AS title,
+					posts.post_date AS date,
+					(SELECT user_login
+					FROM `" . $tusers . "` AS users
+					WHERE users.ID = posts.post_author) AS user
 				FROM `" . $tposts . "` AS posts
-				WHERE TIMESTAMPDIFF(HOUR, posts.post_date, now()) < 25
-				ORDER BY post ASC";
+				WHERE TIMESTAMPDIFF(HOUR, posts.post_date, now()) < 25 AND
+					posts.post_status = 'publish'
+				ORDER BY date DESC";
 			$posts = $wpdb->get_results($sql);
 			
 			if (empty($posts)) {
@@ -650,6 +659,8 @@ class PFMS_AdminPages {
 					<thead>
 						<tr>
 							<th><?php esc_html_e("Post");?></th>
+							<th><?php esc_html_e("Date/Time");?></th>
+							<th><?php esc_html_e("Author");?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -657,7 +668,10 @@ class PFMS_AdminPages {
 						foreach ($posts as $post) {
 							?>
 							<tr>
-								<td><?php echo esc_html($post->post);?></td>
+								<td><?php echo esc_html($post->title);?></td>
+								<td><?php
+									echo esc_html($post->date);?></td>
+								<td><?php echo esc_html($post->user);?></td>
 							</tr>
 							<?php
 						}
@@ -1236,17 +1250,17 @@ class PFMS_AdminPages {
 									</span>
 								</legend>
 								<label for="pfmswp-options-system_security[url_redirect_ip_banned]">
+									<p class="description">
+										<?php
+										esc_html_e("Full URL starting with the 'http://' for to send banned ips.");
+										?>
+									</p>
 									<input
 										class="regular-text"
 										type="text"
 										name="pfmswp-options-system_security[url_redirect_ip_banned]"
 										value="<?php echo esc_attr($options['url_redirect_ip_banned']);?>"
 										/>
-									<p class="description">
-										<?php
-										esc_html_e("Full URL starting with the 'http://'");
-										?>
-									</p>
 								</label>
 							</fieldset>
 						</td>
