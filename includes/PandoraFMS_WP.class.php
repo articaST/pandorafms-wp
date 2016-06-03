@@ -1340,6 +1340,9 @@ class PandoraFMS_WP {
 		if (!isset($options['enabled_plugins_updated']))
 			$options['enabled_plugins_updated'] = 0;
 		
+		if (!isset($options['blacklist_plugins_check_update']))
+			$options['blacklist_plugins_check_update'] = "";
+		
 		if (!isset($options['upload_htaccess']))
 			$options['upload_htaccess'] = 0;
 		
@@ -1382,8 +1385,7 @@ class PandoraFMS_WP {
 		if (!is_array($options) || empty($options) || (false === $options))
 			return $pfms_wp->set_default_options();
 		
-		if (!isset($options['blacklist_plugins_check_update']))
-			$options['blacklist_plugins_check_update'] = "";
+		
 		
 		return $options;
 	}
@@ -1993,7 +1995,7 @@ class PandoraFMS_WP {
 			if (!empty($update_plugins->response)) {
 				$plugins = (array)$update_plugins->response;
 				
-				$options = get_option('pfmswp-options-monitoring');
+				$options = get_option('pfmswp-options-system_security');
 				$blacklist_plugins_check_update =
 					$options['blacklist_plugins_check_update'];
 				$blacklist_plugins_check_update = str_replace(

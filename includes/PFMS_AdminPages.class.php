@@ -715,44 +715,6 @@ class PFMS_AdminPages {
 				<?php
 			}
 			?>
-			
-			
-			<h2><?php esc_html_e("Setup");?></h2>
-			<form method="post" action="options.php">
-				<?php settings_fields('pfmswp-settings-group-options-monitoring');?>
-				<?php $options = get_option('pfmswp-options-monitoring');?>
-				<table class="form-table">
-					<tr valign="top">
-						<th scope="row">
-							<?php esc_html_e("Black list plugins to check updates.");?>
-						</th>
-						<td>
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("Black list plugins to check updates.");?>
-									</span>
-								</legend>
-								<p>
-									<textarea
-										name="pfmswp-options-monitoring[blacklist_plugins_check_update]"
-										class="large-text code"
-										rows="10"><?php
-										echo esc_textarea($options['blacklist_plugins_check_update']);
-										?></textarea>
-								</p>
-							</fieldset>
-						</td>
-					</tr>
-				</table>
-				<p class="submit">
-					<input
-						type="submit" name="submit" id="submit"
-						class="button button-primary"
-						value="<?php esc_attr_e("Save Changes");?>" />
-				</p>
-			</form>
-			
 		</div>
 		<?php
 	}
@@ -1121,6 +1083,20 @@ class PFMS_AdminPages {
 										/>
 									<?php esc_html_e("Active to check the plugins updates available.");?>
 								</label>
+							</fieldset>
+							<br />
+							<fieldset>
+								<p class="description">
+									<?php esc_html_e("Black list plugins to check updates.");?>
+								</p>
+								<p>
+									<textarea
+										name="pfmswp-options-system_security[blacklist_plugins_check_update]"
+										class="large-text code"
+										rows="10"><?php
+										echo esc_textarea($options['blacklist_plugins_check_update']);
+										?></textarea>
+								</p>
 							</fieldset>
 						</td>
 					</tr>
