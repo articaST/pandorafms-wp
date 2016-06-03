@@ -1592,7 +1592,8 @@ class PandoraFMS_WP {
 		$sql = "
 			SELECT COUNT(*) AS count
 			FROM `" . $wpdb->prefix . "posts" . "`
-			WHERE TIMESTAMPDIFF(HOUR, post_date, now()) < 25";
+			WHERE TIMESTAMPDIFF(HOUR, post_date, now()) < 25 AND
+				post_status = 'publish'";
 		
 		$count = $wpdb->get_results($sql);
 		

@@ -581,13 +581,26 @@ class PFMS_AdminPages {
 		
 		<div class="wrap">
 			<h2><?php esc_html_e("Comments in last 24h");?></h2>
-			<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+			<p>
+				<?php esc_html_e("Total comments");?>
+				<strong><?php echo esc_html($pfms_wp->get_count_comments_last_day());?></strong>
+			</p>
 			<?php
 			
 			$tcomments = $wpdb->prefix . "comments";
 			$tposts = $wpdb->prefix . "posts";
 			$sql = "
-				SELECT COUNT(comments.comment_ID) AS count, posts.post_title AS post
+				SELECT COUNT(comments.comment_ID) AS count, posts.post_title AS post,
+					(SELECT comments_date.comment_date
+					FROM `" . $tcomments . "` AS comments_date
+					WHERE comments_date.comment_post_ID = comments.comment_post_ID
+					ORDER BY comments_date.comment_date DESC
+					LIMIT 1) AS date,
+					(SELECT comments_user.comment_author
+					FROM `" . $tcomments . "` AS comments_user
+					WHERE comments_user.comment_post_ID = comments.comment_post_ID
+					ORDER BY comments_user.comment_date DESC
+					LIMIT 1) AS user
 				FROM `" . $tcomments . "` AS comments
 				INNER JOIN `" . $tposts . "` AS posts
 					ON comments.comment_post_ID = posts.ID
@@ -606,7 +619,9 @@ class PFMS_AdminPages {
 					<thead>
 						<tr>
 							<th><?php esc_html_e("Post");?></th>
-							<th><?php esc_html_e("Count");?></th>
+							<th><?php esc_html_e("Last date/time");?></th>
+							<th><?php esc_html_e("Last commented by");?></th>
+							<th><?php esc_html_e("Total Comments");?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -615,6 +630,8 @@ class PFMS_AdminPages {
 							?>
 							<tr>
 								<td><?php echo esc_html($comment->post);?></td>
+								<td><?php echo esc_html($comment->date);?></td>
+								<td><?php echo esc_html($comment->user);?></td>
 								<td><?php echo esc_html($comment->count);?></td>
 							</tr>
 							<?php
