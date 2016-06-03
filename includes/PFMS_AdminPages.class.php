@@ -359,54 +359,59 @@ class PFMS_AdminPages {
 								</tr>
 							<?php
 							}
+							
+							if ($data['monitoring']['enabled_plugins_updated']) {
 							?>
-							<tr>
-								<td><?php esc_html_e('Plugins are updated');?></td>
-								<td>
-									<span>
-										<img id ="ajax_result_loading_plugins_are_updated"
-											style="display: none;"
-											src="<?php echo esc_url( admin_url( 'images/spinner.gif' ) ); ?>" alt="" />
-										<img id ="ajax_result_ok_plugins_are_updated"
-											style="display: none;"
-											src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
-										<span
-											id ="ajax_result_fail_plugins_are_updated"
-											style="display: none;">
-											<img src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
-											<a href="#" onclick="check_plugins_pending_update();" style="font-size: 10px;">
-												<?php esc_html_e("Show");?>
-											</a>
+								<tr>
+									<td><?php esc_html_e('Plugins are updated');?></td>
+									<td>
+										<span>
+											<img id ="ajax_result_loading_plugins_are_updated"
+												style="display: none;"
+												src="<?php echo esc_url( admin_url( 'images/spinner.gif' ) ); ?>" alt="" />
+											<img id ="ajax_result_ok_plugins_are_updated"
+												style="display: none;"
+												src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
+											<span
+												id ="ajax_result_fail_plugins_are_updated"
+												style="display: none;">
+												<img src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
+												<a href="#" onclick="check_plugins_pending_update();" style="font-size: 10px;">
+													<?php esc_html_e("Show");?>
+												</a>
+											</span>
+											<?php
+											if ($data['monitoring']['plugins_updated']) {
+												?>
+												<script type="text/javascript">
+													jQuery(document).ready(function($) {
+														jQuery("#ajax_result_fail_plugins_are_updated")
+															.hide();
+														jQuery("#ajax_result_ok_plugins_are_updated")
+															.show();
+													});
+												</script>
+												<?php
+											}
+											else {
+												?>
+												<script type="text/javascript">
+													jQuery(document).ready(function($) {
+														jQuery("#ajax_result_ok_plugins_are_updated")
+															.hide();
+														jQuery("#ajax_result_fail_plugins_are_updated")
+															.show();
+													});
+												</script>
+												<?php
+											}
+											?>
 										</span>
-										<?php
-										if ($data['monitoring']['plugins_updated']) {
-											?>
-											<script type="text/javascript">
-												jQuery(document).ready(function($) {
-													jQuery("#ajax_result_fail_plugins_are_updated")
-														.hide();
-													jQuery("#ajax_result_ok_plugins_are_updated")
-														.show();
-												});
-											</script>
-											<?php
-										}
-										else {
-											?>
-											<script type="text/javascript">
-												jQuery(document).ready(function($) {
-													jQuery("#ajax_result_ok_plugins_are_updated")
-														.hide();
-													jQuery("#ajax_result_fail_plugins_are_updated")
-														.show();
-												});
-											</script>
-											<?php
-										}
-										?>
-									</span>
-								</td>
-							</tr>
+									</td>
+								</tr>
+							<?php
+							}
+							?>
 							<tr>
 								<td><?php esc_html_e('API Rest enabled');?></td>
 								<td>
@@ -1090,6 +1095,31 @@ class PFMS_AdminPages {
 										?>
 										/>
 									<?php esc_html_e("Active to check the core updates available.");?>
+								</label>
+							</fieldset>
+						</td>
+					</tr>
+					<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("Check plugins updates enabled");?>
+						</th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Check plugin updates enabled");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options-system_security[enabled_plugins_updated]">
+									<input
+										type="checkbox"
+										name="pfmswp-options-system_security[enabled_plugins_updated]"
+										value="1"
+										<?php
+										checked($options['enabled_plugins_updated'], 1, true);
+										?>
+										/>
+									<?php esc_html_e("Active to check the plugins updates available.");?>
 								</label>
 							</fieldset>
 						</td>

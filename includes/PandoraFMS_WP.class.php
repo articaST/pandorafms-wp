@@ -1273,6 +1273,7 @@ class PandoraFMS_WP {
 		$default_options['email_theme_new'] = 1;
 		$default_options['enabled_check_admin'] = 0;
 		$default_options['enabled_wordpress_updated'] = 0;
+		$default_options['enabled_plugins_updated'] = 0;
 		$default_options['upload_htaccess'] = 0;
 		$default_options['upload_robots_txt'] = 0;
 		$default_options['wp_generator_disable'] = 0;
@@ -1335,6 +1336,9 @@ class PandoraFMS_WP {
 		
 		if (!isset($options['enabled_wordpress_updated']))
 			$options['enabled_wordpress_updated'] = 0;
+		
+		if (!isset($options['enabled_plugins_updated']))
+			$options['enabled_plugins_updated'] = 0;
 		
 		if (!isset($options['upload_htaccess']))
 			$options['upload_htaccess'] = 0;
@@ -1523,8 +1527,13 @@ class PandoraFMS_WP {
 			}
 		}
 		
-		$pending_plugins_update = $pfms_wp->check_plugins_pending_update();
-		$return['monitoring']['plugins_updated'] = empty($pending_plugins_update);
+		
+		$return['monitoring']['enabled_plugins_updated'] =
+			$options_system_security['enabled_plugins_updated'];
+		if ($options_system_security['enabled_plugins_updated']) {
+			$pending_plugins_update = $pfms_wp->check_plugins_pending_update();
+			$return['monitoring']['plugins_updated'] = empty($pending_plugins_update);
+		}
 		
 		
 		$return['monitoring']['api_rest_plugin'] = $pfms_wp->check_api_rest_plugin();
