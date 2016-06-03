@@ -627,6 +627,23 @@ class PandoraFMS_WP {
 			$attempts++;
 			
 			set_transient("pfms_wp::bruteforce_attempts", $attempts, DAY_IN_SECONDS);
+			
+			if ($attempts >= $options_system_security['bruteforce_attack_attempts']) {
+				$pfms_wp = PandoraFMS_WP::getInstance();
+				
+				$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
+				
+				$return = $wpdb->insert(
+					$tablename,
+					array(
+						'type' => 'login_lockout',
+						'data' =>
+							sprintf(
+								esc_sql(__("User [%s] login lockout after [%d] attempts.")),
+								$user_login, $attempts),
+						'timestamp' => date('Y-m-d H:i:s')),
+					array('%s', '%s', '%s'));
+			}
 		}
 		
 		error_log("user_login_failed");
@@ -1473,6 +1490,36 @@ class PandoraFMS_WP {
 			$pfms_wp->acl_user_menu_entry,
 			"pfms_wp_admin_menu_general_setup",
 			array("PFMS_AdminPages", "show_general_setup"));
+	}
+	
+	public function get_list_login_lockout() {
+		global $wpdb;
+		
+		$return = array();
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
+		$rows = $wpdb->get_results(
+			"SELECT *
+			FROM `" . $tablename . "`
+			WHERE type = 'login_lockout'
+			ORDER BY `timestamp` DESC");
+		if (empty($rows))
+			$rows = array();
+		
+		foreach ($rows as $row) {
+			preg_match(
+				"/User \[(.*)\] login lockout after \[([0-9]+)\] attempts./",
+				$row->data, $matches);
+			
+			$return[] = array(
+				'user' => $matches[1],
+				'count' => $matches[2],
+				'time' => $row->timestamp);
+		}
+		
+		return $return;
 	}
 	
 	public function get_dashboard_data() {

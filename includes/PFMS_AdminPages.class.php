@@ -1020,7 +1020,44 @@ class PFMS_AdminPages {
 				<?php
 			}
 			?>
+			<h2><?php esc_html_e("Bruteforce attack logs");?></h2>
+			<?php
+			$list = $pfms_wp->get_list_login_lockout();
+			if (empty($list))
+				$list = array();
 			
+			if (empty($list)) {
+				?>
+				<p><?php esc_html_e("Empty data");?></p>
+				<?php
+			}
+			else {
+				?>
+				<table id="list_filesystem" class="widefat striped">
+					<thead>
+						<tr>
+							<th><?php esc_html_e("User");?></th>
+							<th><?php esc_html_e("Count");?></th>
+							<th><?php esc_html_e("Last time");?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php
+						foreach ($list as $entry) {
+							?>
+							<tr>
+								<td><?php esc_html_e($entry['user']);?></td>
+								<td><?php esc_html_e($entry['count']);?></td>
+								<td><?php esc_html_e($entry['time']);?></td>
+							</tr>
+							<?php
+						}
+						?>
+					</tbody>
+				</table>
+				<?php
+			}
+			?>
 			
 			<h2><?php esc_html_e("Setup");?></h2>
 			<form method="post" action="options.php">
