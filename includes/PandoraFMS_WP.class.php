@@ -768,6 +768,7 @@ class PandoraFMS_WP {
 			
 			if ($attempts >= $options_system_security['bruteforce_attack_attempts']) {
 				error_log("protect bruteforce");
+				set_transient("pfms_wp::bruteforce_attempts", 0, DAY_IN_SECONDS);
 				sleep($pfms_wp->wait_protect_bruteforce_login_seconds);
 			}
 		}
