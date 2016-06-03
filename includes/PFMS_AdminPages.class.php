@@ -961,6 +961,7 @@ class PFMS_AdminPages {
 					<thead>
 						<tr>
 							<th><?php esc_html_e("Path");?></th>
+							<th><?php esc_html_e("Date");?></th>
 							<th><?php esc_html_e("Status");?></th>
 							<th><?php esc_html_e("No Writable others");?></th>
 							<th><?php esc_html_e("Original");?></th>
@@ -995,6 +996,11 @@ class PFMS_AdminPages {
 							?>
 							<tr>
 								<td><?php esc_html_e($entry->path);?></td>
+								<td>
+									<?php
+									echo date_i18n(get_option('date_format'), filemtime($entry->path));
+									?>
+								</td>
 								<td><?php esc_html_e($entry->status);?></td>
 								<td><?php echo $icon;?></td>
 								<td><?php echo $icon_original;?></td>

@@ -1424,7 +1424,6 @@ class PandoraFMS_WP {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
 		$icon = plugins_url("images/icon.png", str_replace( "includes/", "", __FILE__));
-		error_log($icon);
 		
 		add_menu_page(
 			_("PandoraFMS WP : Dashboard"),
@@ -2304,6 +2303,7 @@ class PandoraFMS_WP {
 						.append("<thead>" +
 							"<tr>" +
 								"<th><?php esc_html_e("Path");?></th>" +
+								"<th><?php esc_html_e("Date");?></th>" +
 								"<th><?php esc_html_e("Status");?></th>" +
 								"<th><?php esc_html_e("No writable others");?></th>" +
 								"<th><?php esc_html_e("Original");?></th>" +
@@ -2337,7 +2337,7 @@ class PandoraFMS_WP {
 					dialog_weak_user.dialog({
 						'dialogClass' : 'wp-dialog',
 						'height': 200,
-						'minWidth': 900,
+						'minWidth': 1200,
 						'modal' : true,
 						'autoOpen' : false,
 						'closeOnEscape' : true})
@@ -2528,6 +2528,7 @@ class PandoraFMS_WP {
 			
 			$return[] = array(
 				'path' => $entry->path,
+				'date' => date_i18n(get_option('date_format'), filemtime($entry->path)),
 				'status' => $entry->status,
 				'writable_others' => $icon,
 				'original' => $icon_original,
