@@ -1510,6 +1510,11 @@ class PandoraFMS_WP {
 		
 		$return['monitoring']['api_rest_plugin'] = $pfms_wp->check_api_rest_plugin();
 		
+		$return['monitoring']['wordpress_version'] = get_bloginfo('version');
+		$plugins = get_plugins();
+		$return['monitoring']['pandorafms_wp_version'] =
+			$plugins['pandorafms-wp/pandorafms-wp.php']['Version'];
+		
 		// === System security =========================================
 		
 		$options_system_security = get_option('pfmswp-options-system_security');
@@ -2073,20 +2078,28 @@ class PandoraFMS_WP {
 					'action': 'check_plugins_pending_update'
 				};
 				
-				jQuery("#plugins_are_updated").empty();
-				jQuery("#plugins_are_updated").append(
-					jQuery("#ajax_loading").clone());
+				jQuery("#ajax_result_fail_plugins_are_updated")
+					.hide();
+				jQuery("#ajax_result_ok_plugins_are_updated")
+					.hide();
+				jQuery("#ajax_result_loading_plugins_are_updated")
+					.show();
 				
 				jQuery.post(ajaxurl, data, function(response) {
-					jQuery("#plugins_are_updated").empty();
+					jQuery("#ajax_result_loading_plugins_are_updated")
+						.hide();
 					
 					if (response.result) {
-						jQuery("#plugins_are_updated").append(
-							jQuery("#ajax_result_ok").clone());
+						jQuery("#ajax_result_fail_plugins_are_updated")
+							.hide();
+						jQuery("#ajax_result_ok_plugins_are_updated")
+							.show();
 					}
 					else {
-						jQuery("#plugins_are_updated").append(
-							jQuery("#ajax_result_fail").clone());
+						jQuery("#ajax_result_fail_plugins_are_updated")
+							.show();
+						jQuery("#ajax_result_ok_plugins_are_updated")
+							.hide();
 					}
 					
 					var dialog_plugins_pending_update =

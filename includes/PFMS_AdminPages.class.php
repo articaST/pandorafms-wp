@@ -250,7 +250,8 @@ class PFMS_AdminPages {
 										?>
 									</span>
 									</a>
-									<a href="javascript: force_cron_audit_password();">
+									<br />
+									<a href="javascript: force_cron_audit_password();" style="font-size: 10px;">
 										<span id="audit_password_last_execute">
 											<?php
 											if (empty($data['monitoring']['audit_password']['last_execution'])) {
@@ -288,7 +289,8 @@ class PFMS_AdminPages {
 										?>
 									</span>
 									</a>
-									<a href="javascript: force_cron_audit_files();">
+									<br />
+									<a href="javascript: force_cron_audit_files();" style="font-size: 10px;">
 										<span id="audit_files_last_execute">
 											<?php
 											if (empty($data['monitoring']['audit_files']['last_execution'])) {
@@ -308,18 +310,18 @@ class PFMS_AdminPages {
 							<tr>
 								<td><?php esc_html_e('New Coments in last 24h');?></td>
 								<td>
-									<span class="title-count">
-										<?php
-										echo esc_html(
-											$pfms_wp->get_count_comments_last_day());
-										?>
+									<span style="color: #00000; font-weight: bolder;">
+									<?php
+									echo esc_html(
+										$pfms_wp->get_count_comments_last_day());
+									?>
 									</span>
 								</td>
 							</tr>
 							<tr>
 								<td><?php esc_html_e('New posts in last 24h');?></td>
 								<td>
-									<span class="title-count">
+									<span style="color: #00000; font-weight: bolder;">
 										<?php
 										echo esc_html(
 											$pfms_wp->get_count_posts_last_day());
@@ -349,24 +351,48 @@ class PFMS_AdminPages {
 							<tr>
 								<td><?php esc_html_e('Plugins are updated');?></td>
 								<td>
-									<a href="#" onclick="check_plugins_pending_update();">
-										<span id="plugins_are_updated">
-											<?php
-											if ($data['monitoring']['plugins_updated']) {
-												?>
-												<img id ="ajax_result_ok"
-													src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
-												<?php
-											}
-											else {
-												?>
-												<img id ="ajax_result_fail"
-													src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
-												<?php
-											}
-											?>
+									<span>
+										<img id ="ajax_result_loading_plugins_are_updated"
+											style="display: none;"
+											src="<?php echo esc_url( admin_url( 'images/spinner.gif' ) ); ?>" alt="" />
+										<img id ="ajax_result_ok_plugins_are_updated"
+											style="display: none;"
+											src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
+										<span
+											id ="ajax_result_fail_plugins_are_updated"
+											style="display: none;">
+											<img src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
+											<a href="#" onclick="check_plugins_pending_update();" style="font-size: 10px;">
+												<?php esc_html_e("Show");?>
+											</a>
 										</span>
-									</a>
+										<?php
+										if ($data['monitoring']['plugins_updated']) {
+											?>
+											<script type="text/javascript">
+												jQuery(document).ready(function($) {
+													jQuery("#ajax_result_fail_plugins_are_updated")
+														.hide();
+													jQuery("#ajax_result_ok_plugins_are_updated")
+														.show();
+												});
+											</script>
+											<?php
+										}
+										else {
+											?>
+											<script type="text/javascript">
+												jQuery(document).ready(function($) {
+													jQuery("#ajax_result_ok_plugins_are_updated")
+														.hide();
+													jQuery("#ajax_result_fail_plugins_are_updated")
+														.show();
+												});
+											</script>
+											<?php
+										}
+										?>
+									</span>
 								</td>
 							</tr>
 							<tr>
@@ -390,6 +416,26 @@ class PFMS_AdminPages {
 											?>
 										</span>
 									</a>
+								</td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e('Wordpress version');?></td>
+								<td>
+									<span>
+										<?php
+										echo esc_html($data['monitoring']['wordpress_version']);
+										?>
+									</span>
+								</td>
+							</tr>
+							<tr>
+								<td><?php esc_html_e('PandoraFMS WP version');?></td>
+								<td>
+									<span>
+										<?php
+										echo esc_html($data['monitoring']['pandorafms_wp_version']);
+										?>
+									</span>
 								</td>
 							</tr>
 						</tbody>
