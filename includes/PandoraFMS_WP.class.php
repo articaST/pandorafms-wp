@@ -1545,6 +1545,7 @@ class PandoraFMS_WP {
 		$return['monitoring']['pandorafms_wp_version'] =
 			$plugins['pandorafms-wp/pandorafms-wp.php']['Version'];
 		
+		$return['monitoring']['wordpress_sitename'] = get_bloginfo('name');
 		// === System security =========================================
 		
 		$return['system_security'] = array();

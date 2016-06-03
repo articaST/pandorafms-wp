@@ -446,6 +446,16 @@ class PFMS_AdminPages {
 								</td>
 							</tr>
 							<tr>
+								<td><?php esc_html_e('Wordpress sitename');?></td>
+								<td>
+									<span>
+										<?php
+										echo esc_html($data['monitoring']['wordpress_sitename']);
+										?>
+									</span>
+								</td>
+							</tr>
+							<tr>
 								<td><?php esc_html_e('PandoraFMS WP version');?></td>
 								<td>
 									<span>
