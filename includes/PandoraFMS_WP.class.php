@@ -469,6 +469,9 @@ class PandoraFMS_WP {
 		add_action("profile_update", array('PandoraFMS_WP', 'user_change_email'), 10, 2);
 		add_action("wp_login_failed", array('PandoraFMS_WP', 'user_login_failed'));
 		add_action('login_init', array('PandoraFMS_WP', 'login_init'));
+		add_action('login_enqueue_scripts', array('PandoraFMS_WP', 'login_js'));
+		add_action('login_form', array('PandoraFMS_WP', 'login_form'));
+		add_action('wp_authenticate', array('PandoraFMS_WP', 'login_authenticate'), 1, 2);
 		//=== END ==== EVENT HOOKS =====================================
 		
 		if ($options_system_security['upload_htaccess']) {
@@ -773,6 +776,72 @@ class PandoraFMS_WP {
 			}
 		}
 		
+	}
+	
+	public static function login_js() {
+		$options = get_option('pfmswp-options-system_security');
+		
+		if (!$options['activate_login_recaptcha'])
+			return;
+		
+		error_log("login_js");
+		$lang = get_locale();
+		?>
+		<script type="text/javascript"
+			src="https://www.google.com/recaptcha/api.js?hl=<?php echo $lang; ?>"></script>
+		<?php
+	}
+	
+	public static function login_form() {
+		$options = get_option('pfmswp-options-system_security');
+		
+		if (!$options['activate_login_recaptcha'])
+			return;
+		
+		?>
+		<div class="g-recaptcha" data-sitekey="<?php echo $options['site_key']; ?>"></div>
+		<?php 
+	}
+	
+	public static function login_authenticate(&$user_login, &$user_pass) {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$options = get_option('pfmswp-options-system_security');
+		
+		if (!$options['activate_login_recaptcha'])
+			return;
+		
+		$sitekey = $options['site_key'];
+		$secret = $options['secret'];
+		
+		$parameters = array(
+			'secret' => trim($secret),
+			'response' => isset($_POST['g-recaptcha-response']) ?
+				$_POST['g-recaptcha-response'] : "",
+			'remoteip' => $_SERVER['REMOTE_ADDR']
+		);
+		$url = 'https://www.google.com/recaptcha/api/siteverify?' .
+			http_build_query($parameters);
+		
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, $url);
+		curl_setopt($ch, CURLOPT_HEADER, false);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+		$response = curl_exec($ch);
+		curl_close($ch);
+		
+		$json_response = json_decode($response, true);
+		
+		$pfms_wp->debug($json_response);
+		
+		if (isset($json_response['success']) && true !== $json_response['success']) {
+			// Delete the user_login and user_password to stop the login process
+			$user_login = null;
+			$user_pass = null;
+			return;
+		}
 	}
 	//=== END ==== HOOKS CODE ==========================================
 	
@@ -1304,6 +1373,9 @@ class PandoraFMS_WP {
 		$default_options['blacklist_ips'] = "";
 		$default_options['url_redirect_ip_banned'] = "";
 		$default_options['scan_infected_files'] = "";
+		$default_options['activate_login_recaptcha'] = 0;
+		$default_options['site_key'] = "";
+		$default_options['secret'] = "";
 		
 		return $default_options;
 	}
@@ -1393,6 +1465,15 @@ class PandoraFMS_WP {
 		
 		if (!isset($options['scan_infected_files']))
 			$options['scan_infected_files'] = 0;
+		
+		if (!isset($options['activate_login_recaptcha']))
+			$options['activate_login_recaptcha'] = 0;
+		
+		if (!isset($options['site_key']))
+			$options['site_key'] = "";
+		
+		if (!isset($options['secret']))
+			$options['secret'] = "";
 		
 		return $options;
 	}

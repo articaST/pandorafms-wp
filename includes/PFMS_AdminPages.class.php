@@ -1428,6 +1428,73 @@ class PFMS_AdminPages {
 							</fieldset>
 						</td>
 					</tr>
+					<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("Login recapcha");?>
+						</th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Login repcatcha");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options-system_security[activate_login_recaptcha]">
+									<input
+										type="checkbox"
+										name="pfmswp-options-system_security[activate_login_recaptcha]"
+										value="1"
+										<?php
+										checked($options['activate_login_recaptcha'], 1, true);
+										?>
+										/>
+									<?php esc_html_e("Activate the reCaptcha in the login page.");?>
+								</label>
+							</fieldset>
+							<br />
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Site key");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options-system_security[site_key]">
+									<p class="description">
+										<?php
+										esc_html_e("Site key.");
+										?>
+									</p>
+									<input
+										class="regular-text"
+										type="text"
+										name="pfmswp-options-system_security[site_key]"
+										value="<?php echo esc_attr($options['site_key']);?>"
+										/>
+								</label>
+							</fieldset>
+							<br />
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Secret");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options-system_security[secret]">
+									<p class="description">
+										<?php
+										esc_html_e("Site key.");
+										?>
+									</p>
+									<input
+										class="regular-text"
+										type="text"
+										name="pfmswp-options-system_security[secret]"
+										value="<?php echo esc_attr($options['secret']);?>"
+										/>
+								</label>
+							</fieldset>
+						</td>
+					</tr>
 				</table>
 				<p class="submit">
 					<input
