@@ -1693,6 +1693,9 @@ class PandoraFMS_WP {
 		$return['system_security']['activated_rename_login'] =
 			$activated_rename_login['status'];
 		
+		$return['system_security']['activated_recaptcha'] =
+			$options_system_security['activate_login_recaptcha'];
+		
 		return $return;
 	}
 	

@@ -187,6 +187,25 @@ class PFMS_AdminPages {
 									?>
 								</td>
 							</tr>
+							<tr>
+								<td><?php esc_html_e("Activate the reCaptcha in the login page.");?></td>
+								<td>
+									<?php
+									if ($data['system_security']['activated_recaptcha']) {
+										?>
+										<img
+											src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
+										<?php
+									}
+									else {
+										?>
+										<img
+											src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
+										<?php
+									}
+									?>
+								</td>
+							</tr>
 						</tbody>
 					</table>
 				</div>
