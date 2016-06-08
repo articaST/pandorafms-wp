@@ -1826,8 +1826,47 @@ class PandoraFMS_WP {
 	
 	private function audit_files_svn_repository() {
 		global $wpdb;
+		global $wp_filesystem;
+		
+		if (!$wp_filesystem) {
+			WP_Filesystem();
+		}
 		
 		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		
+		$last_version_downloaded_targz = get_option(
+			$pfms_wp->prefix . "last_version_downloaded_targz", "");
+		
+		$upload_dir = wp_upload_dir();
+		$upload_dir = $upload_dir['basedir'];
+		
+		$wordpress_file =
+			$upload_dir . "/wordpress-" . get_bloginfo('version') . ".zip";
+		
+		if ($last_version_downloaded_targz != get_bloginfo('version') ||
+			!is_readable($wordpress_file)) {
+			
+			$url_file =
+				"http://wordpress.org/wordpress-" . get_bloginfo('version') . ".zip";
+			
+			// Download
+			$fp = fopen($wordpress_file, "w");
+				$ch = curl_init($url_file);
+				curl_setopt($ch, CURLOPT_TIMEOUT, 50);
+				curl_setopt($ch, CURLOPT_FILE, $fp);
+				curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+				curl_exec($ch);
+				$r = curl_getinfo($ch);
+				curl_close($ch);
+			fclose($fp);
+			
+			update_option(
+				$pfms_wp->prefix . "last_version_downloaded_targz",
+				get_bloginfo('version'));
+		}
+		
+		$result = unzip_file($wordpress_file, sys_get_temp_dir());
 		
 		$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
 		
@@ -1843,22 +1882,6 @@ class PandoraFMS_WP {
 			if ($store_entry['type'] != "file")
 				continue;
 			
-			$file = str_replace(ABSPATH, "", $store_entry['path']);
-			
-			$remote_file = $url . $file;
-			
-			$tmpfname = tempnam(sys_get_temp_dir(), "file");
-			
-			$fp = fopen($tmpfname, "w");
-				$ch = curl_init($remote_file);
-				curl_setopt($ch, CURLOPT_TIMEOUT, 50);
-				curl_setopt($ch, CURLOPT_FILE, $fp);
-				curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-				curl_exec($ch);
-				$r = curl_getinfo($ch);
-				curl_close($ch);
-			fclose($fp);
-			
 			$wpdb->update(
 				$tablename,
 				array('original' => "yes"),
@@ -1866,27 +1889,25 @@ class PandoraFMS_WP {
 				array('%s'),
 				array('%d'));
 			
-			if ($r['http_code'] != 404) {
-				
-				$sha1_remote_file = sha1_file($tmpfname);
-				
-				if ($sha1_remote_file != $store_entry['sha1']) {
-					
-					//~ error_log("no original");
-					
-					$wpdb->update(
-						$tablename,
-						array('original' => "no"),
-						array('id' => $store_entry['id']),
-						array('%s'),
-						array('%d'));
-				}
-				else {
-					//~ error_log("original");
-				}
-			}
+			$file = str_replace(
+				ABSPATH, sys_get_temp_dir() . "/wordpress/",
+				$store_entry['path']);
 			
-			unlink($tmpfname);
+			$sha1_remote_file = sha1_file($file);
+			if ($sha1_remote_file != $store_entry['sha1']) {
+				
+				//~ error_log("no original");
+				
+				$wpdb->update(
+					$tablename,
+					array('original' => "no"),
+					array('id' => $store_entry['id']),
+					array('%s'),
+					array('%d'));
+			}
+			else {
+				//~ error_log("original");
+			}
 		}
 	}
 	
