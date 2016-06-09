@@ -338,6 +338,54 @@ class PandoraFMS_WP {
 		
 		return (int)get_option($pfms_wp->prefix . "installed_htaccess", 0);
 	}
+	
+	public static function apirest_robots_protect($data) {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		return (int)get_option($pfms_wp->prefix . "installed_robot_txt", 0);
+	}
+	
+	public static function apirest_wp_generator_protect($data) {
+		$options_system_security = get_option('pfmswp-options-system_security');
+		
+		return (int)$options_system_security['wp_generator_disable'];
+	}
+	
+	public static function apirest_failed_login_lockout($data) {
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$return = array();
+		$return['status'] = 0;
+		$return['users'] = array();
+		
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
+		
+		$rows = $wpdb->get_results(
+			"SELECT *
+			FROM `" . $tablename . "`
+			WHERE type = 'login_lockout' AND
+				timestamp > date_sub(NOW(), INTERVAL 5 MINUTE)
+			ORDER BY timestamp DESC");
+		
+		if (empty($rows)) {
+			$return['status'] = 1;
+		}
+		else {
+			$return['status'] = 0;
+			
+			foreach ($rows as $row) {
+				preg_match(
+					"/User \[(.*)\] login lockout after \[([0-9]+)\] attempts./",
+					$row->data, $matches);
+				
+				$return['users'][] = $matches[1];
+			}
+		}
+		
+		return $return;
+	}
 	//=== END ==== API REST CODE =======================================
 	
 	
@@ -426,6 +474,27 @@ class PandoraFMS_WP {
 			array(
 				'methods' => 'GET',
 				'callback' => array('PandoraFMS_WP', 'apirest_upload_code_protect')
+			)
+		);
+		
+		register_rest_route('pandorafms_wp', '/robots_protect',
+			array(
+				'methods' => 'GET',
+				'callback' => array('PandoraFMS_WP', 'apirest_robots_protect')
+			)
+		);
+		
+		register_rest_route('pandorafms_wp', '/wp_generator_protect',
+			array(
+				'methods' => 'GET',
+				'callback' => array('PandoraFMS_WP', 'apirest_wp_generator_protect')
+			)
+		);
+		
+		register_rest_route('pandorafms_wp', '/failed_login_lockout',
+			array(
+				'methods' => 'GET',
+				'callback' => array('PandoraFMS_WP', 'apirest_failed_login_lockout')
 			)
 		);
 	}
