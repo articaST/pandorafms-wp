@@ -56,6 +56,11 @@ if (!wp_next_scheduled('cron_audit_files')) {
 	wp_schedule_event(time(), 'daily', 'cron_audit_files');
 }
 add_action('cron_audit_files', array('PandoraFMS_WP', 'cron_audit_files'));
+
+if (!wp_next_scheduled('cron_clean_logs')) {
+	wp_schedule_event(time(), 'daily', 'cron_clean_logs');
+}
+add_action('cron_clean_logs', array('PandoraFMS_WP', 'cron_clean_logs'));
 //=== END ==== CRON HOOKS ==============================================
 
 

@@ -2252,6 +2252,27 @@ class PandoraFMS_WP {
 		
 		
 	}
+	
+	public static function cron_clean_logs() {
+		global $wpdb;
+		
+		error_log("cron_clean_logs");
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "user_stats";
+		
+		$sql = "DELETE
+			FROM `" . $tablename . "`
+			WHERE timestamp < date_sub(NOW(), INTERVAL 45 DAY);";
+		$result = $wpdb->query($sql);
+		
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
+		$sql = "DELETE
+			FROM `" . $tablename . "`
+			WHERE timestamp < date_sub(NOW(), INTERVAL 45 DAY);";
+		$result = $wpdb->query($sql);
+	}
 	//=== END ==== CRON HOOKS CODE =====================================
 	
 	
