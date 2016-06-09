@@ -1,8 +1,9 @@
 # pandorafms-wp
 ## v0.1
+
 Hardening, monitoring and security plugin for Wordpress. 100% free and openSource. No tricks, no freemium of "enterprise" features. 
 
-Features implemented in this version:
+## Features implemented in this version:
 
 * Rename of login page.
 * Recapcha on login.
@@ -26,4 +27,17 @@ Features implemented in this version:
 * User password audit for weak passwords.
 * Check for weak file/directory permissions.
 * Send email on different events: new user, new user login, user change email, new plugin added, new theme added.
-* Remote integration with Pandora FMS for gather information in a central monitoring solution. Pandora FMS is also an OpenSource [server monitoring](https://pandorafms.com) solution.
+* Remote integration with [Pandora FMS](http://pandorafms.com) for gather information in a central monitoring solution. Pandora FMS is also an OpenSource [server monitoring](http://pandorafms.com/monitoring-solutions/server-monitoring/) solution.
+
+## Requirements and setup
+
+PandoraFMS-WP requires (optionally) a plugin for REST API, called "JSON REST API". You only need if you want to integrate the monitoring/status information of the WP site in a central management console with Pandor FMS. This is an optional feature, you can manage all information from the Wordpress itself.
+
+## Limitations 
+
+This not support WP Multisite. 
+Tested only with 4.5.2 version.
+
+## More information
+
+At this time this is our first readme file :-)

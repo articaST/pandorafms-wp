@@ -37,7 +37,7 @@ class PFMS_Footer {
 	
 	//=== INIT === HOOKS CODE ==========================================
 	public function show_footer() {
-		esc_html_e("PandoraFMS WP runs!!");
+		esc_html_e("<a href='http://pandorafms.com'>Monitored and secured with PandoraFMS</a>");
 	}
 	//=== END === HOOKS CODE ===========================================
 }

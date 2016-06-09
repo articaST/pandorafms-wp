@@ -85,7 +85,8 @@ class PFMS_AdminPages {
 		$data = $pfms_wp->get_dashboard_data();
 		?>
 		<div class="wrap">
-			<h2><?php esc_html_e("Dashboard");?></h2>
+			<h2><?php esc_html_e("Monitoring dashboard");?></h2>
+
 		</div>
 		<div id="col-container">
 		
@@ -104,13 +105,13 @@ class PFMS_AdminPages {
 					<table class="widefat striped">
 						<thead>
 							<tr>
-								<th><?php esc_html_e("Item");?></th>
+								<th><?php esc_html_e("Control item");?></th>
 								<th><?php esc_html_e("Status");?></th>
 							</tr>
 						</thead>
 						<tbody>
 							<tr>
-								<td><?php esc_html_e("Protect upload of PHP Code");?></td>
+								<td><?php esc_html_e("Malicious PHP code upload protection");?></td>
 								<td>
 									<?php
 									if ($data['system_security']['protect_upload_php_code']) {
@@ -129,7 +130,7 @@ class PFMS_AdminPages {
 								</td>
 							</tr>
 							<tr>
-								<td><?php esc_html_e("Robots.txt enhancement");?></td>
+								<td><?php esc_html_e("Robots.txt security enhancement");?></td>
 								<td>
 									<?php
 									if ($data['system_security']['installed_robot_txt']) {
@@ -167,7 +168,7 @@ class PFMS_AdminPages {
 								</td>
 							</tr>
 							<tr>
-								<td><?php esc_html_e("Activated rename login");?></td>
+								<td><?php esc_html_e("Login page protection");?></td>
 								<td>
 									<?php
 									if ($data['system_security']['activated_rename_login']) {
@@ -188,7 +189,7 @@ class PFMS_AdminPages {
 								</td>
 							</tr>
 							<tr>
-								<td><?php esc_html_e("Activate the reCaptcha in the login page.");?></td>
+								<td><?php esc_html_e("Login page protected by reCaptcha");?></td>
 								<td>
 									<?php
 									if ($data['system_security']['activated_recaptcha']) {
@@ -220,7 +221,7 @@ class PFMS_AdminPages {
 					<table class="widefat striped">
 						<thead>
 							<tr>
-								<th><?php esc_html_e("Item");?></th>
+								<th><?php esc_html_e("Monitored item");?></th>
 								<th><?php esc_html_e("Status");?></th>
 							</tr>
 						</thead>
@@ -229,7 +230,7 @@ class PFMS_AdminPages {
 							if ($data['monitoring']['enabled_check_admin']) {
 							?>
 								<tr>
-									<td><?php esc_html_e('Check of "admin" user enabled');?></td>
+									<td><?php esc_html_e('Default admin user check');?></td>
 									<td>
 										<a href="javascript: check_admin_user_enabled();">
 											<div id="admin_user_enabled">
@@ -255,7 +256,7 @@ class PFMS_AdminPages {
 							}
 							?>
 							<tr>
-								<td><?php esc_html_e('Audit of password strength');?></td>
+								<td><?php esc_html_e('Password strength audit');?></td>
 								<td>
 									<a href="#" onclick="show_weak_user_dialog();">
 									<span id="audit_password_status">
@@ -294,7 +295,7 @@ class PFMS_AdminPages {
 								</td>
 							</tr>
 							<tr>
-								<td><?php esc_html_e('Audit of files');?></td>
+								<td><?php esc_html_e('Filesystem audit');?></td>
 								<td>
 									<a href="#" onclick="show_files_dialog();">
 									<span id="audit_files_status">
@@ -358,7 +359,7 @@ class PFMS_AdminPages {
 							if ($data['monitoring']['enabled_wordpress_updated']) {
 							?>
 								<tr>
-									<td><?php esc_html_e('Wordpress is updated');?></td>
+									<td><?php esc_html_e('Wordpress code updated');?></td>
 									<td>
 										<span id="wordpress_is_updated">
 											<?php
@@ -382,7 +383,7 @@ class PFMS_AdminPages {
 							if ($data['monitoring']['enabled_plugins_updated']) {
 							?>
 								<tr>
-									<td><?php esc_html_e('Plugins are updated');?></td>
+									<td><?php esc_html_e('Plugins code updated');?></td>
 									<td>
 										<span>
 											<img id ="ajax_result_loading_plugins_are_updated"
@@ -786,7 +787,7 @@ class PFMS_AdminPages {
 			<h2><?php esc_html_e("Access Control");?></h2>
 		</div>
 		
-		<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+		<p>This section manages access to your Wordpress. Here you can define if you want to be warned on some events and you can see a full log of all user interactions with your site. This information is automatically purged each 45 days.</p>
 		
 		<?php
 		$user_stats = $wpdb->get_results(
@@ -829,7 +830,7 @@ class PFMS_AdminPages {
 		}
 		?>
 		<div class="wrap">
-			<h2><?php esc_html_e("Setup");?></h2>
+			
 			<form method="post" action="options.php">
 				<?php settings_fields('pfmswp-settings-group-access_control');?>
 				<?php $options = get_option('pfmswp-options-access_control');?>
@@ -981,9 +982,11 @@ class PFMS_AdminPages {
 		<div class="wrap">
 			<h2><?php esc_html_e("System security");?></h2>
 		</div>
-		<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+		<p>Options to enforce security on your site.</p>
 		
 		<div class="wrap">
+
+
 			<h2><?php esc_html_e("Filesystem status");?></h2>
 			<?php
 			$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
@@ -992,13 +995,13 @@ class PFMS_AdminPages {
 				SELECT path, status, writable_others, original, infected
 				FROM `" . $tablename . "`
 				WHERE status != '' or writable_others = 1
-				ORDER BY status DESC");
+				ORDER BY status DESC ");
 			if (empty($list))
 				$list = array();
 			
 			if (empty($list)) {
 				?>
-				<p><?php esc_html_e("Empty data");?></p>
+				<p><?php esc_html_e("No data available");?></p>
 				<?php
 			}
 			else {
@@ -1041,10 +1044,13 @@ class PFMS_AdminPages {
 							}
 							?>
 							<tr>
-								<td><?php esc_html_e($entry->path);?></td>
+								<td style='font-size: 6px'><?php esc_html_e($entry->path);?></td>
 								<td>
 									<?php
-									echo date_i18n(get_option('date_format'), filemtime($entry->path));
+									if (file_exists($entry->path))
+										echo date_i18n(get_option('date_format'), filemtime($entry->path));
+									else
+										echo "[Missing file]";
 									?>
 								</td>
 								<td><?php esc_html_e($entry->status);?></td>
@@ -1060,7 +1066,7 @@ class PFMS_AdminPages {
 				
 				<script type="text/javascript">
 					jQuery(function() {
-						jQuery('#list_filesystem').scrollTableBody({'rowsToDisplay': 5});
+						jQuery('#list_filesystem').scrollTableBody({'rowsToDisplay': 8});
 					});
 				</script>
 				<?php
@@ -1105,7 +1111,7 @@ class PFMS_AdminPages {
 			}
 			?>
 			
-			<h2><?php esc_html_e("Setup");?></h2>
+			
 			<form method="post" action="options.php">
 				<?php settings_fields('pfmswp-settings-group-system_security');?>
 				<?php $options = get_option('pfmswp-options-system_security');?>
@@ -1337,13 +1343,13 @@ class PFMS_AdminPages {
 					</tr>
 					<tr valign="top">
 						<th scope="row">
-							<?php esc_html_e("Check file hash to the svn files.");?>
+							<?php esc_html_e("Check WP integrity.");?>
 						</th>
 						<td>
 							<fieldset>
 								<legend class="screen-reader-text">
 									<span>
-										<?php esc_html_e("Check file hash to the svn files.");?>
+										<?php esc_html_e("Compares your files with original Wordpress source filess.");?>
 									</span>
 								</legend>
 								<label for="pfmswp-options-system_security[check_filehash_svn]">
@@ -1469,7 +1475,7 @@ class PFMS_AdminPages {
 										checked($options['scan_infected_files'], 1, true);
 										?>
 										/>
-									<?php esc_html_e("Active to scan each 24h in the cron.");?>
+									<?php esc_html_e("Active to search for malicous code. This is a daily check.");?>
 								</label>
 							</fieldset>
 						</td>
@@ -1496,6 +1502,12 @@ class PFMS_AdminPages {
 										/>
 									<?php esc_html_e("Activate the reCaptcha in the login page.");?>
 								</label>
+									<p class="description">
+										<?php
+										esc_html_e("You need to get your free <a href='https://www.google.com/recaptcha/intro/index.html'>ReCapcha keys</a>");
+										?>
+									</p>
+
 							</fieldset>
 							<br />
 							<fieldset>
@@ -1507,7 +1519,7 @@ class PFMS_AdminPages {
 								<label for="pfmswp-options-system_security[site_key]">
 									<p class="description">
 										<?php
-										esc_html_e("Site key.");
+										esc_html_e("Secret key.");
 										?>
 									</p>
 									<input
