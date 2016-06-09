@@ -603,6 +603,33 @@ class PFMS_AdminPages {
 							</fieldset>
 						</td>
 					</tr>
+					<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("API show alert on data newer than X minutes");?>
+						</th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Show alert on data newer than X minutes");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options[api_data_newer_minutes]">
+									<input
+										class="small-text"
+										type="text"
+										name="pfmswp-options[api_data_newer_minutes]"
+										value="<?php echo esc_attr($options['api_data_newer_minutes']);?>"
+										/>
+									<span class="description">
+										<?php
+										esc_html_e("Minutes");
+										?>
+									</span>
+								</label>
+							</fieldset>
+						</td>
+					</tr>
 				</table>
 				<p class="submit">
 					<input

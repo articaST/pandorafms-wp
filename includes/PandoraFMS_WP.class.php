@@ -1353,6 +1353,7 @@ class PandoraFMS_WP {
 		$default_options['email_notifications'] = "";
 		$default_options['api_password'] = "";
 		$default_options['api_ip'] = "";
+		$default_options['api_data_newer_minutes'] = 90;
 		$default_options['email_new_account'] = 1;
 		$default_options['email_user_login'] = 1;
 		$default_options['email_change_email'] = 1;
