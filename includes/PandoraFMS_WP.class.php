@@ -321,6 +321,23 @@ class PandoraFMS_WP {
 			return get_bloginfo('version');
 		}
 	}
+	
+	public static function apirest_admin_user($data) {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		if (!$pfms_wp->check_admin_user_enabled()) {
+			return 1;
+		}
+		else {
+			return 0;
+		}
+	}
+	
+	public static function apirest_upload_code_protect($data) {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		return (int)get_option($pfms_wp->prefix . "installed_htaccess", 0);
+	}
 	//=== END ==== API REST CODE =======================================
 	
 	
@@ -395,6 +412,20 @@ class PandoraFMS_WP {
 			array(
 				'methods' => 'GET',
 				'callback' => array('PandoraFMS_WP', 'apirest_wp_version')
+			)
+		);
+		
+		register_rest_route('pandorafms_wp', '/admin',
+			array(
+				'methods' => 'GET',
+				'callback' => array('PandoraFMS_WP', 'apirest_admin_user')
+			)
+		);
+		
+		register_rest_route('pandorafms_wp', '/upload_code_protect',
+			array(
+				'methods' => 'GET',
+				'callback' => array('PandoraFMS_WP', 'apirest_upload_code_protect')
 			)
 		);
 	}
