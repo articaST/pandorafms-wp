@@ -386,6 +386,29 @@ class PandoraFMS_WP {
 		
 		return $return;
 	}
+	
+	public static function apirest_password_audit($data) {
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$return = array();
+		$return['status'] = 0;
+		$return['users'] = array();
+		
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "audit_users_weak_password";
+		$users = $wpdb->get_results("SELECT user FROM `" . $tablename . "`");
+		if (empty($users)) {
+			$users = array();
+			$return['status'] = 1;
+		}
+		
+		foreach ($users as $user) {
+			$return['users'][] = $user->user;
+		}
+		
+		return $return;
+	}
 	//=== END ==== API REST CODE =======================================
 	
 	
@@ -495,6 +518,13 @@ class PandoraFMS_WP {
 			array(
 				'methods' => 'GET',
 				'callback' => array('PandoraFMS_WP', 'apirest_failed_login_lockout')
+			)
+		);
+		
+		register_rest_route('pandorafms_wp', '/password_audit',
+			array(
+				'methods' => 'GET',
+				'callback' => array('PandoraFMS_WP', 'apirest_password_audit')
 			)
 		);
 	}
