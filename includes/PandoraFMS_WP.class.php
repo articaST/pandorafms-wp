@@ -463,6 +463,33 @@ class PandoraFMS_WP {
 		
 		return $return;
 	}
+	
+	public static function apirest_failed_login($data) {
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$return = array();
+		
+		$user = get_userdata($user_id);
+		
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
+		$users = $wpdb->get_results("
+			SELECT user
+			FROM `" . $tablename . "`
+			WHERE type= 'failed_login' AND
+				timestamp > date_sub(NOW(), INTERVAL 5 MINUTE)");
+		
+		foreach ($rows as $row) {
+			preg_match(
+				"/User \[(.*)\] failed login./",
+				$row->data, $matches);
+			
+			$return[] = $matches[1];
+		}
+		
+		return $return;
+	}
 	//=== END ==== API REST CODE =======================================
 	
 	
@@ -593,6 +620,13 @@ class PandoraFMS_WP {
 			array(
 				'methods' => 'GET',
 				'callback' => array('PandoraFMS_WP', 'apirest_user_login')
+			)
+		);
+		
+		register_rest_route('pandorafms_wp', '/failed_login',
+			array(
+				'methods' => 'GET',
+				'callback' => array('PandoraFMS_WP', 'apirest_failed_login')
 			)
 		);
 	}
@@ -813,8 +847,20 @@ class PandoraFMS_WP {
 		
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
+		
 		$pfms_wp->store_user_login($user_login, false);
 		
+		$return = $wpdb->insert(
+			$tablename,
+			array(
+				'type' => 'failed_login',
+				'data' =>
+					sprintf(
+						esc_sql(__("User [%s] failed login.")),
+						$user_login),
+				'timestamp' => date('Y-m-d H:i:s')),
+			array('%s', '%s', '%s'));
 		
 		$options_system_security = get_option('pfmswp-options-system_security');
 		if ($options_system_security['bruteforce_attack_protection']) {
@@ -830,10 +876,6 @@ class PandoraFMS_WP {
 			set_transient("pfms_wp::bruteforce_attempts", $attempts, DAY_IN_SECONDS);
 			
 			if ($attempts >= $options_system_security['bruteforce_attack_attempts']) {
-				$pfms_wp = PandoraFMS_WP::getInstance();
-				
-				$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
-				
 				$return = $wpdb->insert(
 					$tablename,
 					array(
