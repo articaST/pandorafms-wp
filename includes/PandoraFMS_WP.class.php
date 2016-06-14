@@ -409,6 +409,33 @@ class PandoraFMS_WP {
 		
 		return $return;
 	}
+	
+	public static function apirest_new_account($data) {
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$return = array();
+		
+		$user = get_userdata($user_id);
+		
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
+		$users = $wpdb->get_results("
+			SELECT user
+			FROM `" . $tablename . "`
+			WHERE type= 'user_register' AND
+				timestamp > date_sub(NOW(), INTERVAL 5 MINUTE)");
+		
+		foreach ($rows as $row) {
+			preg_match(
+				"/User \[(.*)\] register./",
+				$row->data, $matches);
+			
+			$return[] = $matches[1];
+		}
+		
+		return $return;
+	}
 	//=== END ==== API REST CODE =======================================
 	
 	
@@ -525,6 +552,13 @@ class PandoraFMS_WP {
 			array(
 				'methods' => 'GET',
 				'callback' => array('PandoraFMS_WP', 'apirest_password_audit')
+			)
+		);
+		
+		register_rest_route('pandorafms_wp', '/new_account',
+			array(
+				'methods' => 'GET',
+				'callback' => array('PandoraFMS_WP', 'apirest_new_account')
 			)
 		);
 	}
