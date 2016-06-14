@@ -712,7 +712,7 @@ class PandoraFMS_WP {
 		$return = $wpdb->insert(
 			$tablename,
 			array(
-				'type' => 'user_login',
+				'type' => 'user_register',
 				'data' =>
 					sprintf(
 						esc_sql(__("User [%s] register.")),
