@@ -70,9 +70,10 @@ add_action('rest_api_init', array('PandoraFMS_WP', 'rest_api_init'));
 
 
 //=== INIT === ANOTHER HOOKS ===========================================
+add_action('plugins_loaded', array('PandoraFMS_WP', 'login_rename_plugins_loaded'), 1);
 add_action('init', array('PandoraFMS_WP', 'init'));
 add_action('admin_init', array('PandoraFMS_WP', 'admin_init'));
 add_action('admin_menu', array('PandoraFMS_WP', 'add_admin_menu_entries'));
-add_action('plugins_loaded', array('PandoraFMS_WP', 'login_rename_plugins_loaded'), 1);
+
 //=== END ==== ANOTHER HOOKS ===========================================
 ?>

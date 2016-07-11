@@ -22,6 +22,7 @@ class PandoraFMS_WP {
 	private $acl_user_menu_entry = "manage_options"; // acl settings
 	private $position_menu_entry = 75; //Under tools
 	private $items_per_page = 25;
+	
 	/*
 	 * DEBUG == 0
 	 *  - The force the cron task execute now.
@@ -632,9 +633,6 @@ class PandoraFMS_WP {
 	}
 	
 	public static function init() {
-		error_log( "Init" );
-		
-		
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		$pfms_wp->check_new_themes();
 		$pfms_wp->check_new_plugins();
@@ -1073,9 +1071,7 @@ class PandoraFMS_WP {
 		curl_close($ch);
 		
 		$json_response = json_decode($response, true);
-		
-		$pfms_wp->debug($json_response);
-		
+				
 		if (isset($json_response['success']) && true !== $json_response['success']) {
 			// Delete the user_login and user_password to stop the login process
 			$user_login = null;
@@ -1417,6 +1413,8 @@ class PandoraFMS_WP {
 		
 		global $pagenow;
 		
+		$request = parse_url( $_SERVER['REQUEST_URI'] );
+		
 		if (is_admin() &&
 			!is_user_logged_in() &&
 			!defined('DOING_AJAX')) {
@@ -1424,16 +1422,15 @@ class PandoraFMS_WP {
 				__( 'You must log in to access the admin area.'));
 		}
 		
-		$request = parse_url( $_SERVER['REQUEST_URI'] );
-		
 		if (
 			$pagenow === 'wp-login.php' &&
 			$request['path'] !==
 				$pfms_wp->user_trailingslashit($request['path']) &&
 			get_option('permalink_structure')
 		) {
+			
 			wp_safe_redirect(
-				$pfms_wp->user_trailingslashit($index_wp) .
+				$pfms_wp->user_trailingslashit($new_url) .
 					(!empty($_SERVER['QUERY_STRING']) ?
 						'?' . $_SERVER['QUERY_STRING'] :
 						''));
@@ -1501,11 +1498,10 @@ class PandoraFMS_WP {
 		global $pagenow;
 		
 		$pfms_wp = PandoraFMS_WP::getInstance();
-		
-		$options = get_option('pfmswp-options-system_security');
-		
+				
 		$request = parse_url( $_SERVER['REQUEST_URI'] );
-		
+		$login_rename = $options['login_rename_page'];
+				
 		if ((
 			strpos($_SERVER['REQUEST_URI'], 'wp-login.php') !== false ||
 			untrailingslashit($request['path']) ===
@@ -1514,13 +1510,13 @@ class PandoraFMS_WP {
 			! is_admin()
 		) {
 			$pfms_wp->wp_login_php = true;
+			
 			$_SERVER['REQUEST_URI'] =
 				$pfms_wp->user_trailingslashit('/' . str_repeat('-/', 10));
 			$pagenow = 'index.php';
 		}
 		elseif (
-			untrailingslashit($request['path']) ===
-				home_url($options['login_rename_page'], 'relative') || (
+			preg_match( '/'.$login_rename.'/', untrailingslashit($request['path'])) || (
 					! get_option( 'permalink_structure' ) &&
 					isset( $_GET[$options['login_rename_page']] ) &&
 					empty( $_GET[$options['login_rename_page']])
