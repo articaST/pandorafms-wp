@@ -34,6 +34,8 @@ class PandoraFMS_WP {
 	public $wp_login_php = false;
 	
 	public $wait_protect_bruteforce_login_seconds = 120;
+	
+	public $name_dir_plugin = '';
 	//=== END ==== ATRIBUTES ===========================================
 	
 	
@@ -1908,7 +1910,7 @@ class PandoraFMS_WP {
 		$return['monitoring']['wordpress_version'] = get_bloginfo('version');
 		$plugins = get_plugins();
 		$return['monitoring']['pandorafms_wp_version'] =
-			$plugins['pandorafms-wp/pandorafms-wp.php']['Version'];
+			$plugins[$pfms_wp->name_dir_plugin . '/pandorafms-wp.php']['Version'];
 		
 		$return['monitoring']['wordpress_sitename'] = get_bloginfo('name');
 		// === System security =========================================

@@ -68,6 +68,11 @@ add_action('cron_clean_logs', array('PandoraFMS_WP', 'cron_clean_logs'));
 add_action('rest_api_init', array('PandoraFMS_WP', 'rest_api_init'));
 //=== END ==== API REST HOOKS ==========================================
 
+//=== INIT === ADD NAME OF DIR PANDORA PLUGIN ==========================
+$pfms_wp = PandoraFMS_WP::getInstance();
+$plugin_path = explode('/' , untrailingslashit(plugin_dir_path(__FILE__)));
+$pfms_wp->name_dir_plugin = array_pop( $plugin_path);
+//=== END === ADD NAME OF DIR PANDORA PLUGIN ===========================
 
 //=== INIT === ANOTHER HOOKS ===========================================
 add_action('plugins_loaded', array('PandoraFMS_WP', 'login_rename_plugins_loaded'), 1);
