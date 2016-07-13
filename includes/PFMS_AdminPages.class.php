@@ -485,6 +485,28 @@ class PFMS_AdminPages {
 									</span>
 								</td>
 							</tr>
+							<tr>
+								<td><?php esc_html_e('Recent brute force attempts in last 24h');?></td>
+								<td>
+									<span>
+										<?php
+											
+											if ($data['monitoring']['brute_force_attempts'] === 0) {
+												?>
+												<img id =""
+													src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="" />
+												<?php
+											}
+											else {
+												?>
+												<img id =""
+													src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="" />
+												<?php
+											}
+											?>
+									</span>
+								</td>
+							</tr>
 						</tbody>
 					</table>
 					<div style="display: none;">
@@ -1549,6 +1571,27 @@ class PFMS_AdminPages {
 										name="pfmswp-options-system_security[secret]"
 										value="<?php echo esc_attr($options['secret']);?>"
 										/>
+								</label>
+							</fieldset>
+						</td>
+					</tr>
+					<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("Time to recent brute force attempts.");?>
+						</th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Scan for infected files.");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options-system_security[h_recent_brute_force]">
+									<input
+										type="text"
+										name="pfmswp-options-system_security[h_recent_brute_force]"
+										value="<?php echo $options['h_recent_brute_force'];?>" />
+									<?php esc_html_e("Active to search for malicous code. This is a daily check.");?>
 								</label>
 							</fieldset>
 						</td>

@@ -310,7 +310,7 @@ class PandoraFMS_WP {
 		}
 		else {
 			$plugins = get_plugins();
-			return $plugins['pandorafms-wp/pandorafms-wp.php']['Version'];
+			return $plugins[$pfms_wp->name_dir_plugin . '/pandorafms-wp.php']['Version'];
 		}
 	}
 	
@@ -1615,6 +1615,7 @@ class PandoraFMS_WP {
 		$default_options['activate_login_recaptcha'] = 0;
 		$default_options['site_key'] = "";
 		$default_options['secret'] = "";
+		$default_options['h_recent_brute_force'] = "";
 		
 		return $default_options;
 	}
@@ -1714,6 +1715,9 @@ class PandoraFMS_WP {
 		if (!isset($options['secret']))
 			$options['secret'] = "";
 		
+		if (!isset($options['h_recent_brute_force']))
+			$options['h_recent_brute_force'] = "";
+		
 		return $options;
 	}
 	
@@ -1790,6 +1794,14 @@ class PandoraFMS_WP {
 		
 		add_submenu_page(
 			"pfms_wp_admin_menu",
+			_("PandoraFMS WP : Google Analytics"),
+			_("Google Analytics"),
+			$pfms_wp->acl_user_menu_entry,
+			"pfms_wp_admin_menu_google_analytics",
+			array("PFMS_AdminPages", "show_google_analytics"));
+		
+		add_submenu_page(
+			"pfms_wp_admin_menu",
 			_("PandoraFMS WP : Access control"),
 			_("Access control"),
 			$pfms_wp->acl_user_menu_entry,
@@ -1839,6 +1851,28 @@ class PandoraFMS_WP {
 				'count' => $matches[2],
 				'time' => $row->timestamp);
 		}
+		
+		return $return;
+	}
+	
+	public function brute_force_attempts($h_recent_brute_force) {
+		global $wpdb;
+		
+		$return = 0;
+		$returned = array();
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "user_stats";
+		$returned = $wpdb->get_results(
+			"SELECT sum(count) AS count
+			FROM `" . $tablename . "`
+			WHERE action = 'login_fail' AND TIMESTAMPDIFF(HOUR, timestamp, now()) < $h_recent_brute_force
+			ORDER BY `timestamp` DESC", ARRAY_A);
+			
+		
+		if (!empty($returned))
+			$return = $returned[0]['count'];
 		
 		return $return;
 	}
@@ -1913,6 +1947,8 @@ class PandoraFMS_WP {
 			$plugins[$pfms_wp->name_dir_plugin . '/pandorafms-wp.php']['Version'];
 		
 		$return['monitoring']['wordpress_sitename'] = get_bloginfo('name');
+
+		$return['monitoring']['brute_force_attempts'] = $pfms_wp->brute_force_attempts($options_system_security['h_recent_brute_force']);
 		// === System security =========================================
 		
 		$return['system_security'] = array();
@@ -2007,7 +2043,7 @@ class PandoraFMS_WP {
 		$sql = "
 			SELECT COUNT(*) AS count
 			FROM `" . $wpdb->prefix . "comments" . "`
-			WHERE TIMESTAMPDIFF(HOUR, comment_date, now()) < 25";
+			WHERE TIMESTAMPDIFF(HOUR, comment_date, now()) < 25 AND comment_approved = 1";
 		
 		$count = $wpdb->get_results($sql);
 		
@@ -2136,7 +2172,7 @@ class PandoraFMS_WP {
 			if ($sha1_remote_file != $store_entry['sha1']) {
 				
 				//~ error_log("no original");
-				
+				$svn_updates[] = $file;
 				$wpdb->update(
 					$tablename,
 					array('original' => "no"),
@@ -2147,6 +2183,15 @@ class PandoraFMS_WP {
 			else {
 				//~ error_log("original");
 			}
+		}
+		
+		if (!empty($svn_updates)) {
+			$message  = sprintf(__('in %s the core files are updated:'), $blog) . "<br>";
+			$message .= sprintf(__('List of updated files: %s'), implode('\r\n\r\n', $svn_updates)) . "<br>";
+			
+			$result = wp_mail($email_to,
+				sprintf(__('[%s] List of core files updated'), $blog),
+				$message);
 		}
 	}
 	
@@ -2220,6 +2265,7 @@ class PandoraFMS_WP {
 						if ($store_entry['sha1'] !== $entry['sha1']) {
 							// Changed
 							
+							$files_updated[] = $entry['path'];
 							$wpdb->update(
 								$tablename,
 								array('status' => "changed"),
@@ -2238,6 +2284,8 @@ class PandoraFMS_WP {
 				
 				if (!$found) {
 					// New
+					
+					$files_new[] = $entry['path'];
 					$value = array(
 						'path' => $entry['path'],
 						'status' => 'new',
@@ -2250,8 +2298,6 @@ class PandoraFMS_WP {
 					$not_changes_filesystem = false;
 				}
 			}
-			
-			
 			
 			// Check the files unpaired because they are deleted files
 			foreach ($store_filesystem as $store_entry) {
@@ -2266,6 +2312,30 @@ class PandoraFMS_WP {
 				
 				$not_changes_filesystem = false;
 			}
+		}
+		
+		$blog = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
+		
+		if (empty($options['email_notifications']))
+			$email_to = get_option('admin_email');
+		else
+			$email_to = $options['email_notifications'];
+		
+		if (!empty($files_updated)) {
+			$message  = sprintf(__('Updated files in %s:'), $blog) . "<br>";
+			$message .= sprintf(__('List of updated files: %s'), implode('\r\n\r\n', $files_updated)) . "<br>";
+			
+			$result = wp_mail($email_to,
+				sprintf(__('[%s] List of updated files'), $blog),
+				$message);
+		}
+		if (!empty($files_new)) {
+			$message  = sprintf(__('New files in %s:'), $blog) . "<br>";
+			$message .= sprintf(__('List of new files: %s'), implode('\r\n\r\n', $files_new)) . "<br>";
+			
+			$result = wp_mail($email_to,
+				sprintf(__('[%s] List of new files'), $blog),
+				$message);
 		}
 		
 		$audit_files['status'] = (int)$not_changes_filesystem;
@@ -2293,7 +2363,7 @@ class PandoraFMS_WP {
 		
 		//Get all users (included the disabled users because they can return to enabled)
 		$users = get_users();
-		
+		$users_weak = array();
 		
 		$not_exists_weak_users = true;
 		foreach ($users as $user) {
@@ -2313,7 +2383,7 @@ class PandoraFMS_WP {
 					$wpdb->insert(
 						$table_user_weak_password,
 						array('user' => $user_login));
-					
+					$users_weak[] = $user_login;
 					break;
 				}
 				else {
@@ -2329,6 +2399,21 @@ class PandoraFMS_WP {
 		$last_execution = time();
 		$audit_password['last_execution'] = $last_execution;
 		
+		$blog = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
+		
+		if (empty($options['email_notifications']))
+			$email_to = get_option('admin_email');
+		else
+			$email_to = $options['email_notifications'];
+		
+		if (!empty($users_weak)) {
+			$message  = sprintf(__('User with weak passwords in %s:'), $blog) . "<br>";
+			$message .= sprintf(__('List users: %s'), implode('\r\n\r\n', $users_weak)) . "<br>";
+			
+			$result = wp_mail($email_to,
+				sprintf(__('[%s] List of user with weak password'), $blog),
+				$message);
+		}
 		update_option($pfms_wp->prefix . "audit_passwords", $audit_password);
 	}
 	
@@ -2456,8 +2541,6 @@ class PandoraFMS_WP {
 		if ($options_system_security['scan_infected_files']) {
 			$pfms_wp->audit_files_infected();
 		}
-		
-		
 	}
 	
 	public static function cron_clean_logs() {
