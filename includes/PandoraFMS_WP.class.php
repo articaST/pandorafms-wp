@@ -2186,8 +2186,8 @@ class PandoraFMS_WP {
 		}
 		
 		if (!empty($svn_updates)) {
-			$message  = sprintf(__('in %s the core files are updated:'), $blog) . "<br>";
-			$message .= sprintf(__('List of updated files: %s'), implode('\r\n\r\n', $svn_updates)) . "<br>";
+			$message  = sprintf(__('in %s the core files are updated:'), $blog) . "\r\n\r\n";
+			$message .= __('List of updated files:') . "\r\n\r\n" . implode(' \r\n\r\n ', $svn_updates) . "\r\n\r\n";
 			
 			$result = wp_mail($email_to,
 				sprintf(__('[%s] List of core files updated'), $blog),
@@ -2322,16 +2322,16 @@ class PandoraFMS_WP {
 			$email_to = $options['email_notifications'];
 		
 		if (!empty($files_updated)) {
-			$message  = sprintf(__('Updated files in %s:'), $blog) . "<br>";
-			$message .= sprintf(__('List of updated files: %s'), implode('\r\n\r\n', $files_updated)) . "<br>";
+			$message  = sprintf(__('Updated files in %s:'), $blog) . "\r\n\r\n";
+			$message .= __('List of updated files: ') . "\r\n\r\n" . implode(" \r\n\r\n ", $files_updated) . "\r\n\r\n";
 			
 			$result = wp_mail($email_to,
 				sprintf(__('[%s] List of updated files'), $blog),
 				$message);
 		}
 		if (!empty($files_new)) {
-			$message  = sprintf(__('New files in %s:'), $blog) . "<br>";
-			$message .= sprintf(__('List of new files: %s'), implode('\r\n\r\n', $files_new)) . "<br>";
+			$message  = sprintf(__('New files in %s:'), $blog) . "\r\n\r\n";
+			$message .= __('List of new files: ') . "\r\n\r\n" . implode(" \r\n\r\n ", $files_new) . "\r\n\r\n";
 			
 			$result = wp_mail($email_to,
 				sprintf(__('[%s] List of new files'), $blog),
@@ -2407,8 +2407,8 @@ class PandoraFMS_WP {
 			$email_to = $options['email_notifications'];
 		
 		if (!empty($users_weak)) {
-			$message  = sprintf(__('User with weak passwords in %s:'), $blog) . "<br>";
-			$message .= sprintf(__('List users: %s'), implode('\r\n\r\n', $users_weak)) . "<br>";
+			$message  = sprintf(__('User with weak passwords in %s:'), $blog) . "\r\n\r\n";
+			$message .= __('List users: ') . "\r\n\r\n" . implode('\r\n\r\n', $users_weak) . "\r\n\r\n";
 			
 			$result = wp_mail($email_to,
 				sprintf(__('[%s] List of user with weak password'), $blog),
