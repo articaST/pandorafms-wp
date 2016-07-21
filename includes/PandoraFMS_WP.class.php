@@ -71,6 +71,9 @@ class PandoraFMS_WP {
 			add_option($pfms_wp->prefix . "audit_passwords", $audit_password);
 		}
 		
+		add_option($pfms_wp->prefix . "ga_google_uid_token", '');
+		add_option($pfms_wp->prefix . "ga_google_token", '');
+		add_option($pfms_wp->prefix . "ga_google_init", true);
 		// The wordpress has the function dbDelta that create (or update
 		// if it created previously).
 		
@@ -773,7 +776,6 @@ class PandoraFMS_WP {
 			"pfmswp-options-monitoring",
 			array("PandoraFMS_WP", "sanitize_options_monitoring"));
 		
-		
 		// Added script
 		wp_enqueue_script('jquery-ui-dialog');
 		wp_enqueue_style("wp-jquery-ui-dialog");
@@ -781,8 +783,6 @@ class PandoraFMS_WP {
 		wp_enqueue_script(
 			'my_custom_script',
 			plugin_dir_url( __FILE__ ) . '../js/jquery.scrollTableBody-1.0.0.js');
-		
-		error_log( "Admin Init" );
 	}
 	
 	public static function show_footer() {
@@ -1798,7 +1798,7 @@ class PandoraFMS_WP {
 			_("Google Analytics"),
 			$pfms_wp->acl_user_menu_entry,
 			"pfms_wp_admin_menu_google_analytics",
-			array("PFMS_AdminPages", "show_google_analytics"));
+			array("PFMS_GoogleAnalytics", "show_google_analytics"));
 		
 		add_submenu_page(
 			"pfms_wp_admin_menu",
