@@ -64,6 +64,7 @@ class PandoraFMS_WP {
 		
 		if (!$installed) {
 			add_option($pfms_wp->prefix . "installed", true);
+			add_option("pfmswp-options", '');
 			
 			$audit_password = array(
 				'last_execution' => null,
@@ -71,9 +72,6 @@ class PandoraFMS_WP {
 			add_option($pfms_wp->prefix . "audit_passwords", $audit_password);
 		}
 		
-		add_option($pfms_wp->prefix . "ga_google_uid_token", '');
-		add_option($pfms_wp->prefix . "ga_google_token", '');
-		add_option($pfms_wp->prefix . "ga_google_init", true);
 		// The wordpress has the function dbDelta that create (or update
 		// if it created previously).
 		
@@ -763,6 +761,10 @@ class PandoraFMS_WP {
 			"pfmswp-settings-group",
 			"pfmswp-options",
 			array("PandoraFMS_WP", "sanitize_options"));
+		register_setting(
+			"pfmswp-settings-google-analytics",
+			"pfmswp-options-ga",
+			array("PandoraFMS_WP", "sanitize_options_google_analytics"));
 		register_setting(
 			"pfmswp-settings-group-access_control",
 			"pfmswp-options-access_control",
@@ -1616,6 +1618,8 @@ class PandoraFMS_WP {
 		$default_options['site_key'] = "";
 		$default_options['secret'] = "";
 		$default_options['h_recent_brute_force'] = "";
+		$default_options['PMFS_ga_google_token'] = '';
+		$default_options['PMFS_ga_google_uid_token_uid'] = '';
 		
 		return $default_options;
 	}
@@ -1631,6 +1635,21 @@ class PandoraFMS_WP {
 		
 		if (!isset($options['show_footer']))
 			$options['show_footer'] = 0;
+		
+		return $options;
+	}
+	
+	public static function sanitize_options_google_analytics($options) {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		if (!is_array($options) || empty($options) || (false === $options))
+			return $pfms_wp->set_default_options();
+		
+		if (!isset($options['PMFS_ga_google_token']))
+			$options['PMFS_ga_google_token'] = '';
+		
+		if (!isset($options['PMFS_ga_google_uid_token_uid']))
+			$options['PMFS_ga_google_uid_token_uid'] = '';
 		
 		return $options;
 	}
@@ -1792,13 +1811,30 @@ class PandoraFMS_WP {
 			"pfms_wp_admin_menu_monitoring",
 			array("PFMS_AdminPages", "show_monitoring"));
 		
-		add_submenu_page(
-			"pfms_wp_admin_menu",
-			_("PandoraFMS WP : Google Analytics"),
-			_("Google Analytics"),
-			$pfms_wp->acl_user_menu_entry,
-			"pfms_wp_admin_menu_google_analytics",
-			array("PFMS_GoogleAnalytics", "show_google_analytics"));
+		$ga_token_ui = get_option('PMFS_ga_google_uid_token_uid');
+		$ga_token = get_option('PMFS_ga_google_token');
+		$pfms_wp->debug('GA TOKEN UI');
+		$pfms_wp->debug($ga_token_ui);
+		$pfms_wp->debug('GA TOKEN');
+		$pfms_wp->debug($ga_token);
+		if ($ga_token || $ga_token_ui) {
+			add_submenu_page(
+				"pfms_wp_admin_menu",
+				_("PandoraFMS WP : Google Analytics Activate"),
+				_("Google Analytics"),
+				$pfms_wp->acl_user_menu_entry,
+				"pfms_wp_admin_menu_google_analytics",
+				array("PFMS_GoogleAnalytics", "show_google_analytics"));
+		}
+		else {
+			add_submenu_page(
+				"pfms_wp_admin_menu",
+				_("PandoraFMS WP : Google Analytics Activate"),
+				_("Google Analytics"),
+				$pfms_wp->acl_user_menu_entry,
+				"pfms_wp_admin_menu_google_analytics_activate",
+				array("PFMS_GoogleAnalytics", "ga_activate"));
+		}
 		
 		add_submenu_page(
 			"pfms_wp_admin_menu",
@@ -1943,6 +1979,7 @@ class PandoraFMS_WP {
 		
 		$return['monitoring']['wordpress_version'] = get_bloginfo('version');
 		$plugins = get_plugins();
+		$pfms_wp->debug($pfms_wp->name_dir_plugin);
 		$return['monitoring']['pandorafms_wp_version'] =
 			$plugins[$pfms_wp->name_dir_plugin . '/pandorafms-wp.php']['Version'];
 		
