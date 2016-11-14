@@ -21,6 +21,12 @@ class PFMS_AdminPages {
 	//=== INIT === SINGLETON CODE ======================================
 	private static $instance = null;
 	
+	public $GOOGLE_ANALYTICATOR_CLIENTID = '306233129774-fecd8o976qcvibndd2htkelbo967vd2h.apps.googleusercontent.com';
+	public $GOOGLE_ANALYTICATOR_CLIENTSECRET = 'eVx0Uqn__0kptR1vWxWrP7qW'; //don't worry - this don't need to be secret in our case
+	public $GOOGLE_ANALYTICATOR_REDIRECT = 'urn:ietf:wg:oauth:2.0:oob';
+	public $GOOGLE_ANALYTICATOR_SCOPE = 'https://www.googleapis.com/auth/analytics';//.readonly
+	
+	
 	public static function getInstance() {
 		if (!self::$instance instanceof self) {
 			self::$instance = new self;
@@ -523,6 +529,9 @@ class PFMS_AdminPages {
 	}
 	
 	public static function show_general_setup() {
+		$pfms_ap = PFMS_AdminPages::getInstance();
+		$pfms = PandoraFMS_WP::getInstance();
+		
 		?>
 		<div class="wrap">
 			<h2><?php esc_html_e("General Setup");?></h2>
