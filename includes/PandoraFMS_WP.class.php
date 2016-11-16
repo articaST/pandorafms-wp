@@ -767,6 +767,10 @@ class PandoraFMS_WP {
 			"pfmswp-options-ga",
 			array("PandoraFMS_WP", "sanitize_options_google_analytics"));
 		register_setting(
+			"pfmswp-settings-group-options-monitoring",
+			"pfmswp-options-monitoring",
+			array("PandoraFMS_WP", "sanitize_options_monitoring"));
+		register_setting(
 			"pfmswp-settings-group-access_control",
 			"pfmswp-options-access_control",
 			array("PandoraFMS_WP", "sanitize_options_access_control"));
@@ -774,10 +778,7 @@ class PandoraFMS_WP {
 			"pfmswp-settings-group-system_security",
 			"pfmswp-options-system_security",
 			array("PandoraFMS_WP", "sanitize_options_system_security"));
-		register_setting(
-			"pfmswp-settings-group-options-monitoring",
-			"pfmswp-options-monitoring",
-			array("PandoraFMS_WP", "sanitize_options_monitoring"));
+
 		
 		// Added script
 		wp_enqueue_script('jquery-ui-dialog');
@@ -1655,6 +1656,18 @@ class PandoraFMS_WP {
 		return $options;
 	}
 	
+	public static function sanitize_options_monitoring($options) {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		if (!is_array($options) || empty($options) || (false === $options))
+			return $pfms_wp->set_default_options();
+		
+		
+		
+		return $options;
+	}
+
+	
 	public static function sanitize_options_access_control($options) {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
@@ -1741,16 +1754,7 @@ class PandoraFMS_WP {
 		return $options;
 	}
 	
-	public static function sanitize_options_monitoring($options) {
-		$pfms_wp = PandoraFMS_WP::getInstance();
-		
-		if (!is_array($options) || empty($options) || (false === $options))
-			return $pfms_wp->set_default_options();
-		
-		
-		
-		return $options;
-	}
+
 	
 	public function debug($var) {
 		$pfms_wp = PandoraFMS_WP::getInstance();
@@ -1804,13 +1808,7 @@ class PandoraFMS_WP {
 			"pfms_wp_admin_menu",
 			array("PFMS_AdminPages", "show_dashboard"));
 		
-		add_submenu_page(
-			"pfms_wp_admin_menu",
-			_("PandoraFMS WP : Monitoring"),
-			_("Monitoring"),
-			$pfms_wp->acl_user_menu_entry,
-			"pfms_wp_admin_menu_monitoring",
-			array("PFMS_AdminPages", "show_monitoring"));
+
 		
 		$ga_token_ui = get_option('PMFS_ga_google_uid_token_uid');
 		$ga_token = get_option('PMFS_ga_google_token');
@@ -1929,6 +1927,9 @@ class PandoraFMS_WP {
 		
 		$return = array();
 		
+
+
+
 		// === Monitoring ==============================================
 		
 		
@@ -1996,6 +1997,9 @@ class PandoraFMS_WP {
 		$return['monitoring']['wordpress_sitename'] = get_bloginfo('name');
 
 		$return['monitoring']['brute_force_attempts'] = $pfms_wp->brute_force_attempts($options_system_security['h_recent_brute_force']);
+
+
+
 		// === System security =========================================
 		
 		$return['system_security'] = array();
@@ -2065,6 +2069,8 @@ class PandoraFMS_WP {
 		
 		return $filesystem;
 	}
+
+
 	
 	//=== INIT === CHECKS ==============================================
 	public function get_count_posts_last_day() {
