@@ -311,7 +311,6 @@ class PandoraFMS_WP {
 		}
 		else {
 			$plugins = get_plugins();
-			$pfms_wp->debug($plugins);
 			return $plugins[$pfms_wp->name_dir_plugin . '/pandorafms-wp.php']['Version'];
 		}
 	}
@@ -1798,7 +1797,7 @@ class PandoraFMS_WP {
 		
 		add_submenu_page(
 			"pfms_wp_admin_menu",
-			_("PandoraFMS WP : Dashboard"), 
+			_("PandoraFMS WP : Dashboard"),
 			_("Dashboard"),
 			$pfms_wp->acl_user_menu_entry,
 			"pfms_wp_admin_menu",
@@ -1814,10 +1813,10 @@ class PandoraFMS_WP {
 		
 		$ga_token_ui = get_option('PMFS_ga_google_uid_token_uid');
 		$ga_token = get_option('PMFS_ga_google_token');
-		//$pfms_wp->debug('GA TOKEN UI');
-		//$pfms_wp->debug($ga_token_ui);
-		//$pfms_wp->debug('GA TOKEN');
-		//$pfms_wp->debug($ga_token);
+		$pfms_wp->debug('GA TOKEN UI');
+		$pfms_wp->debug($ga_token_ui);
+		$pfms_wp->debug('GA TOKEN');
+		$pfms_wp->debug($ga_token);
 		if ($ga_token || $ga_token_ui) {
 			add_submenu_page(
 				"pfms_wp_admin_menu",
@@ -1860,14 +1859,6 @@ class PandoraFMS_WP {
 			$pfms_wp->acl_user_menu_entry,
 			"pfms_wp_admin_menu_general_setup",
 			array("PFMS_AdminPages", "show_general_setup"));
-
-		add_submenu_page(
-			"pfms_wp_admin_menu",
-			_("PandoraFMS WP : Filesystem Status"),
-			_("Filesystem Status"),
-			$pfms_wp->acl_user_menu_entry,
-			"pfms_wp_admin_menu_filesystem_status",
-			array("PFMS_AdminPages", "show_filesystem_status"));
 	}
 	
 	public function get_list_login_lockout() {
@@ -1989,7 +1980,6 @@ class PandoraFMS_WP {
 		$return['monitoring']['wordpress_version'] = get_bloginfo('version');
 		$plugins = get_plugins();
 		$pfms_wp->debug($pfms_wp->name_dir_plugin);
-		$pfms_wp->debug($plugins);
 		$return['monitoring']['pandorafms_wp_version'] =
 			$plugins[$pfms_wp->name_dir_plugin . '/pandorafms-wp.php']['Version'];
 		
