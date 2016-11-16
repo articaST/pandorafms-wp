@@ -1018,91 +1018,6 @@ class PFMS_AdminPages {
 		<div class="wrap">
 
 
-			<h2><?php esc_html_e("Filesystem status");?></h2>
-			<?php
-			$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
-			
-			$list = $wpdb->get_results("
-				SELECT path, status, writable_others, original, infected
-				FROM `" . $tablename . "`
-				WHERE status != '' or writable_others = 1
-				ORDER BY status DESC ");
-			if (empty($list))
-				$list = array();
-			
-			if (empty($list)) {
-				?>
-				<p><?php esc_html_e("No data available");?></p>
-				<?php
-			}
-			else {
-				?>
-				<table id="list_filesystem" class="widefat striped">
-					<thead>
-						<tr>
-							<th><?php esc_html_e("Path");?></th>
-							<th><?php esc_html_e("Date");?></th>
-							<th><?php esc_html_e("Status");?></th>
-							<th><?php esc_html_e("No Writable others");?></th>
-							<th><?php esc_html_e("Original");?></th>
-							<th><?php esc_html_e("Infected");?></th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php
-						foreach ($list as $entry) {
-							if ($entry->writable_others) {
-								$icon = "<img src='" . esc_url(admin_url( 'images/yes.png')) . "' alt='' />";
-							}
-							else {
-								$icon = "<img  src='" . esc_url(admin_url( 'images/no.png')) . "' alt='' />";
-							}
-							
-							$icon_original = "";
-							if ($entry->original == "no") {
-								$icon_original = "<img src='" . esc_url(admin_url( 'images/no.png')) . "' alt='' />";
-							}
-							else {
-								$icon_original = "<img src='" . esc_url(admin_url( 'images/yes.png')) . "' alt='' />";
-							}
-							
-							$icon_infected = "";
-							if ($entry->infected == "yes") {
-								$icon_infected = "<img src='" . esc_url(admin_url( 'images/no.png')) . "' alt='' />";
-							}
-							else {
-								$icon_infected = "<img src='" . esc_url(admin_url( 'images/yes.png')) . "' alt='' />";
-							}
-							?>
-							<tr>
-								<td style='font-size: 6px'><?php esc_html_e($entry->path);?></td>
-								<td>
-									<?php
-									if (file_exists($entry->path))
-										echo date_i18n(get_option('date_format'), filemtime($entry->path));
-									else
-										echo "[Missing file]";
-									?>
-								</td>
-								<td><?php esc_html_e($entry->status);?></td>
-								<td><?php echo $icon;?></td>
-								<td><?php echo $icon_original;?></td>
-								<td><?php echo $icon_infected;?></td>
-							</tr>
-							<?php
-						}
-						?>
-					</tbody>
-				</table>
-				
-				<script type="text/javascript">
-					jQuery(function() {
-						jQuery('#list_filesystem').scrollTableBody({'rowsToDisplay': 8});
-					});
-				</script>
-				<?php
-			}
-			?>
 			<h2><?php esc_html_e("Bruteforce attack logs");?></h2>
 			<?php
 			$list = $pfms_wp->get_list_login_lockout();
@@ -1372,31 +1287,7 @@ class PFMS_AdminPages {
 							</fieldset>
 						</td>
 					</tr>
-					<tr valign="top">
-						<th scope="row">
-							<?php esc_html_e("Check WP integrity.");?>
-						</th>
-						<td>
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("Compares your files with original Wordpress source filess.");?>
-									</span>
-								</legend>
-								<label for="pfmswp-options-system_security[check_filehash_svn]">
-									<input
-										type="checkbox"
-										name="pfmswp-options-system_security[check_filehash_svn]"
-										value="1"
-										<?php
-										checked($options['check_filehash_svn'], 1, true);
-										?>
-										/>
-									<?php esc_html_e("Each 24h (cron) check the file hash of svn files.");?>
-								</label>
-							</fieldset>
-						</td>
-					</tr>
+
 					<tr valign="top">
 						<th scope="row">
 							<?php esc_html_e("Limit login attempts");?>
@@ -1486,31 +1377,7 @@ class PFMS_AdminPages {
 							</fieldset>
 						</td>
 					</tr>
-					<tr valign="top">
-						<th scope="row">
-							<?php esc_html_e("Scan for infected files.");?>
-						</th>
-						<td>
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("Scan for infected files.");?>
-									</span>
-								</legend>
-								<label for="pfmswp-options-system_security[scan_infected_files]">
-									<input
-										type="checkbox"
-										name="pfmswp-options-system_security[scan_infected_files]"
-										value="1"
-										<?php
-										checked($options['scan_infected_files'], 1, true);
-										?>
-										/>
-									<?php esc_html_e("Active to search for malicous code. This is a daily check.");?>
-								</label>
-							</fieldset>
-						</td>
-					</tr>
+
 					<tr valign="top">
 						<th scope="row">
 							<?php esc_html_e("Login recapcha");?>
@@ -1617,6 +1484,222 @@ class PFMS_AdminPages {
 		<?php
 	}
 	
+	public static function show_filesystem_status() {
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();	
+		
+		?>
+
+		<div class="wrap">
+
+
+			<h2><?php esc_html_e("Filesystem Status");?></h2>
+			<?php
+			$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
+			
+			$list = $wpdb->get_results("
+				SELECT path, status, writable_others, original, infected
+				FROM `" . $tablename . "`
+				WHERE status != '' or writable_others = 1
+				ORDER BY status DESC ");
+			if (empty($list))
+				$list = array();
+			
+			if (empty($list)) {
+				?>
+				<p><?php esc_html_e("No data available");?></p>
+				<?php
+			}
+			else {
+				?>
+				<table id="list_filesystem" class="widefat striped">
+					<thead>
+						<tr>
+							<th><?php esc_html_e("Path");?></th>
+							<th><?php esc_html_e("Date");?></th>
+							<th><?php esc_html_e("Status");?></th>
+							<th><?php esc_html_e("No Writable others");?></th>
+							<th><?php esc_html_e("Original");?></th>
+							<th><?php esc_html_e("Infected");?></th>
+						</tr>
+					</thead>
+					<tbody>
+						<?php
+						foreach ($list as $entry) {
+							if ($entry->writable_others) {
+								$icon = "<img src='" . esc_url(admin_url( 'images/yes.png')) . "' alt='' />";
+							}
+							else {
+								$icon = "<img  src='" . esc_url(admin_url( 'images/no.png')) . "' alt='' />";
+							}
+							
+							$icon_original = "";
+							if ($entry->original == "no") {
+								$icon_original = "<img src='" . esc_url(admin_url( 'images/no.png')) . "' alt='' />";
+							}
+							else {
+								$icon_original = "<img src='" . esc_url(admin_url( 'images/yes.png')) . "' alt='' />";
+							}
+							
+							$icon_infected = "";
+							if ($entry->infected == "yes") {
+								$icon_infected = "<img src='" . esc_url(admin_url( 'images/no.png')) . "' alt='' />";
+							}
+							else {
+								$icon_infected = "<img src='" . esc_url(admin_url( 'images/yes.png')) . "' alt='' />";
+							}
+							?>
+							<tr>
+								<td style='font-size: 11px'><?php esc_html_e($entry->path);?></td>
+								<td>
+									<?php
+									if (file_exists($entry->path))
+										echo date_i18n(get_option('date_format'), filemtime($entry->path));
+									else
+										echo "[Missing file]";
+									?>
+								</td>
+								<td><?php esc_html_e($entry->status);?></td>
+								<td><?php echo $icon;?></td>
+								<td><?php echo $icon_original;?></td>
+								<td><?php echo $icon_infected;?></td>
+							</tr>
+							<?php
+						}
+						?>
+					</tbody>
+				</table>
+				
+				<script type="text/javascript">
+					jQuery(function() {
+						jQuery('#list_filesystem').scrollTableBody({'rowsToDisplay': 8});
+					});
+				</script>
+				<?php
+			}
+			?>
+
+
+			<form method="post" action="options.php">
+				<?php settings_fields('pfmswp-settings-group-system_security');?>
+				<?php $options = get_option('pfmswp-options-system_security');?>
+				<table class="form-table">
+					
+		
+		
+					<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("Check WP integrity.");?>
+						</th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Compares your files with original Wordpress source filess.");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options-system_security[check_filehash_svn]">
+									<input
+										type="checkbox"
+										name="pfmswp-options-system_security[check_filehash_svn]"
+										value="1"
+										<?php
+										checked($options['check_filehash_svn'], 1, true);
+										?>
+										/>
+									<?php esc_html_e("Each 24h (cron) check the file hash of svn files.");?>
+								</label>
+							</fieldset>
+						</td>
+					</tr>
+	
+					<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("Black list IPs.");?>
+						</th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Black list IPs.");?>
+									</span>
+								</legend>
+								<p>
+									<textarea
+										name="pfmswp-options-system_security[blacklist_ips]"
+										class="large-text code"
+										rows="10"><?php
+										echo esc_textarea($options['blacklist_ips']);
+										?></textarea>
+								</p>
+							</fieldset>
+							<br />
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Redirect URL if the ip is banned.");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options-system_security[url_redirect_ip_banned]">
+									<p class="description">
+										<?php
+										esc_html_e("Full URL starting with the 'http://' for to send banned ips.");
+										?>
+									</p>
+									<input
+										class="regular-text"
+										type="text"
+										name="pfmswp-options-system_security[url_redirect_ip_banned]"
+										value="<?php echo esc_attr($options['url_redirect_ip_banned']);?>"
+										/>
+								</label>
+							</fieldset>
+						</td>
+					</tr>
+					<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("Scan for infected files.");?>
+						</th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Scan for infected files.");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options-system_security[scan_infected_files]">
+									<input
+										type="checkbox"
+										name="pfmswp-options-system_security[scan_infected_files]"
+										value="1"
+										<?php
+										checked($options['scan_infected_files'], 1, true);
+										?>
+										/>
+									<?php esc_html_e("Active to search for malicous code. This is a daily check.");?>
+								</label>
+							</fieldset>
+						</td>
+					</tr>
+					
+				</table>
+				<p class="submit">
+					<input
+						type="submit" name="submit" id="submit"
+						class="button button-primary"
+						value="<?php esc_attr_e("Save Changes");?>" />
+				</p>
+			</form>
+			
+
+	
+
+
+		</div>
+		<?php
+	}
+
 	private function use_trailing_slashes() {
 		return '/' === substr( get_option( 'permalink_structure' ), -1, 1 );
 	}
