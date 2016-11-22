@@ -118,7 +118,8 @@ class PandoraFMS_WP {
 		$sql = "CREATE TABLE `$tablename` (
 			`id` INT NOT NULL AUTO_INCREMENT,
 			`path` longtext NOT NULL,
-			`writable_others` INT NOT NULL DEFAULT 0,
+			`add_to_blacklist` INT NOT NULL DEFAULT 0,	
+			`writable_others` INT NOT NULL DEFAULT 0,		
 			`type` varchar(60) NOT NULL DEFAULT '',
 			`status` varchar(60) NOT NULL DEFAULT '',
 			`original` varchar(60) NOT NULL DEFAULT '',
@@ -1667,7 +1668,7 @@ class PandoraFMS_WP {
 		return $options;
 	}
 
-	
+
 	public static function sanitize_options_access_control($options) {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
@@ -1750,6 +1751,9 @@ class PandoraFMS_WP {
 		
 		if (!isset($options['h_recent_brute_force']))
 			$options['h_recent_brute_force'] = "";
+
+		if (!isset($options['add_to_blacklist']))
+			$options['add_to_blacklist'] = "";
 		
 		return $options;
 	}
@@ -2025,6 +2029,7 @@ class PandoraFMS_WP {
 		return $return;
 	}
 	
+	// === Filesystem Status =========================================
 	private function get_filesystem_status($directory = null) {
 		$filesystem = array();
 		
@@ -2041,10 +2046,15 @@ class PandoraFMS_WP {
 			
 			$path = realpath($directory . '/' . $entry);
 			$perms = fileperms($path);
-			
+			///$added=0;
+
 			$entry_filesystem = array();
 			
 			$entry_filesystem['path'] = $path;
+			/*$entry_filesystem['add_to_blacklist'] = foreach*/
+			/*$entry_filesystem['add_to_blacklist'] = Si hacen click en el boton vale 1 y sino 0 */
+			//$entry_filesystem['add_to_blacklist'] = $added;
+			
 			$entry_filesystem['writable_others'] = ($perms & 0x0002)? 1 : 0;
 			
 			if ($entry === '.') {
@@ -2069,6 +2079,24 @@ class PandoraFMS_WP {
 		
 		return $filesystem;
 	}
+
+
+	private function update_path_to_blacklist($id_path,$remove_path) {
+	
+
+		global $wpdb; // this is how you get access to the database
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+//$pfms_wp->debug($remove_path);
+
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
+		return (bool) $wpdb->update( $tablename,  array('add_to_blacklist' => (int) $remove_path),array('id'=>$id_path)); //update table
+		//return $wpdb->update( $tablename,  array('add_to_blacklist' => (int) $remove_path),array('id'=>$id_path)); //update table				
+//var_dump($wpdb);
+		//wp_die(); // this is required to terminate immediately and return a proper response	
+
+	} //this function is called by the action ajax_update_black_list and this function updates the field blacklist of the table wp_test_pfms-wp::filesystem
 
 
 	
@@ -2269,6 +2297,7 @@ class PandoraFMS_WP {
 			foreach ($filesystem as $entry) {
 				$value = array(
 					'path' => $entry['path'],
+					'add_to_blacklist' => $entry['add_to_blacklist'],
 					'writable_others' => $entry['writable_others'],
 					'type' => $entry['type'],
 					'status' => 'new',
@@ -2513,7 +2542,8 @@ class PandoraFMS_WP {
 		
 		return empty($user);
 	}
-	
+
+
 	private function check_plugins_pending_update() {
 		
 		$pending_update_plugins = array();
@@ -2700,9 +2730,7 @@ class PandoraFMS_WP {
 			function show_api_rest_plugin() {
 				var dialog_weak_user =
 					jQuery("<div id='dialog_' title='<?php esc_attr_e("API REST Plugin Installation");?>' />")
-						.html('<?php
-						esc_attr_e("The REST API is the newest WordPress API. You can install the JSON REST API plugin. There are plans for the REST API to be included in the core of WordPress, but for now it lives in a plugin.")
-						?>')
+						.html('<?php esc_attr_e("The REST API is the newest WordPress API. You can install the JSON REST API plugin. There are plans for the REST API to be included in the core of WordPress, but for now it lives in a plugin."); ?>')
 						.appendTo("body");
 				
 				dialog_weak_user.dialog({
@@ -2826,6 +2854,7 @@ class PandoraFMS_WP {
 				"json");
 			}
 			
+			//Tabla que se muestra al pinchar dentro de Dashboard, en Monitoring, Filesystem audit
 			function show_files_dialog() {
 				var status = jQuery("#audit_files_status img").attr("id");
 				
@@ -2863,8 +2892,7 @@ class PandoraFMS_WP {
 						var tr = "<tr>";
 						
 						jQuery.each(file, function(i, item) {
-							if ((i == "writable_others") || (i == "original") ||
-								(i == "infected")) {
+							if ((i == "writable_others") || (i == "original") || (i == "infected")) {
 								
 								tr = tr + "<td align='center'>";
 							}
@@ -3035,6 +3063,7 @@ class PandoraFMS_WP {
 		wp_die();
 	}
 	
+	//Tabla que se muestra al pinchar dentro de Dashboard, en Monitoring, Filesystem audit
 	public static function ajax_get_list_audit_files() {
 		global $wpdb;
 		
@@ -3052,6 +3081,7 @@ class PandoraFMS_WP {
 		$return = array();
 		foreach ($filesystem as $entry) {
 			$icon = "";
+
 			if ($entry->writable_others) {
 				$icon = "<img src='" . esc_url(admin_url( 'images/yes.png')) . "' alt='' />";
 			}
@@ -3079,6 +3109,7 @@ class PandoraFMS_WP {
 				'path' => $entry->path,
 				'date' => date_i18n(get_option('date_format'), filemtime($entry->path)),
 				'status' => $entry->status,
+				//'add_to_blacklist' => $id_button
 				'writable_others' => $icon,
 				'original' => $icon_original,
 				'infected' => $icon_original);
@@ -3088,6 +3119,25 @@ class PandoraFMS_WP {
 		
 		wp_die();
 	}
+
+
+	public static function ajax_update_path_to_blacklist() {
+
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$id_path = intval( $_POST['id_path'] );
+		$remove_path = intval ($_POST['remove_path']);
+		echo ('$remove_path='.$remove_path.' '); //para comprobar que cambia
+		//$pfms_wp->debug($_POST);
+		$blacklist = $pfms_wp->update_path_to_blacklist($id_path,$remove_path);
+
+		echo  ('$blacklist='.$blacklist.' ' ); //devuelve true o false segun si ha hecho el update o no 
+	
+		//wp_die(); // this is required to terminate immediately and return a proper response
+
+	} // this function is an action and calls to function update_path_to_blacklist
+
+
 	//=== END ==== AJAX HOOKS CODE =====================================
 }
 ?>

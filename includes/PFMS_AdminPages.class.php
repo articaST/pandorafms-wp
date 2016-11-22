@@ -40,6 +40,8 @@ class PFMS_AdminPages {
 	private function __construct() {
 	}
 	
+
+	//=== ACCESS CONTROL VIEW ====================================
 	public static function print_access_control_list_dashboard() {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
@@ -83,7 +85,9 @@ class PFMS_AdminPages {
 		</script>
 		<?php
 	}
-	
+	//=== END === ACCESS CONTROL VIEW =======================
+
+	//=== DASHBOARD VIEW ====================================
 	public static function show_dashboard() {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		$pfms_ap = PFMS_AdminPages::getInstance();
@@ -527,7 +531,9 @@ class PFMS_AdminPages {
 		</div>
 		<?php
 	}
-	
+	//=== END === DASHBOARD VIEW =============================
+
+	//=== GENERAL SETUP VIEW =================================
 	public static function show_general_setup() {
 		$pfms_ap = PFMS_AdminPages::getInstance();
 		$pfms = PandoraFMS_WP::getInstance();
@@ -673,140 +679,9 @@ class PFMS_AdminPages {
 		</div>
 		<?php
 	}
+	//=== END === GENERAL SETUP VIEW =============================
 	
-	public static function show_monitoring() {
-		global $wpdb;
-		
-		$pfms_wp = PandoraFMS_WP::getInstance();
-		
-		?>
-		<div class="wrap">
-			<h2><?php esc_html_e("Monitoring");?></h2>
-		</div>
-		
-		<div class="wrap">
-			<h2><?php esc_html_e("Comments in last 24h");?></h2>
-			<p>
-				<?php esc_html_e("Total comments");?>
-				<strong><?php echo esc_html($pfms_wp->get_count_comments_last_day());?></strong>
-			</p>
-			<?php
-			
-			$tcomments = $wpdb->prefix . "comments";
-			$tposts = $wpdb->prefix . "posts";
-			$sql = "
-				SELECT COUNT(comments.comment_ID) AS count, posts.post_title AS post,
-					(SELECT comments_date.comment_date
-					FROM `" . $tcomments . "` AS comments_date
-					WHERE comments_date.comment_post_ID = comments.comment_post_ID
-					ORDER BY comments_date.comment_date DESC
-					LIMIT 1) AS date,
-					(SELECT comments_user.comment_author
-					FROM `" . $tcomments . "` AS comments_user
-					WHERE comments_user.comment_post_ID = comments.comment_post_ID
-					ORDER BY comments_user.comment_date DESC
-					LIMIT 1) AS user
-				FROM `" . $tcomments . "` AS comments
-				INNER JOIN `" . $tposts . "` AS posts
-					ON comments.comment_post_ID = posts.ID
-				WHERE TIMESTAMPDIFF(HOUR, comments.comment_date, now()) < 25
-				ORDER BY post ASC";
-			$comments = $wpdb->get_results($sql);
-			
-			if (empty($comments)) {
-				?>
-				<p><strong><?php esc_html_e("Empty list");?></strong></p>
-				<?php
-			}
-			else {
-				?>
-				<table class="widefat striped">
-					<thead>
-						<tr>
-							<th><?php esc_html_e("Post");?></th>
-							<th><?php esc_html_e("Last date/time");?></th>
-							<th><?php esc_html_e("Last commented by");?></th>
-							<th><?php esc_html_e("Total Comments");?></th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php
-						foreach ($comments as $comment) {
-							?>
-							<tr>
-								<td><?php echo esc_html($comment->post);?></td>
-								<td><?php echo esc_html($comment->date);?></td>
-								<td><?php echo esc_html($comment->user);?></td>
-								<td><?php echo esc_html($comment->count);?></td>
-							</tr>
-							<?php
-						}
-						?>
-					</tbody>
-				</table>
-				<?php
-			}
-			?>
-			
-			
-			<h2><?php esc_html_e("Posts in last 24h");?></h2>
-			<p>
-				<?php esc_html_e("Total post");?>
-				<strong><?php echo esc_html($pfms_wp->get_count_posts_last_day());?></strong>
-			</p>
-			<?php
-			
-			$tposts = $wpdb->prefix . "posts";
-			$tusers = $wpdb->prefix . "users";
-			$sql = "
-				SELECT posts.post_title AS title,
-					posts.post_date AS date,
-					(SELECT user_login
-					FROM `" . $tusers . "` AS users
-					WHERE users.ID = posts.post_author) AS user
-				FROM `" . $tposts . "` AS posts
-				WHERE TIMESTAMPDIFF(HOUR, posts.post_date, now()) < 25 AND
-					posts.post_status = 'publish'
-				ORDER BY date DESC";
-			$posts = $wpdb->get_results($sql);
-			
-			if (empty($posts)) {
-				?>
-				<p><strong><?php esc_html_e("Empty list");?></strong></p>
-				<?php
-			}
-			else {
-				?>
-				<table class="widefat striped">
-					<thead>
-						<tr>
-							<th><?php esc_html_e("Post");?></th>
-							<th><?php esc_html_e("Date/Time");?></th>
-							<th><?php esc_html_e("Author");?></th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php
-						foreach ($posts as $post) {
-							?>
-							<tr>
-								<td><?php echo esc_html($post->title);?></td>
-								<td><?php
-									echo esc_html($post->date);?></td>
-								<td><?php echo esc_html($post->user);?></td>
-							</tr>
-							<?php
-						}
-						?>
-					</tbody>
-				</table>
-				<?php
-			}
-			?>
-		</div>
-		<?php
-	}
-	
+	//=== ACCESS CONTROL VIEW ====================================
 	public static function show_access_control() {
 		global $wpdb;
 		
@@ -1002,7 +877,9 @@ class PFMS_AdminPages {
 		</div>
 		<?php
 	}
-	
+	//=== END === ACCESS CONTROL VIEW =============================
+
+	//=== SYSTEM SECURITY VIEW ====================================
 	public static function show_system_security() {
 		global $wpdb;
 		
@@ -1483,7 +1360,10 @@ class PFMS_AdminPages {
 		</div>
 		<?php
 	}
-	
+	//=== END === SYSTEM SECURITY VIEW ==============================
+
+
+	//=== FILESYSTEM STATUS VIEW ====================================
 	public static function show_filesystem_status() {
 		global $wpdb;
 		
@@ -1497,12 +1377,14 @@ class PFMS_AdminPages {
 			<h2><?php esc_html_e("Filesystem Status");?></h2>
 			<?php
 			$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
-			
+
 			$list = $wpdb->get_results("
-				SELECT path, status, writable_others, original, infected
+				SELECT id, path, status, add_to_blacklist, writable_others, original, infected
 				FROM `" . $tablename . "`
-				WHERE status != '' or writable_others = 1
-				ORDER BY status DESC ");
+				WHERE status != '' or writable_others = 1 
+				ORDER BY status DESC "); 
+				//Este where es el que hace que no muestre todos los registros del path
+
 			if (empty($list))
 				$list = array();
 			
@@ -1517,6 +1399,7 @@ class PFMS_AdminPages {
 					<thead>
 						<tr>
 							<th><?php esc_html_e("Path");?></th>
+							<th><?php esc_html_e("Add to blacklist");?></th>
 							<th><?php esc_html_e("Date");?></th>
 							<th><?php esc_html_e("Status");?></th>
 							<th><?php esc_html_e("No Writable others");?></th>
@@ -1527,6 +1410,14 @@ class PFMS_AdminPages {
 					<tbody>
 						<?php
 						foreach ($list as $entry) {
+							if ($entry->add_to_blacklist) {
+							  $icon1 = "<input id='btn_del_".$entry->id."' type='submit' onclick='remove_path_to_blacklist(".$entry->id.",\"" .$entry->path."\")' value='Remove'/>";
+							   $icon1 .= "<input id='btn_add_".$entry->id."' type='submit' style='display:none;' onclick='add_path_to_blacklist(".$entry->id.",\"" .$entry->path."\")' value='Add'/>";
+							}
+							else {
+								$icon1 = "<input id='btn_add_".$entry->id."' type='submit' onclick='add_path_to_blacklist(".$entry->id.",\"" .$entry->path."\")' value='Add'/>";
+							   $icon1 .= "<input id='btn_del_".$entry->id."' type='submit' style='display:none;' onclick='remove_path_to_blacklist(".$entry->id.",\"" .$entry->path."\")' value='Remove'/>";
+							}						
 							if ($entry->writable_others) {
 								$icon = "<img src='" . esc_url(admin_url( 'images/yes.png')) . "' alt='' />";
 							}
@@ -1552,6 +1443,7 @@ class PFMS_AdminPages {
 							?>
 							<tr>
 								<td style='font-size: 11px'><?php esc_html_e($entry->path);?></td>
+								<td><?php echo $icon1;?></td>
 								<td>
 									<?php
 									if (file_exists($entry->path))
@@ -1571,10 +1463,89 @@ class PFMS_AdminPages {
 					</tbody>
 				</table>
 				
-				<script type="text/javascript">
+
+				<script type="text/javascript" >
+
+					//this function is called by the button 'add' and calls the function update_path_to_black_list and adds the path to the textarea
+				    function add_path_to_blacklist(id,path) {
+
+						jQuery(document).ready(function($) {
+
+							var data = {
+								'action': 'update_path_to_blacklist',
+								'id_path': id,
+								'remove_path': 1
+							}; 
+							//console.log(data); //para comprobar lo que se envía
+							jQuery.post(ajaxurl, data, function(response) {
+							
+								//console.log('add-response '+response+' '); //para ver la response
+
+								if(response){
+									//add the path to textarea
+									var add = $('#id_textarea').val();
+									add +=  path + '\n';
+									$('#id_textarea').val(add);
+
+									//hide add button and show remove button
+									$('#btn_add_'+id).hide();
+									$('#btn_del_'+id).show();
+
+								} // si el update ha sido correcto, añade la ruta al textarea
+								else{
+									alert ('No ha sido correcto');
+								}
+
+							}) 
+						})
+
+					} 
+
+					//this function is called by the button 'remove' and calls the function update_path_to_black_list and remove the path to the textarea
+				    function remove_path_to_blacklist(id,path) {
+
+						jQuery(document).ready(function($) {
+
+							var data = {
+								'action': 'update_path_to_blacklist',
+								'id_path': id,
+								'remove_path': 0 
+							}; 
+							//console.log(data); //para comprobar lo que se envía
+							jQuery.post(ajaxurl, data, function(response) {
+							//console.log('del-response '+response+ ' '); //para ver la response
+
+								if(response){
+
+									//hide remove button and show add button
+									$('#btn_del_'+id).hide();						
+									$('#btn_add_'+id).show();
+
+									//remove path from textarea
+									var del = $('#id_textarea').val();
+									var text = new RegExp(path,"g");
+									var replace_path = del.replace(text,'');
+									$('#id_textarea').val(replace_path);
+
+
+											
+
+								} // si el update ha sido correcto, elmina la ruta del textarea
+								else{
+									alert ('No ha sido correcto');
+									//console.log(response); //muestra espacio en blanco
+								}
+
+							}) 
+						})
+
+					} 
+
+					//Funcion para añadir una barra lateral en la tabla. Cambiar por un boton cargar más
 					jQuery(function() {
 						jQuery('#list_filesystem').scrollTableBody({'rowsToDisplay': 8});
 					});
+
 				</script>
 				<?php
 			}
@@ -1616,9 +1587,54 @@ class PFMS_AdminPages {
 	
 					<tr valign="top">
 						<th scope="row">
-							<?php esc_html_e("Black list IPs.");?>
+							<?php esc_html_e("Black list files");?>
 						</th>
 						<td>
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Black List of files for not to be checked");?>
+									</span>
+								</legend>
+								<p>
+									<textarea
+
+										id="id_textarea"
+										name="pfmswp-options-system_security[add_to_blacklist]"
+										class="large-text code"
+										rows="10">
+										<?php
+										
+											$add_bl = $wpdb->get_results("SELECT path FROM `" . $tablename . "`WHERE add_to_blacklist = 1 ");  
+
+											if (empty($add_bl)) {
+												?>
+												<?php esc_html_e("");?>
+								 				<?php
+											}
+											else{
+
+												foreach ($add_bl as $key => $added_bl) {
+													?>
+													<?php echo esc_textarea($added_bl->path); ?>
+								 				<?php
+												}
+											}//adds to textarea all paths that the user has clicked to add to the blacklist
+			
+										?>
+									</textarea>
+								</p>
+							</fieldset>	
+						</td>
+					</tr>
+
+					<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("Black list ips");?>
+						</th>
+							<td>
+
+
 							<fieldset>
 								<legend class="screen-reader-text">
 									<span>
@@ -1699,9 +1715,13 @@ class PFMS_AdminPages {
 		</div>
 		<?php
 	}
+//=== END === FILESYSTEM STATUS VIEW =================================
+
 
 	private function use_trailing_slashes() {
 		return '/' === substr( get_option( 'permalink_structure' ), -1, 1 );
 	}
-}
+
+} // === END === CLASS PFMS_AdminPages
+
 ?>
