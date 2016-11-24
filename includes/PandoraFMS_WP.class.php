@@ -707,6 +707,7 @@ class PandoraFMS_WP {
 		add_action('login_enqueue_scripts', array('PandoraFMS_WP', 'login_js'));
 		add_action('login_form', array('PandoraFMS_WP', 'login_form'));
 		add_action('wp_authenticate', array('PandoraFMS_WP', 'login_authenticate'), 1, 2);
+		//add_action('wp_files', array('PandoraFMS_WP', 'files_modified'), 1, 2);
 		//=== END ==== EVENT HOOKS =====================================
 		
 		if ($options_system_security['upload_htaccess']) {
@@ -897,6 +898,7 @@ class PandoraFMS_WP {
 		error_log("user_login_failed");
 	}
 	
+	//Send an email with each login
 	public static function user_login($user_login) {
 		global $wpdb;
 		
@@ -948,6 +950,7 @@ class PandoraFMS_WP {
 			$message);
 	}
 	
+	//Send an email when any user change the email
 	public static function user_change_email($user_id, $old_user_data) {
 		global $wpdb;
 		
@@ -1326,6 +1329,40 @@ class PandoraFMS_WP {
 		}
 	}
 	
+//Send an email when a file is modified
+	public static function file_modified($path_file, $hash_file) {
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$options = get_option('pfmswp-options');
+		$options = $pfms_wp->sanitize_options($options);
+		
+		$options_access_control = get_option('pfmswp-options-filesystem');
+		$options_access_control = $pfms_wp->sanitize_options_filesystem($options_filesystem);
+		
+
+
+		$table_filesystem =
+			$wpdb->prefix . $pfms_wp->prefix . "filesystem";
+		
+		$check_hash = get_option($pfms_wp->prefix . "check_sha1");
+
+//comparar el sha1 de los archivos LLAMAR A audit_files()
+		//mismo cron que check wp integrity, comprobar cada 24h, pero aqui el email se envia solo cuando algun archivo ha sido cambiado
+
+		$old_files = 0;
+		$new_files = 0;
+		$modified_files = 0;
+		
+
+		$path = get_userdata($path_file);
+		$hash = get_userdata($hash_file);
+		
+	}
+	
+
+
 	private function installed_login_rename() {
 		$plugins = get_plugins();
 		
@@ -1602,6 +1639,7 @@ class PandoraFMS_WP {
 		$default_options['email_change_email'] = 1;
 		$default_options['email_plugin_new'] = 1;
 		$default_options['email_theme_new'] = 1;
+		$default_options['email_files_modified'] = 1;
 		$default_options['enabled_check_admin'] = 0;
 		$default_options['enabled_wordpress_updated'] = 0;
 		$default_options['enabled_plugins_updated'] = 0;
@@ -1685,6 +1723,8 @@ class PandoraFMS_WP {
 			$options['email_plugin_new'] = 0;
 		if (!isset($options['email_theme_new']))
 			$options['email_theme_new'] = 0;
+		if (!isset($options['email_files_modified']))
+			$options['email_files_modified'] = 0;
 		
 		return $options;
 	}
@@ -2046,14 +2086,10 @@ class PandoraFMS_WP {
 			
 			$path = realpath($directory . '/' . $entry);
 			$perms = fileperms($path);
-			///$added=0;
 
 			$entry_filesystem = array();
 			
 			$entry_filesystem['path'] = $path;
-			/*$entry_filesystem['add_to_blacklist'] = foreach*/
-			/*$entry_filesystem['add_to_blacklist'] = Si hacen click en el boton vale 1 y sino 0 */
-			//$entry_filesystem['add_to_blacklist'] = $added;
 			
 			$entry_filesystem['writable_others'] = ($perms & 0x0002)? 1 : 0;
 			
@@ -2081,6 +2117,158 @@ class PandoraFMS_WP {
 	}
 
 
+
+//Esta funcion envia un email con la tabla filesystem status. Es llamada por test_email (boton)
+private function send_test_email(){
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$options = get_option('pfmswp-options');
+		$options = $pfms_wp->sanitize_options($options);
+		
+		$options_access_control = get_option('pfmswp-options-access_control');
+		$options_access_control = $pfms_wp->sanitize_options_access_control($options_access_control);
+ 
+ 		$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
+ 		
+ 		//$pfms_wp->debug('debug de send_test_email');
+
+
+		$blog = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
+		
+		if (empty($options['email_notifications']))
+			$email_to = get_option('admin_email');
+		else
+			$email_to = $options['email_notifications'];
+		
+
+
+		$list = $wpdb->get_results("
+			SELECT id, path, status, add_to_blacklist, writable_others, original, infected
+			FROM `" . $tablename . "`
+			WHERE status != '' or writable_others = 1 
+			ORDER BY status DESC "); 
+			//Este where es el que hace que no muestre todos los registros del path
+
+		if (empty($list))
+			$list = array();
+		
+		if (empty($list)) {
+			
+			echo ' No data available ';
+			
+		}
+		else {
+
+
+		$mensaje  = sprintf(__('List of files changed in %s:'), $blog) . "\r\n\r\n";
+		$mensaje .= '
+			<html>
+				<head>
+					<title>Cambios</title>
+				</head>
+				 
+				<body>
+					<table style="text-align:center;">
+						<thead>
+							<tr style="font-size=14px !important;">
+								<th>Path</th>
+								<th>Date</th>
+								<th>Status</th>
+								<th>No Writable others</th>
+								<th>Original</th>
+								<th>Infected</th>
+							</tr>
+						</thead>
+						<tbody>
+		';
+
+		foreach ($list as $entry) :
+							
+			if ($entry->writable_others) {
+				$icon = "Yes";
+			}
+			else {
+				$icon = "No";
+			}
+			
+			$icon_original = "";
+			if ($entry->original == "no") {
+				$icon_original = "No";
+			}
+			else {
+				$icon_original = "Yes";
+			}
+			
+			$icon_infected = "";
+			if ($entry->infected == "yes") {
+				$icon_infected = "No";
+			}
+			else {
+				$icon_infected = "Yes";
+			}
+
+		$mensaje .=	'
+			<tr>
+				<td>'. $entry->path.'</td>
+				<td>
+		';
+
+
+
+		if (file_exists($entry->path)){
+
+		$mensaje .=	
+			date_i18n(get_option('date_format'), filemtime($entry->path));
+		;
+
+		}
+		else{
+
+		$mensaje .=	
+			"[Missing file]";
+		;
+
+		}
+									
+		$mensaje .=	'
+				</td>
+				<td>'. $entry->status.'</td>
+				<td>'. $icon .'</td>
+				<td>'. $icon_original .'</td>
+				<td>'. $icon_infected .'</td>
+			</tr>
+			';
+
+		endforeach;
+
+
+		$mensaje .=	'
+						</tbody>
+					</table>
+				</body>
+			</html>
+		';
+
+		}//fin else
+
+
+		
+
+		$header = "\r\nContent-type: text/html\r\n"; //Necesario para convertir la tabla en html que entienda el gestor de correo
+
+		$result = wp_mail($email_to, 'The files are changed' ,	$mensaje, $header);
+
+ 		//wp_mail('tatiana.llorente@artica.es','Holaa','Adioss');
+
+
+
+		wp_die(); 
+	}
+
+
+	//this function is called by the action ajax_update_black_list and this function updates the field blacklist of the table wp_test_pfms-wp::filesystem
 	private function update_path_to_blacklist($id_path,$remove_path) {
 	
 
@@ -2096,7 +2284,7 @@ class PandoraFMS_WP {
 //var_dump($wpdb);
 		//wp_die(); // this is required to terminate immediately and return a proper response	
 
-	} //this function is called by the action ajax_update_black_list and this function updates the field blacklist of the table wp_test_pfms-wp::filesystem
+	} 
 
 
 	
@@ -2180,6 +2368,7 @@ class PandoraFMS_WP {
 		}
 	}
 	
+	//Busca y compara para hacer el hasing de ficheros 
 	private function audit_files_svn_repository() {
 		global $wpdb;
 		global $wp_filesystem;
@@ -2200,8 +2389,7 @@ class PandoraFMS_WP {
 		$wordpress_file =
 			$upload_dir . "/wordpress-" . get_bloginfo('version') . ".zip";
 		
-		if ($last_version_downloaded_targz != get_bloginfo('version') ||
-			!is_readable($wordpress_file)) {
+		if ($last_version_downloaded_targz != get_bloginfo('version') || !is_readable($wordpress_file)) {
 			
 			$url_file =
 				"http://wordpress.org/wordpress-" . get_bloginfo('version') . ".zip";
@@ -2406,10 +2594,11 @@ class PandoraFMS_WP {
 		if (!empty($files_updated)) {
 			$message  = sprintf(__('Updated files in %s:'), $blog) . "\r\n\r\n";
 			$message .= __('List of updated files: ') . "\r\n\r\n" . implode(" \r\n\r\n ", $files_updated) . "\r\n\r\n";
+			$message .= $value;
 			
-			$result = wp_mail($email_to,
-				sprintf(__('[%s] List of updated files'), $blog),
-				$message);
+
+			$result = wp_mail($email_to, sprintf(__('[%s] List of updated files'), $blog), $message); //asunto, titulo header wp (blogname), archivos adjuntos 
+			//envia la lista de rutas por email, hay que enviar toda la tabla
 		}
 		if (!empty($files_new)) {
 			$message  = sprintf(__('New files in %s:'), $blog) . "\r\n\r\n";
@@ -2927,6 +3116,17 @@ class PandoraFMS_WP {
 		<?php
 	}
 	
+	//funcion para forzar a enviar un email con los files hayan sido modificados o no. La llama un boton
+	public static function ajax_send_test_email(){
+
+		$pfms_wp = PandoraFMS_WP::getInstance();
+
+ 		$send_email = $pfms_wp->send_test_email();
+ 
+
+	}
+
+
 	public static function ajax_force_cron_audit_files() {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
@@ -2934,6 +3134,7 @@ class PandoraFMS_WP {
 			$pfms_wp->ajax_check_audit_files();
 		}
 		else {
+
 			wp_reschedule_event(time(), 'daily', 'cron_audit_files');
 			
 			$audit_files = get_option($pfms_wp->prefix . "audit_files",
@@ -3125,7 +3326,7 @@ class PandoraFMS_WP {
 
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
-		$id_path = intval( $_POST['id_path'] );
+		$id_path = intval( $_POST['id_path'] ); //pasamos los parametros como variables
 		$remove_path = intval ($_POST['remove_path']);
 		echo ('$remove_path='.$remove_path.' '); //para comprobar que cambia
 		//$pfms_wp->debug($_POST);

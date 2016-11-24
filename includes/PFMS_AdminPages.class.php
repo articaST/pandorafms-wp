@@ -866,6 +866,7 @@ class PFMS_AdminPages {
 							</fieldset>
 						</td>
 					</tr>
+				
 				</table>
 				<p class="submit">
 					<input
@@ -1466,6 +1467,28 @@ class PFMS_AdminPages {
 
 				<script type="text/javascript" >
 
+					//this function is called by the button 'Send test email' and calls the function send_test_email
+					function test_email() {
+
+						jQuery(document).ready(function($) {
+
+							var data = {
+								'action': 'send_test_email'
+							}
+
+							console.log(data);
+
+							jQuery.post(ajaxurl, data, function(response) {
+								console.log('llamada ajax');
+								
+							})
+
+
+						})
+
+					} 
+
+
 					//this function is called by the button 'add' and calls the function update_path_to_black_list and adds the path to the textarea
 				    function add_path_to_blacklist(id,path) {
 
@@ -1699,6 +1722,40 @@ class PFMS_AdminPages {
 						</td>
 					</tr>
 					
+					<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("Email on files list modified");?>
+						</th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Email on files list modified");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options-system_security[check_filehash_svn]">
+									<input
+										type="checkbox"
+										name="pfmswp-options-system_security[check_filehash_svn]"
+										value="1"
+										<?php
+										//checked($options['email_files_modified'], 1, true);
+										checked($options['check_filehash_svn'], 1, true);
+										?>
+										/>
+									<?php esc_html_e("Send email when files list is modified.");?>
+								</label>
+								<!--<a href="#" onclick="test_email();">enlace</a>-->
+								<input
+									type="submit" name="submit" id="submit"
+									class="button button-primary"
+									value="<?php esc_attr_e("Send Test Email");?>" 
+									onclick="test_email()" 
+								/>							<!--En la funcion send_test_email para que fuerce a enviar el email sin que pasen 24h-->
+							</fieldset>
+						</td>
+					</tr>	
+
 				</table>
 				<p class="submit">
 					<input
