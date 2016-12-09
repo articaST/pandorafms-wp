@@ -104,6 +104,7 @@ class PandoraFMS_WP {
 		$tablename = $wpdb->prefix . $pfms_wp->prefix . "user_stats";
 		$sql = "CREATE TABLE `$tablename` (
 			`id` INT NOT NULL AUTO_INCREMENT,
+			`ip_user` varchar(60) NOT NULL DEFAULT '',
 			`user` varchar(60) NOT NULL DEFAULT '',
 			`action` varchar(60) NOT NULL DEFAULT '',
 			`count` INT NOT NULL DEFAULT 0,
@@ -118,7 +119,6 @@ class PandoraFMS_WP {
 		$sql = "CREATE TABLE `$tablename` (
 			`id` INT NOT NULL AUTO_INCREMENT,
 			`path` longtext NOT NULL,
-			`add_to_blacklist` INT NOT NULL DEFAULT 0,	
 			`writable_others` INT NOT NULL DEFAULT 0,		
 			`type` varchar(60) NOT NULL DEFAULT '',
 			`status` varchar(60) NOT NULL DEFAULT '',
@@ -130,6 +130,29 @@ class PandoraFMS_WP {
 		dbDelta($sql);
 	}
 	
+	//funcion que he creado para recoger la ip de los usuarios y guardarla en el campo que he creado ip_user de la tabla user_stats
+	public function get_user_ip($id){
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "user_stats";
+		
+
+		if (!empty($_SERVER['HTTP_CLIENT_IP']))
+			$ip = $_SERVER['HTTP_CLIENT_IP']; //Para IP Compartido
+			return $ip; 
+
+		if (!empty($_SERVER['HTTP_X_FORWARDED_FOR']))
+			$ip = $_SERVER['HTTP_X_FORWARDED_FOR']; //Para IP Proxy
+			return $ip; 
+
+			$ip = $_SERVER['REMOTE_ADDR']; //Para IP Normal
+			return $ip; 
+
+
+	}
+
 	public function get_last_access_control() {
 		global $wpdb;
 		
@@ -153,7 +176,27 @@ class PandoraFMS_WP {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
 		$tablename = $wpdb->prefix . $pfms_wp->prefix . "user_stats";
-		
+
+
+		if (!empty($_SERVER['HTTP_CLIENT_IP'])){
+			$ip = $_SERVER['HTTP_CLIENT_IP']; //Para IP Compartido
+			//return $ip; 
+		}
+		else if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])){
+			$ip = $_SERVER['HTTP_X_FORWARDED_FOR']; //Para IP Proxy
+			//return $ip; 
+		}
+		else if (!empty($_SERVER['REMOTE_ADDR'])){
+			$ip = $_SERVER['REMOTE_ADDR']; //Para IP Normal
+			//return $ip; 
+		}
+		else {
+			$ip = 'unknown';
+		}
+
+
+//::1 is the loopback address in IPv6. Think of it as the IPv6 version of 127.0.0.1.
+
 		
 		if ($login) {
 			$action = 'login_ok';
@@ -202,35 +245,43 @@ class PandoraFMS_WP {
 			}
 		}
 		
+
 		if (empty($actual_stats)) {
 			$actual_stats = array();
 			$actual_stats['user'] = $user_login;
+			$actual_stats['ip_user'] = $ip;
 			$actual_stats['action'] = $action;
 			$actual_stats['count'] = 1;
 			$actual_stats['timestamp'] = date('Y-m-d H:i:s');
-			
+
+
 			$id = $wpdb->insert(
 				$tablename,
 				$actual_stats,
-				array('%s', '%s', '%d', '%s'));
+				array('%s', '%s', '%s','%d', '%s'));
 			$wpdb->flush();
+
+	
 		}
 		else {
 			$id = $actual_stats['id'];
 			unset($actual_stats['id']);
 			unset($actual_stats['unix_timestamp']);
-			
+
 			// Refresh the data
+			$actual_stats['ip_user'] = $ip;
 			$actual_stats['count'] = $actual_stats['count'] + 1;
 			$actual_stats['timestamp'] = date('Y-m-d H:i:s');
 			
+			
 			$wpdb->update(
-				$tablename,
-				$actual_stats,
-				array('id' => $id),
-				array('%s', '%s', '%d', '%s'),
-				array('%d'));
+				$tablename, //tabla
+				$actual_stats, //values
+				array('id' => $id), //where
+				array('%s', '%s', '%s','%d', '%s'), //formats values
+				array('%d')); //formats where
 		}
+
 	}
 	
 	
@@ -357,6 +408,7 @@ class PandoraFMS_WP {
 		return (int)$options_system_security['wp_generator_disable'];
 	}
 	
+
 	public static function apirest_failed_login_lockout($data) {
 		global $wpdb;
 		
@@ -636,11 +688,20 @@ class PandoraFMS_WP {
 			)
 		);
 	}
+
+
+
+
+
+
+
 	
 	public static function init() {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		$pfms_wp->check_new_themes();
 		$pfms_wp->check_new_plugins();
+
+		//$pfms_wp->blacklist_files();//para llamarla al inicio
 		
 		$options_system_security = get_option('pfmswp-options-system_security');
 		
@@ -750,6 +811,8 @@ class PandoraFMS_WP {
 		else {
 			$pfms_wp->deactivate_login_rename();
 		}
+
+		
 	}
 	
 	public static function admin_init() {
@@ -780,6 +843,10 @@ class PandoraFMS_WP {
 			"pfmswp-settings-group-system_security",
 			"pfmswp-options-system_security",
 			array("PandoraFMS_WP", "sanitize_options_system_security"));
+		register_setting(
+			"pfmswp-settings-group-filesystem",
+			"pfmswp-options-filesystem",
+			array("PandoraFMS_WP", "sanitize_options_filesystem"));
 
 		
 		// Added script
@@ -1340,7 +1407,7 @@ class PandoraFMS_WP {
 		
 		$options_access_control = get_option('pfmswp-options-filesystem');
 		$options_access_control = $pfms_wp->sanitize_options_filesystem($options_filesystem);
-		
+		//esta option no existe, no la he creado
 
 
 		$table_filesystem =
@@ -1361,6 +1428,75 @@ class PandoraFMS_WP {
 		
 	}
 	
+
+
+
+	//function for add and remove files of the blacklist files in the textarea of Fylesystem Status
+	public static function blacklist_files() { 
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$options_filesystem = get_option('pfmswp-options-filesystem');
+		$options_filesystem = $pfms_wp->sanitize_options_filesystem($options_filesystem);
+
+		$blacklist_files = $options_filesystem['blacklist_files']; //recoge la ruta escrita en el textarea
+
+
+		$paths_files = array(
+     					'paths_files' => $blacklist_files); 
+
+		add_option("pfmswp-options-filesystem", $paths_files);
+
+
+		$blacklist_files = str_replace("\r", "\n", $blacklist_files);
+		$blacklist_files = explode("\n", $blacklist_files);
+
+		if (empty($blacklist_files))
+			$blacklist_files = array();
+
+
+		$blacklist_files = array_filter($blacklist_files); 
+		//array_filter() devuelve el array filtrado. Como no lleva callback, todas las entradas del array iguales a FALSE serán eliminadas.
+		/*
+		if (array_search("*", $blacklist_files) !== false) {
+			$return = 1;
+		}
+		elseif (array_search($blacklist_files) !== false) {
+			$return = 1;
+		}
+*/
+
+
+		$pfms_wp->check_blacklist_files();
+
+	}
+
+
+// this function is called by blacklist_files() and make the update in the array option
+	private function check_blacklist_files() {
+		global $wpdb;
+
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$options_filesystem = get_option('pfmswp-options-filesystem');
+		$options_filesystem = $pfms_wp->sanitize_options_filesystem($options_filesystem);
+
+
+		$blacklist_files = $options_filesystem['blacklist_files']; //recoge la ruta escrita en el textarea
+
+	
+		$tablename = $wpdb->prefix . "options";
+	
+
+		$paths_files = array(
+     					'paths_files' => $blacklist_files); 
+
+		update_option("pfmswp-options-filesystem", $paths_files);
+
+
+	}
+
 
 
 	private function installed_login_rename() {
@@ -1612,6 +1748,9 @@ class PandoraFMS_WP {
 				
 				$pfms_wp->login_rename_wp_loaded();
 			});
+
+
+
 		// === END ==== Custom hooks ===================================
 		
 		update_option($pfms_wp->prefix . "activated_rename_login",
@@ -1661,6 +1800,10 @@ class PandoraFMS_WP {
 		$default_options['h_recent_brute_force'] = "";
 		$default_options['PMFS_ga_google_token'] = '';
 		$default_options['PMFS_ga_google_uid_token_uid'] = '';
+		$default_options['disable_xmlrpc'] = 0;
+		$default_options['blacklist_files'] = "vacio por defecto";
+		//$default_options['blacklist_files'] = '';
+		
 		
 		return $default_options;
 	}
@@ -1679,6 +1822,7 @@ class PandoraFMS_WP {
 		
 		return $options;
 	}
+	
 	
 	public static function sanitize_options_google_analytics($options) {
 		$pfms_wp = PandoraFMS_WP::getInstance();
@@ -1792,14 +1936,28 @@ class PandoraFMS_WP {
 		if (!isset($options['h_recent_brute_force']))
 			$options['h_recent_brute_force'] = "";
 
-		if (!isset($options['add_to_blacklist']))
-			$options['add_to_blacklist'] = "";
-		
+		if (!isset($options['disable_xmlrpc']))
+			$options['disable_xmlrpc'] = 0;
+
 		return $options;
 	}
 	
 
 	
+	public static function sanitize_options_filesystem($options) {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		if (!is_array($options) || empty($options) || (false === $options))
+			return $pfms_wp->set_default_options();
+		
+		if (!isset($options['blacklist_files']))
+			$options['blacklist_files'] = "";
+		
+		return $options;
+	}
+
+
+
 	public function debug($var) {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
@@ -1951,12 +2109,17 @@ class PandoraFMS_WP {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
 		$tablename = $wpdb->prefix . $pfms_wp->prefix . "user_stats";
+		/*$returned = $wpdb->get_results(
+			"SELECT sum(count) AS count
+			FROM `" . $tablename . "`
+			WHERE action = 'login_fail' AND TIMESTAMPDIFF(HOUR, timestamp, now()) < ".$h_recent_brute_force."
+			ORDER BY `timestamp` DESC", ARRAY_A);*/
 		$returned = $wpdb->get_results(
 			"SELECT sum(count) AS count
 			FROM `" . $tablename . "`
 			WHERE action = 'login_fail' AND TIMESTAMPDIFF(HOUR, timestamp, now()) < $h_recent_brute_force
 			ORDER BY `timestamp` DESC", ARRAY_A);
-			
+		
 		
 		if (!empty($returned))
 			$return = $returned[0]['count'];
@@ -1964,6 +2127,8 @@ class PandoraFMS_WP {
 		return $return;
 	}
 	
+
+	//Submenu Dashboard
 	public function get_dashboard_data() {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
@@ -2043,7 +2208,6 @@ class PandoraFMS_WP {
 		$return['monitoring']['brute_force_attempts'] = $pfms_wp->brute_force_attempts($options_system_security['h_recent_brute_force']);
 
 
-
 		// === System security =========================================
 		
 		$return['system_security'] = array();
@@ -2066,6 +2230,7 @@ class PandoraFMS_WP {
 		$return['system_security']['activated_recaptcha'] =
 			$options_system_security['activate_login_recaptcha'];
 		
+
 		return $return;
 	}
 	
@@ -2085,15 +2250,15 @@ class PandoraFMS_WP {
 				continue;
 			
 			$path = realpath($directory . '/' . $entry);
-			$perms = fileperms($path);
+			$perms = fileperms($path); /*filemers es una funcion que devuelve los permisos de un fichero 
+			como un modo numerico al igual que chmod(), pero este tambien incluye informacion sobre el tipo de fichero como el filename*/
 
 			$entry_filesystem = array();
 			
 			$entry_filesystem['path'] = $path;
 			
-			$entry_filesystem['writable_others'] = ($perms & 0x0002)? 1 : 0;
-			
-			if ($entry === '.') {
+			$entry_filesystem['writable_others'] = ($perms & 0x0002)? 1 : 0; //0x0002 este número es el que otorga permiso de escritura por otros			
+			if ($entry === '.') { //Si en la ruta no hay un punto, es un directorio asique pone type=dir y sha1=vacío
 				$entry_filesystem['type'] = 'dir';
 				$entry_filesystem['sha1'] = '';
 				
@@ -2115,6 +2280,7 @@ class PandoraFMS_WP {
 		
 		return $filesystem;
 	}
+
 
 
 
@@ -2145,11 +2311,11 @@ private function send_test_email(){
 
 
 		$list = $wpdb->get_results("
-			SELECT id, path, status, add_to_blacklist, writable_others, original, infected
+			SELECT id, path, status, writable_others, original, infected
 			FROM `" . $tablename . "`
-			WHERE status != '' or writable_others = 1 
+			WHERE status = 'changed'
 			ORDER BY status DESC "); 
-			//Este where es el que hace que no muestre todos los registros del path
+			//Este where es el que hace que envie solo los archivos que han sido modificados
 
 		if (empty($list))
 			$list = array();
@@ -2178,7 +2344,7 @@ private function send_test_email(){
 								<th>Status</th>
 								<th>No Writable others</th>
 								<th>Original</th>
-								<th>Infected</th>
+								<th>No Infected</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -2187,10 +2353,10 @@ private function send_test_email(){
 		foreach ($list as $entry) :
 							
 			if ($entry->writable_others) {
-				$icon = "Yes";
+				$icon = "No";
 			}
 			else {
-				$icon = "No";
+				$icon = "Yes";
 			}
 			
 			$icon_original = "";
@@ -2220,7 +2386,7 @@ private function send_test_email(){
 		if (file_exists($entry->path)){
 
 		$mensaje .=	
-			date_i18n(get_option('date_format'), filemtime($entry->path));
+			date_i18n(get_option('date_format'), filemtime($entry->path)); //si tiene fecha muestrala y sino pon missing file
 		;
 
 		}
@@ -2268,23 +2434,6 @@ private function send_test_email(){
 	}
 
 
-	//this function is called by the action ajax_update_black_list and this function updates the field blacklist of the table wp_test_pfms-wp::filesystem
-	private function update_path_to_blacklist($id_path,$remove_path) {
-	
-
-		global $wpdb; // this is how you get access to the database
-		
-		$pfms_wp = PandoraFMS_WP::getInstance();
-		
-//$pfms_wp->debug($remove_path);
-
-		$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
-		return (bool) $wpdb->update( $tablename,  array('add_to_blacklist' => (int) $remove_path),array('id'=>$id_path)); //update table
-		//return $wpdb->update( $tablename,  array('add_to_blacklist' => (int) $remove_path),array('id'=>$id_path)); //update table				
-//var_dump($wpdb);
-		//wp_die(); // this is required to terminate immediately and return a proper response	
-
-	} 
 
 
 	
@@ -2304,6 +2453,7 @@ private function send_test_email(){
 		
 		return $count[0]->count;
 	}
+
 	public function get_count_comments_last_day() {
 		global $wpdb;
 		
@@ -2319,6 +2469,8 @@ private function send_test_email(){
 		return $count[0]->count;
 	}
 	
+	//Comprueba si hay archivos infectados
+	//Ckecka si los archivos están infectados, mediante base64_decode, entre otras.
 	private function audit_files_infected() {
 		error_log("audit_files_infected");
 		
@@ -2368,7 +2520,9 @@ private function send_test_email(){
 		}
 	}
 	
+	//funcion para saber si el archivo es Original o no
 	//Busca y compara para hacer el hasing de ficheros 
+	//Checka los archivos con los archivos del repositorio original de la misma version de WP en su web, comprueba el sha1 para saber si es original o no.
 	private function audit_files_svn_repository() {
 		global $wpdb;
 		global $wp_filesystem;
@@ -2464,6 +2618,11 @@ private function send_test_email(){
 		}
 	}
 	
+
+
+//CONCLUSION: Separar todas estas funciones y despues llamarlas desde una general (¿¿cron_audit_files??), y antes de esta hacer el if para comprobar si la ruta está en el textarea.
+
+//crear una condicion que si los archivos están en la black list les ignore y no les checke el audit_files
 	private function audit_files() {
 		global $wpdb;
 		
@@ -2480,27 +2639,30 @@ private function send_test_email(){
 		
 		$not_changes_filesystem = true;
 		
-		if (is_null($audit_files['last_execution'])) {
+
+		//si la ultima ejecucion es null, hace un insert de todos los valores en la bbdd
+		if (is_null($audit_files['last_execution'])) { //si no hay ultima execution es que el archivo es nuevo, por eso hace un insert y no un update
 			// Save the files only
 			foreach ($filesystem as $entry) {
 				$value = array(
 					'path' => $entry['path'],
-					'add_to_blacklist' => $entry['add_to_blacklist'],
 					'writable_others' => $entry['writable_others'],
 					'type' => $entry['type'],
 					'status' => 'new',
-					'sha1' => $entry['sha1']);
+					'sha1' => $entry['sha1']); //para que sean solo files y no dir (creo)
 				
 				$wpdb->insert(
 					$tablename,
 					$value);
 			}
 		}
-		else {
-			// Clean the audit_files table from the last execution
+		else { //cuando cierra?
+			// Clean the audit_files table from the last execution (tabla filesystem)
 			$store_filesystem = $wpdb->get_results("
 				SELECT * FROM `" . $tablename . "`");
 			
+
+			//Foreach, si esta deleted, borrarlo de la bbdd, si esta changed o new, update poniendo el status "".
 			foreach ($store_filesystem as $i => $store_entry) {
 				$store_entry = (array)$store_entry;
 				
@@ -2511,6 +2673,7 @@ private function send_test_email(){
 							array('id' => $store_entry['id']));
 						unset($store_filesystem[$i]);
 						break;
+					case 'altered':
 					case 'changed':
 					case 'new':
 						$wpdb->update(
@@ -2524,8 +2687,13 @@ private function send_test_email(){
 				}
 			}
 			
+
+
+			//Foreach, comprueba el sha1, y si no coinciden, cambia el estado a changed.
 			foreach ($filesystem as $entry) {
 				$found = false;
+
+				//empieza foreach changed
 				foreach ($store_filesystem as $i => $store_entry) {
 					$store_entry = (array)$store_entry;
 					
@@ -2533,7 +2701,8 @@ private function send_test_email(){
 						$found = true;
 						
 						if ($store_entry['sha1'] !== $entry['sha1']) {
-							// Changed
+							
+							// Status Changed
 							
 							$files_updated[] = $entry['path'];
 							$wpdb->update(
@@ -2544,16 +2713,103 @@ private function send_test_email(){
 								array('%d'));
 							
 							$not_changes_filesystem = false;
+
+							//llamar a la funcion que envia un email con la lista de ficheros modificados
+							$this->send_test_email(); 
+
+						}
+						
+						unset($store_filesystem[$i]); //para borrar este array que está vacío en el case (creo) unset destruye una variable especificada
+						
+
+
+						break;
+					}
+				} //fin foreach changed
+
+/*
+				//empieza foreach altered
+				foreach ($store_filesystem as $i => $store_entry) {
+					$store_entry = (array)$store_entry;
+					
+					//comparar con el zip, no con la bbdd
+					$ruta_actual = $entry['path'];
+					//$ruta_almacenada = $store_entry['path']; //en la bbdd
+
+
+					$dir = 'wordpress-4.6.1-es_ES.zip';
+					$zip = zip_open($dir);
+					if ($zip) {
+
+						while($entrada = zip_read($zip)){
+							$ruta_almacenada= zip_entry_name($entrada);
+						}
+
+						zip_close($dir);
+					}
+
+*/
+
+//	pensar si es mejor hacer la expresion regular directamente en la consulta de la BBDD o en el php
+
+/*
+					$patron = array('/wp-admin/', '/wp-includes/', '/wp-content/');
+
+					//$matches = false;
+					foreach ($patron as $pattern){
+
+					  /*if (preg_match($pattern, $ruta_actual, $coincidencias_ruta_actual)){
+							$matches = true;
+							print_r($coincidencias_ruta_actual);
+					  } */
+
+/*					  	$coincide = preg_match($pattern, $ruta_actual, $coincidencias_ruta_actual);
+					  	echo $coincide; //1 coincide, 0 no coincide, FALSE error
+					  	print_r($coincidencias_ruta_actual);
+
+
+						$coincide2 = preg_match($pattern, $ruta_almacenada, $coincidencias_ruta_almacenada);
+						echo $coincide2; //1 coincide, 0 no coincide, FALSE error
+						print_r($coincidencias_ruta_almacenada);
+
+					}//fin foreach patrones
+
+
+
+					if ($coincidencias_ruta_actual === $coincidencias_ruta_almacenada) {
+						$found = true;
+						
+						if ($coincidencias_ruta_almacenada['sha1'] !== $coincidencias_ruta_actual['sha1']) {
+							
+							// Status Altered
+							
+							$files_updated[] = $coincidencias_ruta_actual['path'];
+							$wpdb->update(
+								$tablename,
+								array('status' => "altered"),
+								array('id' => $coincidencias_ruta_almacenada['id']),
+								array('%s'),
+								array('%d'));
+							
+							$not_changes_filesystem = false;
 						}
 						
 						unset($store_filesystem[$i]);
 						
 						break;
 					}
-				}
-				
+				} //fin foreach altered
+
+
+*/
+
+
+
+
+				//Si no encuentra el archivo, pone status new.
 				if (!$found) {
-					// New
+
+					// Status New
 					
 					$files_new[] = $entry['path'];
 					$value = array(
@@ -2567,11 +2823,14 @@ private function send_test_email(){
 					
 					$not_changes_filesystem = false;
 				}
-			}
+			} //fin foreach que engloba changed, (altered) y new
 			
 			// Check the files unpaired because they are deleted files
+
+			//Foreach, Check the files unpaired because they are deleted files y actualiza a deleted.
 			foreach ($store_filesystem as $store_entry) {
-				// Deleted
+				
+				// Status Deleted
 				
 				$wpdb->update(
 					$tablename,
@@ -2581,9 +2840,14 @@ private function send_test_email(){
 					array('%d'));
 				
 				$not_changes_filesystem = false;
-			}
-		}
-		
+			} 
+		} // cierra el else
+
+
+
+
+
+		//envia notificaciones por email avisando de que hay update o new files.
 		$blog = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
 		
 		if (empty($options['email_notifications']))
@@ -2598,7 +2862,7 @@ private function send_test_email(){
 			
 
 			$result = wp_mail($email_to, sprintf(__('[%s] List of updated files'), $blog), $message); //asunto, titulo header wp (blogname), archivos adjuntos 
-			//envia la lista de rutas por email, hay que enviar toda la tabla
+			//envia la lista de rutas por email
 		}
 		if (!empty($files_new)) {
 			$message  = sprintf(__('New files in %s:'), $blog) . "\r\n\r\n";
@@ -2609,12 +2873,21 @@ private function send_test_email(){
 				$message);
 		}
 		
-		$audit_files['status'] = (int)$not_changes_filesystem;
-		$audit_files['last_execution'] = time();
+		$audit_files['status'] = (int)$not_changes_filesystem; //sacará 1 o 0
+		$audit_files['last_execution'] = time(); // mostrará una fecha o missing file si está deleted
 		
 		update_option($pfms_wp->prefix . "audit_files", $audit_files);
-	}
 	
+$pfms_wp->debug($audit_files);
+	} //esto cierra audit files
+	
+
+
+
+
+
+
+
 	private function audit_passwords_strength() {
 		global $wpdb;
 		
@@ -2733,6 +3006,8 @@ private function send_test_email(){
 	}
 
 
+
+
 	private function check_plugins_pending_update() {
 		
 		$pending_update_plugins = array();
@@ -2773,6 +3048,82 @@ private function send_test_email(){
 		return $pending_update_plugins;
 	}
 	
+	//Disable file xmlrpc.php of Wordpress is called from a checkbox
+	public function check_disable_xmlrpc(){
+
+			$pfms_wp = PandoraFMS_WP::getInstance();		
+			$options = get_option('pfmswp-options-system_security');
+
+			$DOCUMENT_ROOT = $_SERVER['DOCUMENT_ROOT'];
+			$htaccess_path= $DOCUMENT_ROOT. '/wordpress/.htaccess';
+								
+			$fwrite = PHP_EOL . PHP_EOL
+				.'# Block WordPress xmlrpc.php requests '. PHP_EOL
+				.'<Files xmlrpc.php> '. PHP_EOL
+				.'order allow,deny '. PHP_EOL
+				.'deny from all '. PHP_EOL
+				.'</Files> '. PHP_EOL;
+			//Nota: PHP_EOL (end of line) introduce un salto de línea en PHP. Mediante la concatenación con un punto forzamos el salto de línea después del texto introducido.	
+				
+			
+			//$hola = $options['disable_xmlrpc'];
+
+			//if ($hola) {
+
+			//if the chekbox is checked, adds the filter to disable xmlrpc and writes the rules to disable it in the .htaccess file too
+			if ($options['disable_xmlrpc']) {
+				//$hola = 'hola';
+				// Disable use XML-RPC
+				add_filter( 'xmlrpc_enabled', '__return_false' ) ; //esto devuelve true 1
+				/* My understanding is that only disable XML-RPC methods that require authentication. 
+				There still may be methods that do not require authentication. */
+
+				// Disable X-Pingback to header
+				add_filter( 'wp_headers', 'disable_x_pingback' );
+
+					function disable_x_pingback( $headers ) {
+						unset( $headers['X-Pingback'] );
+
+					return $headers;
+					}
+	
+
+				$htaccess_file = fopen($htaccess_path, "a");
+
+				fwrite($htaccess_file, $fwrite);
+				//$pfms_wp->debug((string) $fwrite); 
+				
+				fclose($htaccess_file);
+
+			}
+			//if the checkbox is not checked, delete the filter and delete the rules in the .htaccess file
+			else{
+				//Aqui borramos lo que hemos escrito antes en el htaccess y quitamos el filter que habiamos añadido (todo ello comprobando previamente si existe ¿o no hace falta?)
+				//$hola = 'adios'; 
+
+				remove_filter( 'xmlrpc_enabled', '__return_false' ) ; 
+				remove_filter( 'wp_headers', 'disable_x_pingback' );
+
+
+				$htaccess_content_total = file_get_contents ($htaccess_path);
+
+				$htaccess_file = fopen($htaccess_path, "w+");
+				//reemplazar
+				$xmlrpc_remove = str_replace($fwrite, '', $htaccess_content_total);
+				fwrite($htaccess_file, $xmlrpc_remove);
+
+				fclose($htaccess_file);
+				//echo $htaccess_content_total;
+				//$pfms_wp->debug((string) $fwrite); 
+			}
+			
+
+				//$pfms_wp->debug($hola); 
+		
+
+	}
+
+
 	private function check_api_rest_plugin() {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
@@ -3127,6 +3478,16 @@ private function send_test_email(){
 	}
 
 
+
+
+
+
+
+
+
+
+
+
 	public static function ajax_force_cron_audit_files() {
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
@@ -3310,7 +3671,6 @@ private function send_test_email(){
 				'path' => $entry->path,
 				'date' => date_i18n(get_option('date_format'), filemtime($entry->path)),
 				'status' => $entry->status,
-				//'add_to_blacklist' => $id_button
 				'writable_others' => $icon,
 				'original' => $icon_original,
 				'infected' => $icon_original);
@@ -3322,23 +3682,11 @@ private function send_test_email(){
 	}
 
 
-	public static function ajax_update_path_to_blacklist() {
-
-		$pfms_wp = PandoraFMS_WP::getInstance();
-		
-		$id_path = intval( $_POST['id_path'] ); //pasamos los parametros como variables
-		$remove_path = intval ($_POST['remove_path']);
-		echo ('$remove_path='.$remove_path.' '); //para comprobar que cambia
-		//$pfms_wp->debug($_POST);
-		$blacklist = $pfms_wp->update_path_to_blacklist($id_path,$remove_path);
-
-		echo  ('$blacklist='.$blacklist.' ' ); //devuelve true o false segun si ha hecho el update o no 
-	
-		//wp_die(); // this is required to terminate immediately and return a proper response
-
-	} // this function is an action and calls to function update_path_to_blacklist
 
 
 	//=== END ==== AJAX HOOKS CODE =====================================
 }
+
+
+
 ?>

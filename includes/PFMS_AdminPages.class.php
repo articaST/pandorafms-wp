@@ -217,6 +217,7 @@ class PFMS_AdminPages {
 									?>
 								</td>
 							</tr>
+
 						</tbody>
 					</table>
 				</div>
@@ -712,6 +713,7 @@ class PFMS_AdminPages {
 				<thead>
 					<tr>
 						<th><?php esc_html_e("User");?></th>
+						<th><?php esc_html_e("IP");?></th>
 						<th><?php esc_html_e("Action");?></th>
 						<th><?php esc_html_e("Count");?></th>
 						<th><?php esc_html_e("Last time");?></th>
@@ -723,6 +725,7 @@ class PFMS_AdminPages {
 						?>
 						<tr>
 							<td><?php echo esc_html($user->user);?></td>
+							<td><?php echo esc_html($user->ip_user);?></td>
 							<td><?php echo esc_html($user->action);?></td>
 							<td><?php echo esc_html($user->count);?></td>
 							<td><?php echo esc_html($user->timestamp);?></td>
@@ -867,6 +870,52 @@ class PFMS_AdminPages {
 						</td>
 					</tr>
 				
+					<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("Black list ips");?>
+						</th>
+							<td>
+
+
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Black list IPs.");?>
+									</span>
+								</legend>
+								<p>
+									<textarea
+										name="pfmswp-options-system_security[blacklist_ips]"
+										class="large-text code"
+										rows="10"><?php
+										//echo esc_textarea($options['blacklist_ips']);
+										?></textarea>
+								</p>
+							</fieldset>
+							<br />
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Redirect URL if the ip is banned.");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options-system_security[url_redirect_ip_banned]">
+									<p class="description">
+										<?php
+										esc_html_e("Full URL starting with the 'http://' for to send banned ips.");
+										?>
+									</p>
+									<input
+										class="regular-text"
+										type="text"
+										name="pfmswp-options-system_security[url_redirect_ip_banned]"
+										value="<?php //echo esc_attr($options['url_redirect_ip_banned']);?>"
+										/>
+								</label>
+							</fieldset>
+						</td>
+					</tr>
+
 				</table>
 				<p class="submit">
 					<input
@@ -1350,6 +1399,34 @@ class PFMS_AdminPages {
 							</fieldset>
 						</td>
 					</tr>
+					<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("Desactiva el XMLRPC de Wordpress.");?>
+						</th>
+						<td>
+							<fieldset>
+								<legend class="screen-reader-text">
+									<span>
+										<?php esc_html_e("Desactiva el XMLRPC de Wordpress");?>
+									</span>
+								</legend>
+								<label for="pfmswp-options-system_security[disable_xmlrpc]">
+										<input 
+										type="checkbox" 
+										name="pfmswp-options-system_security[disable_xmlrpc]"
+										value="1" 
+										<?php 
+										checked($options['disable_xmlrpc'], 1, true);
+										$pfms_wp->check_disable_xmlrpc();
+
+										?> 
+										/>
+									<?php esc_html_e("Active to disable XMLRPC.");?>
+								</label>
+							</fieldset>
+							<br />
+						</td>
+					</tr>
 				</table>
 				<p class="submit">
 					<input
@@ -1380,11 +1457,15 @@ class PFMS_AdminPages {
 			$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
 
 			$list = $wpdb->get_results("
-				SELECT id, path, status, add_to_blacklist, writable_others, original, infected
+				SELECT id, path, status, writable_others, original, infected 
 				FROM `" . $tablename . "`
-				WHERE status != '' or writable_others = 1 
+				WHERE  path like '%htdocs%' AND status != '' OR writable_others = 1 OR infected = 'yes' 
 				ORDER BY status DESC "); 
-				//Este where es el que hace que no muestre todos los registros del path
+			//FALTA PONER ORIGINAL = NO!!!!!!
+			//AND status != '' OR writable_others = 1 OR original = 'no' OR infected = 'yes' OR add_to_blacklist = 1
+				//Este where es el que hace que no muestre todos los registros del path. Las condiciones son, que muestre la ruta cuando:
+				//tenga algún estado, tenga permisos de escritura por otros, el archivo no sea original o esté infectado. O esté en la blacklist, para poder removerlo
+			//Que la ruta sea dentro de htdocs para que no muestre los archivos de mi pc
 
 			if (empty($list))
 				$list = array();
@@ -1400,30 +1481,22 @@ class PFMS_AdminPages {
 					<thead>
 						<tr>
 							<th><?php esc_html_e("Path");?></th>
-							<th><?php esc_html_e("Add to blacklist");?></th>
-							<th><?php esc_html_e("Date");?></th>
-							<th><?php esc_html_e("Status");?></th>
-							<th><?php esc_html_e("No Writable others");?></th>
-							<th><?php esc_html_e("Original");?></th>
-							<th><?php esc_html_e("Infected");?></th>
+							<th style="text-align: center;"><?php esc_html_e("Date");?></th>
+							<th style="text-align: center;"><?php esc_html_e("Status");?></th>
+							<th style="text-align: center;"><?php esc_html_e("No Writable others");?></th>
+							<th style="text-align: center;"><?php esc_html_e("Original");?></th>
+							<th style="text-align: center;"><?php esc_html_e("No Infected");?></th>
 						</tr>
 					</thead>
 					<tbody>
 						<?php
 						foreach ($list as $entry) {
-							if ($entry->add_to_blacklist) {
-							  $icon1 = "<input id='btn_del_".$entry->id."' type='submit' onclick='remove_path_to_blacklist(".$entry->id.",\"" .$entry->path."\")' value='Remove'/>";
-							   $icon1 .= "<input id='btn_add_".$entry->id."' type='submit' style='display:none;' onclick='add_path_to_blacklist(".$entry->id.",\"" .$entry->path."\")' value='Add'/>";
-							}
-							else {
-								$icon1 = "<input id='btn_add_".$entry->id."' type='submit' onclick='add_path_to_blacklist(".$entry->id.",\"" .$entry->path."\")' value='Add'/>";
-							   $icon1 .= "<input id='btn_del_".$entry->id."' type='submit' style='display:none;' onclick='remove_path_to_blacklist(".$entry->id.",\"" .$entry->path."\")' value='Remove'/>";
-							}						
+					
 							if ($entry->writable_others) {
-								$icon = "<img src='" . esc_url(admin_url( 'images/yes.png')) . "' alt='' />";
+								$icon = "<img src='" . esc_url(admin_url( 'images/no.png')) . "' alt='' />";
 							}
 							else {
-								$icon = "<img  src='" . esc_url(admin_url( 'images/no.png')) . "' alt='' />";
+								$icon = "<img  src='" . esc_url(admin_url( 'images/yes.png')) . "' alt='' />";
 							}
 							
 							$icon_original = "";
@@ -1436,16 +1509,18 @@ class PFMS_AdminPages {
 							
 							$icon_infected = "";
 							if ($entry->infected == "yes") {
-								$icon_infected = "<img src='" . esc_url(admin_url( 'images/no.png')) . "' alt='' />";
+								$icon_infected = "<img src='" . esc_url(admin_url( 'images/no.png')) . "' alt='no infected' />";
 							}
 							else {
-								$icon_infected = "<img src='" . esc_url(admin_url( 'images/yes.png')) . "' alt='' />";
+								$icon_infected = "<img src='" . esc_url(admin_url( 'images/yes.png')) . "' alt='infected' />";
 							}
+
+
+
 							?>
 							<tr>
 								<td style='font-size: 11px'><?php esc_html_e($entry->path);?></td>
-								<td><?php echo $icon1;?></td>
-								<td>
+								<td style="text-align: center;"> 
 									<?php
 									if (file_exists($entry->path))
 										echo date_i18n(get_option('date_format'), filemtime($entry->path));
@@ -1453,10 +1528,10 @@ class PFMS_AdminPages {
 										echo "[Missing file]";
 									?>
 								</td>
-								<td><?php esc_html_e($entry->status);?></td>
-								<td><?php echo $icon;?></td>
-								<td><?php echo $icon_original;?></td>
-								<td><?php echo $icon_infected;?></td>
+								<td style="text-align: center;"><?php esc_html_e($entry->status);?></td>
+								<td style="text-align: center;"><?php echo $icon;?></td>
+								<td style="text-align: center;"><?php echo $icon_original;?></td>
+								<td style="text-align: center;"><?php echo $icon_infected;?></td>
 							</tr>
 							<?php
 						}
@@ -1489,80 +1564,18 @@ class PFMS_AdminPages {
 					} 
 
 
-					//this function is called by the button 'add' and calls the function update_path_to_black_list and adds the path to the textarea
-				    function add_path_to_blacklist(id,path) {
-
-						jQuery(document).ready(function($) {
-
-							var data = {
-								'action': 'update_path_to_blacklist',
-								'id_path': id,
-								'remove_path': 1
-							}; 
-							//console.log(data); //para comprobar lo que se envía
-							jQuery.post(ajaxurl, data, function(response) {
-							
-								//console.log('add-response '+response+' '); //para ver la response
-
-								if(response){
-									//add the path to textarea
-									var add = $('#id_textarea').val();
-									add +=  path + '\n';
-									$('#id_textarea').val(add);
-
-									//hide add button and show remove button
-									$('#btn_add_'+id).hide();
-									$('#btn_del_'+id).show();
-
-								} // si el update ha sido correcto, añade la ruta al textarea
-								else{
-									alert ('No ha sido correcto');
-								}
-
-							}) 
-						})
-
-					} 
-
-					//this function is called by the button 'remove' and calls the function update_path_to_black_list and remove the path to the textarea
-				    function remove_path_to_blacklist(id,path) {
-
-						jQuery(document).ready(function($) {
-
-							var data = {
-								'action': 'update_path_to_blacklist',
-								'id_path': id,
-								'remove_path': 0 
-							}; 
-							//console.log(data); //para comprobar lo que se envía
-							jQuery.post(ajaxurl, data, function(response) {
-							//console.log('del-response '+response+ ' '); //para ver la response
-
-								if(response){
-
-									//hide remove button and show add button
-									$('#btn_del_'+id).hide();						
-									$('#btn_add_'+id).show();
-
-									//remove path from textarea
-									var del = $('#id_textarea').val();
-									var text = new RegExp(path,"g");
-									var replace_path = del.replace(text,'');
-									$('#id_textarea').val(replace_path);
 
 
-											
 
-								} // si el update ha sido correcto, elmina la ruta del textarea
-								else{
-									alert ('No ha sido correcto');
-									//console.log(response); //muestra espacio en blanco
-								}
 
-							}) 
-						})
 
-					} 
+
+
+
+
+
+
+
 
 					//Funcion para añadir una barra lateral en la tabla. Cambiar por un boton cargar más
 					jQuery(function() {
@@ -1578,6 +1591,12 @@ class PFMS_AdminPages {
 			<form method="post" action="options.php">
 				<?php settings_fields('pfmswp-settings-group-system_security');?>
 				<?php $options = get_option('pfmswp-options-system_security');?>
+
+				<?php settings_fields('pfmswp-settings-group-filesystem');?>
+				<?php $options_filesystem = get_option('pfmswp-options-filesystem');
+					  $options_filesystem = $pfms_wp->sanitize_options_filesystem($options_filesystem);
+				?>
+
 				<table class="form-table">
 					
 		
@@ -1623,79 +1642,20 @@ class PFMS_AdminPages {
 									<textarea
 
 										id="id_textarea"
-										name="pfmswp-options-system_security[add_to_blacklist]"
+										name="pfmswp-options-filesystem[blacklist_files]"
 										class="large-text code"
 										rows="10">
 										<?php
-										
-											$add_bl = $wpdb->get_results("SELECT path FROM `" . $tablename . "`WHERE add_to_blacklist = 1 ");  
-
-											if (empty($add_bl)) {
-												?>
-												<?php esc_html_e("");?>
-								 				<?php
-											}
-											else{
-
-												foreach ($add_bl as $key => $added_bl) {
-													?>
-													<?php echo esc_textarea($added_bl->path); ?>
-								 				<?php
-												}
-											}//adds to textarea all paths that the user has clicked to add to the blacklist
-			
+										echo esc_textarea($options_filesystem['blacklist_files']);					
 										?>
 									</textarea>
 								</p>
+
 							</fieldset>	
 						</td>
 					</tr>
 
-					<tr valign="top">
-						<th scope="row">
-							<?php esc_html_e("Black list ips");?>
-						</th>
-							<td>
 
-
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("Black list IPs.");?>
-									</span>
-								</legend>
-								<p>
-									<textarea
-										name="pfmswp-options-system_security[blacklist_ips]"
-										class="large-text code"
-										rows="10"><?php
-										echo esc_textarea($options['blacklist_ips']);
-										?></textarea>
-								</p>
-							</fieldset>
-							<br />
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("Redirect URL if the ip is banned.");?>
-									</span>
-								</legend>
-								<label for="pfmswp-options-system_security[url_redirect_ip_banned]">
-									<p class="description">
-										<?php
-										esc_html_e("Full URL starting with the 'http://' for to send banned ips.");
-										?>
-									</p>
-									<input
-										class="regular-text"
-										type="text"
-										name="pfmswp-options-system_security[url_redirect_ip_banned]"
-										value="<?php echo esc_attr($options['url_redirect_ip_banned']);?>"
-										/>
-								</label>
-							</fieldset>
-						</td>
-					</tr>
 					<tr valign="top">
 						<th scope="row">
 							<?php esc_html_e("Scan for infected files.");?>
@@ -1778,6 +1738,9 @@ class PFMS_AdminPages {
 	private function use_trailing_slashes() {
 		return '/' === substr( get_option( 'permalink_structure' ), -1, 1 );
 	}
+
+
+
 
 } // === END === CLASS PFMS_AdminPages
 
