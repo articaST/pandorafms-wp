@@ -1443,12 +1443,6 @@ class PandoraFMS_WP {
 		$blacklist_files = $options_filesystem['blacklist_files']; //recoge la ruta escrita en el textarea
 
 
-		$paths_files = array(
-     					'paths_files' => $blacklist_files); 
-
-		add_option("pfmswp-options-filesystem", $paths_files);
-
-
 		$blacklist_files = str_replace("\r", "\n", $blacklist_files);
 		$blacklist_files = explode("\n", $blacklist_files);
 
@@ -1492,7 +1486,7 @@ class PandoraFMS_WP {
 		$paths_files = array(
      					'paths_files' => $blacklist_files); 
 
-		update_option("pfmswp-options-filesystem", $paths_files);
+		update_option("pfmswp-options-filesystem", $paths_files); //si no existe la option, la crea
 
 
 	}
@@ -1801,8 +1795,7 @@ class PandoraFMS_WP {
 		$default_options['PMFS_ga_google_token'] = '';
 		$default_options['PMFS_ga_google_uid_token_uid'] = '';
 		$default_options['disable_xmlrpc'] = 0;
-		$default_options['blacklist_files'] = "vacio por defecto";
-		//$default_options['blacklist_files'] = '';
+		$default_options['blacklist_files'] = '';
 		
 		
 		return $default_options;
@@ -2622,6 +2615,8 @@ private function send_test_email(){
 
 //CONCLUSION: Separar todas estas funciones y despues llamarlas desde una general (¿¿cron_audit_files??), y antes de esta hacer el if para comprobar si la ruta está en el textarea.
 
+//comprobar si los archivos estan en el textarea o no, antes de realizar cada una de las diferentes funciones de checkeo/scaneo
+
 //crear una condicion que si los archivos están en la black list les ignore y no les checke el audit_files
 	private function audit_files() {
 		global $wpdb;
@@ -2656,11 +2651,68 @@ private function send_test_email(){
 					$value);
 			}
 		}
-		else { //cuando cierra?
+		else { 
 			// Clean the audit_files table from the last execution (tabla filesystem)
+
+
+			$options_filesystem = get_option('pfmswp-options-filesystem');
+			$options_filesystem = $pfms_wp->sanitize_options_filesystem($options_filesystem);
+
+
 			$store_filesystem = $wpdb->get_results("
 				SELECT * FROM `" . $tablename . "`");
-			
+				//WHERE path != $options_filesystem
+
+			//HACER AQUI LA COMPROBACION DE SI LOS FICHEROS ESTAN EN LA BLACKLIST O NO
+			/*
+
+			$options_filesystem = get_option('pfmswp-options-filesystem');
+			$options_filesystem = $pfms_wp->sanitize_options_filesystem($options_filesystem);
+
+
+			$consulta_path = SELECT path FROM `wp_test_pfms-wp::filesystem`;
+
+
+			$busqueda = array_search($consulta_path, $options_filesystem);
+
+			if ($busqueda === true){
+				//si es verdadero no ejecutes pero SOLO para esos archivos
+			}
+			else{
+				ejecuta la funcion
+				(aqui meteria todos los foreach de abajo)
+			}
+
+			*/
+
+
+
+
+
+/*
+					$patron = array('/wp-admin/', '/wp-includes/', '/wp-content/');
+
+					//$matches = false;
+					foreach ($patron as $pattern){
+
+					  /*if (preg_match($pattern, $ruta_actual, $coincidencias_ruta_actual)){
+							$matches = true;
+							print_r($coincidencias_ruta_actual);
+					  } */
+
+/*					  	$coincide = preg_match($pattern, $ruta_actual, $coincidencias_ruta_actual);
+					  	echo $coincide; //1 coincide, 0 no coincide, FALSE error
+					  	print_r($coincidencias_ruta_actual);
+
+
+						$coincide2 = preg_match($pattern, $ruta_almacenada, $coincidencias_ruta_almacenada);
+						echo $coincide2; //1 coincide, 0 no coincide, FALSE error
+						print_r($coincidencias_ruta_almacenada);
+
+					}//fin foreach patrones
+
+*/
+
 
 			//Foreach, si esta deleted, borrarlo de la bbdd, si esta changed o new, update poniendo el status "".
 			foreach ($store_filesystem as $i => $store_entry) {
