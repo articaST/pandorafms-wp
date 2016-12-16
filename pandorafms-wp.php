@@ -23,6 +23,8 @@ require_once(plugin_dir_path(__FILE__) . "/includes/PFMS_AdminPages.class.php");
 require_once(plugin_dir_path(__FILE__) . "/includes/PFMS_Widget_Dashboard.class.php");
 require_once(plugin_dir_path(__FILE__) . "/includes/PFMS_Footer.class.php");
 require_once(plugin_dir_path(__FILE__) . "/includes/PFMS_GoogleAnalytics.class.php");
+//require_once(plugin_dir_path(__FILE__) . "/includes/PFMS_ApiRest.class.php");
+//require_once(plugin_dir_path(__FILE__) . "/includes/PFMS_Hooks.class.php");
 
 require_once(ABSPATH . "wp-admin/includes/class-wp-upgrader.php");
 require_once(ABSPATH . "wp-admin/includes/file.php");

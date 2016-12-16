@@ -1458,8 +1458,8 @@ class PFMS_AdminPages {
 
 			$list = $wpdb->get_results("
 				SELECT id, path, status, writable_others, original, infected 
-				FROM `" . $tablename . "`
-				WHERE  path like '%htdocs%' AND status != '' OR writable_others = 1 OR infected = 'yes' 
+				FROM `$tablename`
+				WHERE  status != '' OR writable_others = 1 OR infected = 'yes' 
 				ORDER BY status DESC "); 
 			//FALTA PONER ORIGINAL = NO!!!!!!
 			//AND status != '' OR writable_others = 1 OR original = 'no' OR infected = 'yes' OR add_to_blacklist = 1
@@ -1519,7 +1519,8 @@ class PFMS_AdminPages {
 
 							?>
 							<tr>
-								<td style='font-size: 11px'><?php esc_html_e($entry->path);?></td>
+								<td style='font-size: 11px'><?php esc_html_e($entry->path);?></td> 
+								<!-- ¿Mostrar solo los paths que se están escaneando? ¿O marcarlos como no escaneados en un campo de la tabla (la que veo, no la bbdd)? -->
 								<td style="text-align: center;"> 
 									<?php
 									if (file_exists($entry->path))
@@ -1640,15 +1641,12 @@ class PFMS_AdminPages {
 								</legend>
 								<p>
 									<textarea
-
 										id="id_textarea"
 										name="pfmswp-options-filesystem[blacklist_files]"
 										class="large-text code"
-										rows="10">
-										<?php
-										echo esc_textarea($options_filesystem['blacklist_files']);					
-										?>
-									</textarea>
+										rows="10"><?php 
+										echo esc_textarea($options_filesystem['blacklist_files']);
+										?></textarea>
 								</p>
 
 							</fieldset>	

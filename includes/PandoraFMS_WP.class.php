@@ -1443,9 +1443,6 @@ class PandoraFMS_WP {
 		$blacklist_files = $options_filesystem['blacklist_files']; //recoge la ruta escrita en el textarea
 
 
-		$blacklist_files = str_replace("\r", "\n", $blacklist_files);
-		$blacklist_files = explode("\n", $blacklist_files);
-
 		if (empty($blacklist_files))
 			$blacklist_files = array();
 
@@ -1478,6 +1475,12 @@ class PandoraFMS_WP {
 
 
 		$blacklist_files = $options_filesystem['blacklist_files']; //recoge la ruta escrita en el textarea
+
+		//NO QUIERO QUE GUARDE ESPACIOS EN LA BBDD
+		//Ahora mismo guarda las rutas en la bbdd tal cual lo escriba en el textarea
+
+		//$blacklist_files = str_replace("\n", ",", $blacklist_files); 
+		//$blacklist_files = explode(",", $blacklist_files);
 
 	
 		$tablename = $wpdb->prefix . "options";
@@ -2631,12 +2634,34 @@ private function send_test_email(){
 				'status' => null));
 		
 		$filesystem = $pfms_wp->get_filesystem_status();
-		
 		$not_changes_filesystem = true;
 		
+		$store_filesystem = $wpdb->get_results("
+			SELECT * FROM `" . $tablename . "`");
+
+		$options_filesystem = get_option('pfmswp-options-filesystem');
+		$options_filesystem = $pfms_wp->sanitize_options_filesystem($options_filesystem); // muestra el array con indice blacklist_files donde esta la ruta
+		
+		$blacklist_string = $options_filesystem['blacklist_files']; //es un string. Es identico a $blacklist_string = implode(",", $options_filesystem);
+		$blacklist_array = explode(PHP_EOL, $blacklist_string);
+
+
+
+		// Ojo, me sigue metiendo un ^M detras hay que quitarlo, lo quito reemplazandolo.
+		foreach ($blacklist_array as $key => $value) {
+			$value = str_replace(PHP_EOL, '', $value); //PHP_EOL El símbolo 'Fin De Línea' correcto de la plataforma en uso. Is the same of \r\n or \n depending on the OS.
+			//$value = array_values(array_filter(explode("\n", str_replace("\r", '', $value))));
+			//$value =preg_replace( "/\r|\n/", "", $value );
+		}
+
+		//Ojo, en este punto puede tener elementos en el array que on cadena vacia, esos los verificaremos antes de compararlos.
+
 
 		//si la ultima ejecucion es null, hace un insert de todos los valores en la bbdd
 		if (is_null($audit_files['last_execution'])) { //si no hay ultima execution es que el archivo es nuevo, por eso hace un insert y no un update
+			
+			$incluir = 1;
+
 			// Save the files only
 			foreach ($filesystem as $entry) {
 				$value = array(
@@ -2646,73 +2671,81 @@ private function send_test_email(){
 					'status' => 'new',
 					'sha1' => $entry['sha1']); //para que sean solo files y no dir (creo)
 				
-				$wpdb->insert(
+
+				foreach ($blacklist_array as $key => $value) {
+					if ($value != ""){ 
+						if (strpos($entry['path'], $value) !== FALSE)
+							$incluir = 0;
+					}
+				}
+
+				if ($incluir == 1){
+					$wpdb->insert(
 					$tablename,
 					$value);
+				} else {
+					//traza
+
+				}
+
+				$incluir = 1;
 			}
 		}
-		else { 
-			// Clean the audit_files table from the last execution (tabla filesystem)
+		else {
+
+			$incluir = 1;
+		
+
+			foreach ($blacklist_array as  $value) {
+
+				foreach ($store_filesystem as $key => $entry) {
+
+	
+					$value = str_ireplace("\x0D", "", $value);// SOLUCIONADO EL PROBLEMA CON ^M !!!!!!!
+					//$path = $entry['path']; 
+					$path = $entry->path; 
+					
+					if ($value != "" ){ //si el indice del array está vacío lo ignora 
+
+						$pos = strpos($path, $value); //(diferencia entre mayusculas y minusculas porque es ireplace) 
+
+						if ( $pos === false){ 
+
+							$store_entry = (array)$entry;
+							switch ($store_entry['status']) {
+								case 'deleted':
+									$wpdb->delete(
+										$tablename,
+										array('id' => $store_entry['id']));
+									unset($store_filesystem[$key]);
+									break;
+								case 'altered':
+								case 'changed':
+								case 'new':
+									$wpdb->update(
+										$tablename,
+										array('status' => ""),
+										array('id' => $store_entry['id']),
+										array('%s'),
+										array('%d'));
+									$store_filesystem[$key]->status = "";
+									break;
+							}
 
 
-			$options_filesystem = get_option('pfmswp-options-filesystem');
-			$options_filesystem = $pfms_wp->sanitize_options_filesystem($options_filesystem);
+						}
+						else{
+							$store_filesystem[$key]->status = 'skyped';
+						}		
 
+					}
 
-			$store_filesystem = $wpdb->get_results("
-				SELECT * FROM `" . $tablename . "`");
-				//WHERE path != $options_filesystem
+				}			
 
-			//HACER AQUI LA COMPROBACION DE SI LOS FICHEROS ESTAN EN LA BLACKLIST O NO
-			/*
-
-			$options_filesystem = get_option('pfmswp-options-filesystem');
-			$options_filesystem = $pfms_wp->sanitize_options_filesystem($options_filesystem);
-
-
-			$consulta_path = SELECT path FROM `wp_test_pfms-wp::filesystem`;
-
-
-			$busqueda = array_search($consulta_path, $options_filesystem);
-
-			if ($busqueda === true){
-				//si es verdadero no ejecutes pero SOLO para esos archivos
 			}
-			else{
-				ejecuta la funcion
-				(aqui meteria todos los foreach de abajo)
-			}
 
-			*/
-
-
-
-
-
+	
 /*
-					$patron = array('/wp-admin/', '/wp-includes/', '/wp-content/');
-
-					//$matches = false;
-					foreach ($patron as $pattern){
-
-					  /*if (preg_match($pattern, $ruta_actual, $coincidencias_ruta_actual)){
-							$matches = true;
-							print_r($coincidencias_ruta_actual);
-					  } */
-
-/*					  	$coincide = preg_match($pattern, $ruta_actual, $coincidencias_ruta_actual);
-					  	echo $coincide; //1 coincide, 0 no coincide, FALSE error
-					  	print_r($coincidencias_ruta_actual);
-
-
-						$coincide2 = preg_match($pattern, $ruta_almacenada, $coincidencias_ruta_almacenada);
-						echo $coincide2; //1 coincide, 0 no coincide, FALSE error
-						print_r($coincidencias_ruta_almacenada);
-
-					}//fin foreach patrones
-
-*/
-
 
 			//Foreach, si esta deleted, borrarlo de la bbdd, si esta changed o new, update poniendo el status "".
 			foreach ($store_filesystem as $i => $store_entry) {
@@ -2739,8 +2772,7 @@ private function send_test_email(){
 				}
 			}
 			
-
-
+*/
 			//Foreach, comprueba el sha1, y si no coinciden, cambia el estado a changed.
 			foreach ($filesystem as $entry) {
 				$found = false;
@@ -2752,6 +2784,11 @@ private function send_test_email(){
 					if ($entry['path'] === $store_entry['path']) {
 						$found = true;
 						
+						if($store_entry['status'] == 'skyped'){
+							unset($store_filesystem[$i]);
+							continue;
+						}
+
 						if ($store_entry['sha1'] !== $entry['sha1']) {
 							
 							// Status Changed
@@ -2769,97 +2806,29 @@ private function send_test_email(){
 							//llamar a la funcion que envia un email con la lista de ficheros modificados
 							$this->send_test_email(); 
 
+
+
+
+
+
+
+
+
+
+
+
 						}
 						
 						unset($store_filesystem[$i]); //para borrar este array que está vacío en el case (creo) unset destruye una variable especificada
 						
-
-
 						break;
 					}
 				} //fin foreach changed
 
-/*
-				//empieza foreach altered
-				foreach ($store_filesystem as $i => $store_entry) {
-					$store_entry = (array)$store_entry;
-					
-					//comparar con el zip, no con la bbdd
-					$ruta_actual = $entry['path'];
-					//$ruta_almacenada = $store_entry['path']; //en la bbdd
-
-
-					$dir = 'wordpress-4.6.1-es_ES.zip';
-					$zip = zip_open($dir);
-					if ($zip) {
-
-						while($entrada = zip_read($zip)){
-							$ruta_almacenada= zip_entry_name($entrada);
-						}
-
-						zip_close($dir);
-					}
-
-*/
-
-//	pensar si es mejor hacer la expresion regular directamente en la consulta de la BBDD o en el php
-
-/*
-					$patron = array('/wp-admin/', '/wp-includes/', '/wp-content/');
-
-					//$matches = false;
-					foreach ($patron as $pattern){
-
-					  /*if (preg_match($pattern, $ruta_actual, $coincidencias_ruta_actual)){
-							$matches = true;
-							print_r($coincidencias_ruta_actual);
-					  } */
-
-/*					  	$coincide = preg_match($pattern, $ruta_actual, $coincidencias_ruta_actual);
-					  	echo $coincide; //1 coincide, 0 no coincide, FALSE error
-					  	print_r($coincidencias_ruta_actual);
-
-
-						$coincide2 = preg_match($pattern, $ruta_almacenada, $coincidencias_ruta_almacenada);
-						echo $coincide2; //1 coincide, 0 no coincide, FALSE error
-						print_r($coincidencias_ruta_almacenada);
-
-					}//fin foreach patrones
-
-
-
-					if ($coincidencias_ruta_actual === $coincidencias_ruta_almacenada) {
-						$found = true;
-						
-						if ($coincidencias_ruta_almacenada['sha1'] !== $coincidencias_ruta_actual['sha1']) {
-							
-							// Status Altered
-							
-							$files_updated[] = $coincidencias_ruta_actual['path'];
-							$wpdb->update(
-								$tablename,
-								array('status' => "altered"),
-								array('id' => $coincidencias_ruta_almacenada['id']),
-								array('%s'),
-								array('%d'));
-							
-							$not_changes_filesystem = false;
-						}
-						
-						unset($store_filesystem[$i]);
-						
-						break;
-					}
-				} //fin foreach altered
-
-
-*/
-
-
-
+$pfms_wp->debug('aqui1:  '.$found);
 
 				//Si no encuentra el archivo, pone status new.
-				if (!$found) {
+				if ($found === false) {
 
 					// Status New
 					
@@ -2867,6 +2836,7 @@ private function send_test_email(){
 					$value = array(
 						'path' => $entry['path'],
 						'status' => 'new',
+						'type' => $entry['type'],
 						'sha1' => $entry['sha1']);
 					
 					$wpdb->insert(
@@ -2878,7 +2848,7 @@ private function send_test_email(){
 			} //fin foreach que engloba changed, (altered) y new
 			
 			// Check the files unpaired because they are deleted files
-
+$pfms_wp->debug('aqui2:  '.$found);
 			//Foreach, Check the files unpaired because they are deleted files y actualiza a deleted.
 			foreach ($store_filesystem as $store_entry) {
 				
@@ -2893,10 +2863,11 @@ private function send_test_email(){
 				
 				$not_changes_filesystem = false;
 			} 
+			$pfms_wp->debug('aqui3');
 		} // cierra el else
 
 
-
+$pfms_wp->debug('aqui4');
 
 
 		//envia notificaciones por email avisando de que hay update o new files.
@@ -2931,6 +2902,7 @@ private function send_test_email(){
 		update_option($pfms_wp->prefix . "audit_files", $audit_files);
 	
 $pfms_wp->debug($audit_files);
+
 	} //esto cierra audit files
 	
 
