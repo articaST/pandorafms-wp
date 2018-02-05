@@ -676,12 +676,12 @@ class PandoraFMS_WP {
 	public static function show_message_version_wp() {		
 		$pfms_wp = PandoraFMS_WP::getInstance();
 			
-		if( substr(get_bloginfo('version'), 0, -2) < '4.6' ){
+		if( substr(get_bloginfo('version'), 0, 3) < '4.6' ){
     	    echo '<div id="message" class="notice notice-warning is-dismissible">	   
         			<p>To use the Wordpress API REST, you need the version 4.6 as a minimum.</p>
         	     </div>';
 	    }
-	    elseif ( substr(get_bloginfo('version'), 0, -2) < '4.7' ){
+	    elseif ( substr(get_bloginfo('version'), 0, 3) < '4.7' ){
 	    	echo '<div id="message" class="notice notice-warning is-dismissible">
         			<p>To use the Wordpress API REST, you need to install the plugin <a href="https://es.wordpress.org/plugins/rest-api/">WP REST API (Version 2)</a> </p>
         	     </div>';
