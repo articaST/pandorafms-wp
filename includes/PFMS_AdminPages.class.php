@@ -1,6 +1,6 @@
 <?php
 /*
-Copyright (c) 2017-2017 Artica Soluciones Tecnologicas
+Copyright (c) 2021 Artica PFMS 
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -21,13 +21,7 @@ require_once($plugin_dir_path . "pagination.class.php");
 class PFMS_AdminPages {
 	
 	//=== INIT === SINGLETON CODE ======================================
-	private static $instance = null;
-	
-	public $GOOGLE_ANALYTICATOR_CLIENTID = '306233129774-fecd8o976qcvibndd2htkelbo967vd2h.apps.googleusercontent.com';
-	public $GOOGLE_ANALYTICATOR_CLIENTSECRET = 'eVx0Uqn__0kptR1vWxWrP7qW'; //don't worry - this don't need to be secret in our case
-	public $GOOGLE_ANALYTICATOR_REDIRECT = 'urn:ietf:wg:oauth:2.0:oob';
-	public $GOOGLE_ANALYTICATOR_SCOPE = 'https://www.googleapis.com/auth/analytics';//.readonly
-	
+	private static $instance = null;	
 	
 	public static function getInstance() {
 		if (!self::$instance instanceof self) {
@@ -98,249 +92,23 @@ class PFMS_AdminPages {
 		$data = $pfms_wp->get_dashboard_data();
 		?>
 		<div class="wrap">
-			<h2><?php esc_html_e("Monitoring dashboard");?></h2>
+			<h2><?php esc_html_e("Pandora FMS WP Monitoring dashboard");?></h2>
 
 			<div id="col-container">		
-				<div id="col-right">
-					<div class="col-wrap">					
-						<div class="card">
-							<h2 class="title"><?php esc_html_e("Access Control");?></h2>
-							<?php
-							$pfms_ap->print_access_control_list_dashboard();
-							?>
-							<br/>
-							<table class="widefat striped">
-								<thead>
-									<tr>
-										<th><?php esc_html_e("Control item");?></th>
-										<th><?php esc_html_e("Status");?></th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr>
-										<td><?php esc_html_e("Login page protection");?></td>
-										<td>
-											<?php
-											if ($data['access_control']['activate_login_rename']) { 
-												?>
-												<img src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="yes" />
-												<?php
-											}
-											else {
-												?>
-												<a href="#" onclick="show_activated_rename_login();">
-													<img src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="no" />
-												</a>
-												<?php
-											}
-											?>
-										</td>
-									</tr>
-									<tr>
-										<td><?php esc_html_e("Login page protected by reCaptcha");?></td>
-										<td>
-											<?php
-											if ( ($data['access_control']['activated_recaptcha'] == '1')
-												&& ($data['access_control']['site_key'] != '') && ($data['access_control']['secret'] != '') ) {
-												?>
-												<img src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="yes" />
-												<?php
-											}
-											else {
-												?>
-												<img src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="no" />
-												<?php
-											}
-											?>
-										</td>
-									</tr>
-
-								</tbody>
-							</table>
-						</div>			
-						<div class="card">
-							<h2 class="title"><?php esc_html_e("System Security");?></h2>
-							<table class="widefat striped">
-								<thead>
-									<tr>
-										<th><?php esc_html_e("Control item");?></th>
-										<th><?php esc_html_e("Status");?></th>
-									</tr>
-								</thead>
-								<tbody>
-									<tr>
-										<td><?php esc_html_e("Malicious PHP code upload protection");?></td>
-										<td>
-											<?php
-											if ($data['system_security']['protect_upload_php_code']) {
-												?>
-												<img src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="yes" />
-												<?php
-											}
-											else {
-												?>
-												<img src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="no" />
-												<?php
-											}
-											?>
-										</td>
-									</tr>
-									<tr>
-										<td><?php esc_html_e("Robots.txt security enhancement");?></td>
-										<td>
-											<?php
-											if ($data['system_security']['installed_robot_txt']) {
-												?>
-												<img src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="yes" />
-												<?php
-											}
-											else {
-												?>
-												<img src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="no" />
-												<?php
-											}
-											?>
-										</td>
-									</tr>
-									<tr>
-										<td><?php esc_html_e("WP generator disabled");?></td>
-										<td>
-											<?php
-											if ($data['system_security']['wp_generator_disable']) {
-												?>
-												<img src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="yes" />
-												<?php
-											}
-											else {
-												?>
-												<img src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="no" />
-												<?php
-											}
-											?>
-										</td>
-									</tr>									
-								</tbody>
-							</table>
-						</div>				
-					</div><!-- /col-wrap -->
-				</div><!-- /col-right -->
-				<?php $options_access_control = get_option('pfmswp-options-access_control'); ?>
 				<?php $options = get_option('pfmswp-options');?>
-				<div id="col-left">
+				
 					<div class="col-wrap">
-						<div class="card">
+						<div class="card_pfms">
 							<h2 class="title"><?php esc_html_e("Monitoring");?></h2>
 							<table class="widefat striped">
 								<thead>
 									<tr>
 										<th><?php esc_html_e("Monitored item");?></th>
 										<th><?php esc_html_e("Status");?></th>
+
 									</tr>
 								</thead>
 								<tbody>
-									<?php
-									if ($data['monitoring']['enabled_check_admin']) {
-									?>
-										<tr>
-											<td><?php esc_html_e('Default admin user check');?></td>
-											<td>
-												<a href="javascript: check_admin_user_enabled();">
-													<div id="admin_user_enabled">
-														<?php
-														if ($data['monitoring']['check_admin']) {
-															?>
-															<img id ="ajax_result_ok"
-																src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="yes" />
-															<?php
-														}
-														else {
-															?>
-															<img id ="ajax_result_fail"
-																src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="no" />
-															<?php
-														}
-														?>
-													</div>
-												</a>
-											</td>
-										</tr>
-									<?php
-									}
-									?>
-									<tr>
-										<td><?php esc_html_e('Password strength audit');?></td>
-										<td>
-											<a href="#" onclick="show_weak_user_dialog();">
-											<span id="audit_password_status">
-												<?php
-												if ($data['monitoring']['audit_password']['status']) {
-													?>
-													<img id ="ajax_result_ok"
-														src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="yes" />
-													<?php
-												}
-												else {
-													?>
-													<img id ="ajax_result_fail"
-														src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="no" />
-													<?php
-												}
-												?>
-											</span>
-											</a>
-											<br />
-											<a href="javascript: force_cron_audit_password();" style="font-size: 10px;">
-												<span id="audit_password_last_execute">
-													<?php
-													if (empty($data['monitoring']['audit_password']['last_execution'])) {
-														esc_html_e('Never execute');
-													}
-													else {
-														echo esc_html(
-															date_i18n(
-																get_option('date_format'), $data['monitoring']['audit_password']['last_execution']));
-													}
-													?>
-												</span>
-											</a>
-										</td>
-									</tr>
-									<tr>
-										<td><?php esc_html_e('Filesystem audit');?></td>
-										<td>
-											<a href="#" onclick="show_files_dialog();">
-											<span id="audit_files_status">
-												<?php
-												if ($data['monitoring']['filesystem_audit']) {
-													?>
-													<img id ="ajax_result_ok" src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="yes" />
-													<?php
-												}
-												else {
-													?>
-													<img id ="ajax_result_fail" src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="no" />
-													<?php
-												}
-												?>
-											</span>
-											</a>
-											<br />
-											<a href="javascript: force_cron_audit_files();" style="font-size: 10px;">
-												<span id="audit_files_last_execute">
-													<?php
-													if (empty($data['monitoring']['audit_files']['last_execution'])) {
-														esc_html_e('Never execute');
-													}
-													else {
-														echo esc_html(
-															date_i18n(
-																get_option('date_format'), $data['monitoring']['audit_files']['last_execution']));
-													}
-													?>
-												</span>
-											</a>
-										</td>
-									</tr>
 									<tr>
 										<td><?php esc_html_e('New Coments in last 24h');?></td>
 										<td>
@@ -360,82 +128,80 @@ class PFMS_AdminPages {
 											</span>
 										</td>
 									</tr>
-									<?php
-									if ($data['monitoring']['enabled_wordpress_updated']) {
-									?>
-										<tr>
-											<td><?php esc_html_e('Wordpress code updated');?></td>
-											<td>
-												<span id="wordpress_is_updated">
-													<?php
-													if ($data['monitoring']['wordpress_updated']) {
-														?>
-														<img src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="yes" />
-														<?php
-													}
-													else {
-														?>
-														<img src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="no" />
-														<?php
-													}
+	<tr>
+		<td><?php esc_html_e('Total users');?></td>
+		<td>
+			<span>
+				<?php echo esc_html($pfms_wp->get_user_count()); ?>
+			</span>
+		</td>
+	</tr>
+									<tr>
+										<td><?php esc_html_e('Wordpress code updated');?></td>
+										<td>
+											<span id="wordpress_is_updated">
+												<?php
+												if ($data['monitoring']['wordpress_updated']) {
 													?>
-												</span>
-											</td>
-										</tr>
-									<?php
-									}									
-									if ($data['monitoring']['enabled_plugins_updated']) {
-									?>
-										<tr>
-											<td><?php esc_html_e('Plugins code updated');?></td>
-											<td>
-												<span>
-													<img id ="ajax_result_loading_plugins_are_updated" style="display: none;"
-														src="<?php echo esc_url( admin_url( 'images/spinner.gif' ) ); ?>" alt="" />
-													<img id ="ajax_result_ok_plugins_are_updated"
-														style="display: none;"
-														src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="yes" />
-													<span id ="ajax_result_fail_plugins_are_updated" style="display: none;">
-														<img src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="no" />
-														<a href="#" onclick="check_plugins_pending_update();" style="font-size: 10px;">
-															<?php esc_html_e("Show");?>
-														</a>
-													</span>
+													<img src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="yes" />
 													<?php
-													if ($data['monitoring']['plugins_updated']) {
-														?>
-														<script type="text/javascript">
-															jQuery(document).ready(function($) {
-																jQuery("#ajax_result_fail_plugins_are_updated")
-																	.hide();
-																jQuery("#ajax_result_ok_plugins_are_updated")
-																	.show();
-															});
-														</script>
-														<?php
-													}
-													else {
-														?>
-														<script type="text/javascript">
-															jQuery(document).ready(function($) {
-																jQuery("#ajax_result_ok_plugins_are_updated")
-																	.hide();
-																jQuery("#ajax_result_fail_plugins_are_updated")
-																	.show();
-															});
-														</script>
-														<?php
-													}
+												}
+												else {
 													?>
+													<img src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="no" />
+													<?php
+												}
+												?>
+											</span>
+										</td>
+									</tr>
+									<tr>
+										<td><?php esc_html_e('Plugins code updated');?></td>
+										<td>
+											<span>
+												<img id ="ajax_result_loading_plugins_are_updated" style="display: none;"
+													src="<?php echo esc_url( admin_url( 'images/spinner.gif' ) ); ?>" alt="" />
+												<img id ="ajax_result_ok_plugins_are_updated"
+													style="display: none;"
+													src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="yes" />
+												<span id ="ajax_result_fail_plugins_are_updated" style="display: none;">
+													<img src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="no" />
+													<a href="#" onclick="check_plugins_pending_update();" style="font-size: 10px;">
+														<?php esc_html_e("Show");?>
+													</a>
 												</span>
-											</td>
-										</tr>
-									<?php
-									}
-									?>
+												<?php
+												if ($data['monitoring']['plugins_updated']) {
+													?>
+													<script type="text/javascript">
+														jQuery(document).ready(function($) {
+															jQuery("#ajax_result_fail_plugins_are_updated")
+																.hide();
+															jQuery("#ajax_result_ok_plugins_are_updated")
+																.show();
+														});
+													</script>
+													<?php
+												}
+												else {
+													?>
+													<script type="text/javascript">
+														jQuery(document).ready(function($) {
+															jQuery("#ajax_result_ok_plugins_are_updated")
+																.hide();
+															jQuery("#ajax_result_fail_plugins_are_updated")
+																.show();
+														});
+													</script>
+													<?php
+												}
+												?>
+											</span>
+										</td>
+									</tr>
 									<tr>
 										<td><?php esc_html_e('API Rest enabled');?></td>
-										<td>											
+										<td>	
 											<span id="api_rest_plugin">
 												<?php
 												if ($data['monitoring']['api_rest_plugin']) {
@@ -455,6 +221,105 @@ class PFMS_AdminPages {
 											</span>											
 										</td>
 									</tr>
+	
+
+
+
+<tr>
+	<td><?php esc_html_e('New themes installed recently');?></td>
+	<td>
+		<span>
+
+<?php		
+	if ($pfms_wp->api_new_themes() == 1) {												
+		?>
+		<img src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="yes" />
+		<?php
+	}
+	else {
+		?>
+		<img src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="no" />
+		 <i>Check audit records</i>
+		<?php
+	}
+?>
+		</span>
+	</td>
+</tr>
+
+<tr>
+	<td><?php esc_html_e('New plugins installed recently');?></td>
+	<td>
+		<span>
+
+<?php		
+	if ($pfms_wp->api_new_plugins() == 1) {												
+		?>
+		<img src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="yes" />
+		<?php
+	}
+	else {
+		?>
+		<img src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="no" />
+	    <i>Check audit logs</i>
+		<?php
+
+	}
+?>
+		</span>
+	</td>
+</tr>
+
+<tr>
+	<td><?php esc_html_e('Is "admin" user active in the system?');?></td>
+	<td>
+		<span>
+
+<?php		
+	if ($pfms_wp->check_admin_user_enabled() == 1) {												
+		?>
+		<img src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="yes" />
+		<?php
+	}
+	else {
+		?>
+		<img src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="no" />
+	    <i>You SHOULD rename it for security</i>
+		<?php
+
+	}
+?>
+		</span>
+	</td>
+</tr>
+
+<tr>
+	<td><?php esc_html_e('Recent brute force attempts');?></td>
+	<td>
+		<span>
+
+<?php		
+	if ($pfms_wp->brute_force_attempts(60) == 1) {												
+		?>
+		<img src="<?php echo esc_url( admin_url( 'images/yes.png' ) ); ?>" alt="yes" />
+		<?php
+	}
+	else {
+		?>
+		<img src="<?php echo esc_url( admin_url( 'images/no.png' ) ); ?>" alt="no" />
+	    <i>Check audit records</i>
+		<?php
+
+	}
+?>
+		</span>
+	</td>
+</tr>
+
+
+
+
+
 									<tr>
 										<td><?php esc_html_e('Wordpress version');?></td>
 										<td>
@@ -507,7 +372,6 @@ class PFMS_AdminPages {
 							</div>
 						</div>
 					</div>
-				</div><!-- /col-left -->
 			</div><!-- /container -->
 		</div><!-- /wrap -->
 		<?php
@@ -521,20 +385,56 @@ class PFMS_AdminPages {
 		
 		$pfms_wp = PandoraFMS_WP::getInstance();
 		
-		$tablename = $wpdb->prefix . $pfms_wp->prefix . "user_stats";
-
 		?>
+	
+		<h2><?php esc_html_e("System audit");?></h2>
+	
+		<?php
+			$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
+			$audit_logs = $wpdb->get_results( "SELECT *	FROM `" . $tablename . "` ORDER BY timestamp DESC" );
+		?>
+		<table id="list_audit" class="widefat striped" style="width: 95%">
+			<thead>
+				<tr>
+					<th><?php esc_html_e("Type");?></th>
+					<th><?php esc_html_e("Data");?></th>
+					<th><?php esc_html_e("Timestamp");?></th>
+				</tr>
+			</thead>
+			<tbody>
+	<?php
+		if (empty($audit_logs)) {
+			?>				
+			<tr>
+				<td colspan="3">
+					<p><strong><?php esc_html_e("Empty list");?></strong></p>
+				</td>
+			</tr>
+		<?php
+		}
+		else {
+			foreach ($audit_logs as $audit) {
+				?>
+				<tr>
+					<td><?php echo esc_html($audit->type);?></td>
+					<td><?php echo esc_html($audit->data);?></td>
+					<td><?php echo esc_html($audit->timestamp);?></td>
+				</tr>
+				<?php
+			}
+		}
+				?>
+			</tbody>
+		</table>
 
-		<div class="wrap">
-			<h2><?php esc_html_e("Access Control");?></h2>
-		</div>
-		
-		<p>This section manages access to your Wordpress. Here you can define if you want to be warned on some events and you can see a full log of all user interactions with your site. <br/>This information is automatically purged each 7 days by default. You can change this time in General Setup.</p>
+
+		<h2><?php esc_html_e("User audit");?></h2>
 		
 		<?php
+			$tablename = $wpdb->prefix . $pfms_wp->prefix . "user_stats";
 			$user_stats = $wpdb->get_results( "SELECT *	FROM `" . $tablename . "` ORDER BY timestamp DESC" );
 		?>
-			<table id="list_access_control" class="widefat striped" >
+			<table id="list_access_control" class="widefat striped" style="width: 95%">
 				<thead>
 					<tr>
 						<th><?php esc_html_e("User");?></th>
@@ -572,410 +472,18 @@ class PFMS_AdminPages {
 				</tbody>
 			</table>
 
-				<script type="text/javascript" >
+			
 
-					jQuery(function() {
-						jQuery('#list_access_control').scrollTableBody({'rowsToDisplay': 5});
-					});
+			
+			
+			<script type="text/javascript" >
 
-				</script>
+				jQuery(function() {
+					jQuery('#list_access_control').scrollTableBody({'rowsToDisplay': 10});
+				});
 
-		<div class="wrap">		
-			<form method="post" action="options.php">
-				<?php 
-					settings_fields('pfmswp-settings-group-access_control');
-					$options = get_option('pfmswp-options-access_control');
-					$pfms_ap = PFMS_AdminPages::getInstance();
-				?>
-				<table class="form-table">
-					<tr valign="top">
-						<th scope="row">
-							<?php esc_html_e("Email on new account creation");?>
-						</th>
-						<td>
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span> 
-										<?php esc_html_e("Email on new account creation");?> 
-									</span>
-								</legend>
-								<label for="pfmswp-options-access_control[email_new_account]">
-									<input
-										type="checkbox"
-										name="pfmswp-options-access_control[email_new_account]"
-										value="1"
-										<?php checked($options['email_new_account'], 1, true); ?>
-									/>
-									<?php esc_html_e("Send email with each new account.");?>
-								</label>
-							</fieldset>
-						</td>
-					</tr>
-					<tr valign="top">
-						<th scope="row">
-							<?php esc_html_e("Email on login user");?>
-						</th>
-						<td>
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("Email on login user");?>
-									</span>
-								</legend>
-								<label for="pfmswp-options-access_control[email_user_login]">
-									<input
-										type="checkbox"
-										name="pfmswp-options-access_control[email_user_login]"
-										value="1"
-										<?php checked($options['email_user_login'], 1, true); ?>
-									/>
-									<?php esc_html_e("Send email with each login.");?>
-								</label>
-							</fieldset>
-						</td>
-					</tr>
-					<tr valign="top">
-						<th scope="row">
-							<?php esc_html_e("Email on user email change");?>
-						</th>
-						<td>
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("Email on user email change");?>
-									</span>
-								</legend>
-								<label for="pfmswp-options-access_control[email_change_email]">
-									<input
-										type="checkbox"
-										name="pfmswp-options-access_control[email_change_email]"
-										value="1"
-										<?php checked($options['email_change_email'], 1, true); ?>
-									/>
-									<?php esc_html_e("Send email when any user change the email.");?>
-								</label>
-							</fieldset>
-						</td>
-					</tr>
-					<tr valign="top">
-						<th scope="row">
-							<?php esc_html_e("Email on new plugin");?>
-						</th>
-						<td>
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("Email on new plugin");?>
-									</span>
-								</legend>
-								<label for="pfmswp-options-access_control[email_plugin_new]">
-									<input
-										type="checkbox"
-										name="pfmswp-options-access_control[email_plugin_new]"
-										value="1"
-										<?php checked($options['email_plugin_new'], 1, true); ?>
-									/>
-									<?php esc_html_e("Send email when add new plugin.");?>
-								</label>
-							</fieldset>
-						</td>
-					</tr>
-					<tr valign="top">
-						<th scope="row">
-							<?php esc_html_e("Email on new theme");?>
-						</th>
-						<td>
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("Email on new theme");?>
-									</span>
-								</legend>
-								<label for="pfmswp-options-access_control[email_theme_new]">
-									<input
-										type="checkbox"
-										name="pfmswp-options-access_control[email_theme_new]"
-										value="1"
-										<?php
-										checked($options['email_theme_new'], 1, true);
-										?>
-										/>
-									<?php esc_html_e("Send email when add new theme.");?>
-								</label>
-							</fieldset>
-						</td>
-					</tr>				
-					<tr valign="top">
-						<th scope="row">
-							<?php esc_html_e("Activate login rename");?>
-						</th>
-						<td>
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("Activate login rename");?>
-									</span>
-								</legend>
-								<label for="pfmswp-options-access_control[activate_login_rename]">
-									<input
-										type="checkbox"
-										name="pfmswp-options-access_control[activate_login_rename]"
-										value="1"
-										<?php checked($options['activate_login_rename'], 1, true); ?>
-									/>
-									<?php esc_html_e("Activate the plugin 'Rename wp-login.php' and install.");?>
-								</label>
-							</fieldset>
-							<br />
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("The rename login page.");  ?>
-									</span>
-								</legend>
-								<label for="pfmswp-options-access_control[login_rename_page]">
-									<?php
-										if (get_option('permalink_structure')) {
-											echo '<code>' .
-												trailingslashit(home_url()) .
-												'</code> ' .
-												'<input
-													type="text" name="pfmswp-options-access_control[login_rename_page]"
-													value="' . esc_attr($options['login_rename_page']) . '">' .
-												($pfms_ap->use_trailing_slashes() ?
-													' <code>/</code>' :
-													'');
-										}
-										else {
-											echo '<code>' .
-												trailingslashit(home_url()) .
-												'?</code> ' .
-												'<input
-													type="text" name="pfmswp-options-access_control[login_rename_page]"
-													value="' . esc_attr($options['login_rename_page'])  . '">';
-										}
-									?>						
-									<p class="description">
-										<?php esc_html_e("The rename login page."); ?>
-									</p>
-								</label>
-							</fieldset>
-						</td>
-					</tr>
-					<tr valign="top">
-						<th scope="row">
-							<?php esc_html_e("Limit login attempts");?>
-						</th>
-						<td>
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("Limit login attempts");?>
-									</span>
-								</legend>
-								<label for="pfmswp-options-access_control[bruteforce_attack_protection]">
-									<input
-										type="checkbox"
-										name="pfmswp-options-access_control[bruteforce_attack_protection]"
-										value="1"
-										<?php checked($options['bruteforce_attack_protection'], 1, true); ?>
-									/>
-									<?php esc_html_e("Active to enable bruteforce attack protection.");?>
-								</label>
-							</fieldset>
-							<br />
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("Max. Number of invalid login attemps before account locking.");?>
-									</span>
-								</legend>
-								<label for="pfmswp-options-access_control[bruteforce_attack_attempts]">
-									<input
-										class="small-text"
-										type="text"
-										name="pfmswp-options-access_control[bruteforce_attack_attempts]"
-										value="<?php echo esc_attr($options['bruteforce_attack_attempts']);?>"
-									/>
-									<span class="description">
-										<?php esc_html_e("Login attempts limit"); ?>
-									</span>
-								</label>
-								<br/>
-								<label for="pfmswp-options-access_control[wait_protect_bruteforce_login_seconds]">
-									<input
-										class="small-text"
-										type="text"
-										name="pfmswp-options-access_control[wait_protect_bruteforce_login_seconds]"
-										value="<?php echo esc_attr($options['wait_protect_bruteforce_login_seconds']);?>"
-									/>
-									<span class="description">
-										<?php esc_html_e("Login lockdown time"); ?>
-									</span>
-								</label>
-								<br/>
-								<label for="pfmswp-options-access_control[h_recent_brute_force]">
-									<input
-									    class="small-text"
-										type="text"
-										name="pfmswp-options-access_control[h_recent_brute_force]"
-										value="<?php echo $options['h_recent_brute_force'];?>" 
-									/>
-									<span class="description">
-										<?php
-											esc_html_e("seconds. How long should such failed attempts occur to freeze the account?");
-										?>
-									</span>
-								</label>
-							</fieldset>
-						</td>
-					</tr>
-					<tr valign="top">
-						<th scope="row">
-							<?php esc_html_e("Black list IPs");?>
-						</th>
-						<td>
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("Black list IPs");?>
-									</span>
-								</legend>
-								<p>
-									<textarea
-										name="pfmswp-options-access_control[blacklist_ips]"
-										class="large-text code"
-										rows="10"><?php 
-										echo esc_textarea($options['blacklist_ips']); ?></textarea>
-								</p>
-							</fieldset>
-							<!--<br />
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php //esc_html_e("Redirect URL if the ip is banned.");?>
-									</span>
-								</legend>
-								<label for="pfmswp-options-access_control[url_redirect_ip_banned]">
-									<p class="description">-->
-										<?php
-											//esc_html_e("Full URL starting with the 'http://' for to send banned ips. (Opcional)");
-										?>
-									<!--</p>
-									<input
-										class="regular-text"
-										type="text"
-										name="pfmswp-options-access_control[url_redirect_ip_banned]"
-										value="<?php //echo esc_attr($options['url_redirect_ip_banned']);?>"
-									/>
-								</label>
-							</fieldset>-->
-						</td>
-					</tr>
-					<tr valign="top">
-						<th scope="row">
-							<?php esc_html_e("Login recapcha");?>
-						</th>
-						<td>
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("Login repcatcha");?>
-									</span>
-								</legend>
-								<label for="pfmswp-options-access_control[activate_login_recaptcha]">
-									<input
-										type="checkbox"
-										name="pfmswp-options-access_control[activate_login_recaptcha]"
-										value="1"
-										<?php checked($options['activate_login_recaptcha'], 1, true); ?>
-									/>
-									<?php esc_html_e("Activate the reCaptcha in the login page.");?>
-								</label>
-									<p class="description">
-										<?php
-											echo("You need to get your free <a href='https://www.google.com/recaptcha/intro/index.html'>ReCaptcha keys</a>.");
-										?>
-									</p>
-							</fieldset>
-							<br />
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("Site key");?>
-									</span>
-								</legend>
-								<label for="pfmswp-options-access_control[site_key]">
-									<p class="description">
-										<?php esc_html_e("Site key."); ?>
-									</p>
-									<input
-										class="regular-text"
-										type="text"
-										name="pfmswp-options-access_control[site_key]"
-										value="<?php echo esc_attr($options['site_key']);?>"
-									/>
-								</label>
-							</fieldset>
-							<br />
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("Secret key");?>
-									</span>
-								</legend>
-								<label for="pfmswp-options-access_control[secret]">
-									<p class="description">
-										<?php esc_html_e("Secret key."); ?>
-									</p>
-									<input
-										class="regular-text"
-										type="text"
-										name="pfmswp-options-access_control[secret]"
-										value="<?php echo esc_attr($options['secret']);?>"
-									/>
-								</label>
-							</fieldset>
-						</td>
-					</tr>
-					<tr valign="top">
-						<th scope="row">
-							<?php esc_html_e("Disable the XMLRPC of Wordpress");?>
-						</th>
-						<td>
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("Disable the XMLRPC of Wordpress");?>
-									</span>
-								</legend>
-								<label for="pfmswp-options-access_control[disable_xmlrpc]">
-										<input 
-										type="checkbox" 
-										name="pfmswp-options-access_control[disable_xmlrpc]"
-										value="1" 
-										<?php 
-											checked($options['disable_xmlrpc'], 1, true);
-											$pfms_wp->check_disable_xmlrpc();
-										?> 
-										/>
-									<?php esc_html_e("Active to disable XMLRPC.");?>
-								</label>
-							</fieldset>
-							<br />
-						</td>
-					</tr>
-				</table>
-				<p class="submit">
-					<input
-						type="submit" name="submit-access_control" id="submit-access_control"
-						class="button button-primary"
-						value="<?php esc_attr_e("Save Changes");?>" 
-						onclick="empty_rename_login_page_or_repatcha();"
-					/>
-				</p>
-			</form>
-		</div>
+			</script>
+
 		<?php
 	}
 	//=== END === ACCESS CONTROL VIEW ==================================
@@ -1070,6 +578,7 @@ class PFMS_AdminPages {
 							</fieldset>
 						</td>
 					</tr>
+
 					<tr valign="top">
 						<th scope="row">
 							<?php esc_html_e("Check core updates enabled");?>
@@ -1129,75 +638,9 @@ class PFMS_AdminPages {
 							</fieldset>
 						</td>
 					</tr>
-					<tr valign="top">
-						<th scope="row">
-							<?php esc_html_e("Protect upload of PHP Code");?>
-						</th>
-						<td>
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("Protect upload of PHP Code");?>
-									</span>
-								</legend>
-								<label for="pfmswp-options-system_security[upload_htaccess]">
-									<input
-										type="checkbox"
-										name="pfmswp-options-system_security[upload_htaccess]"
-										value="1"
-										<?php checked($options['upload_htaccess'], 1, true); ?>
-									/>
-									<?php esc_html_e("Active and set a .htaccess in upload directory.");?>
-								</label>
-							</fieldset>
-						</td>
-					</tr>
-					<tr valign="top">
-						<th scope="row">
-							<?php esc_html_e("Robots.txt enhancement");?>
-						</th>
-						<td>
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("Robots.txt enhancement");?>
-									</span>
-								</legend>
-								<label for="pfmswp-options-system_security[upload_robots_txt]">
-									<input
-										type="checkbox"
-										name="pfmswp-options-system_security[upload_robots_txt]"
-										value="1"
-										<?php checked($options['upload_robots_txt'], 1, true); ?>
-									/>
-									<?php esc_html_e("Active and set a custom Robots.txt.");?>
-								</label>
-							</fieldset>
-						</td>
-					</tr>
-					<tr valign="top">
-						<th scope="row">
-							<?php esc_html_e("WP Generator disable");?>
-						</th>
-						<td>
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("WP Generator disable");?>
-									</span>
-								</legend>
-								<label for="pfmswp-options-system_security[wp_generator_disable]">
-									<input
-										type="checkbox"
-										name="pfmswp-options-system_security[wp_generator_disable]"
-										value="1"
-										<?php checked($options['wp_generator_disable'], 1, true); ?>
-									/>
-									<?php esc_html_e("Disable the WP Generator in wp_head.");?>
-								</label>
-							</fieldset>
-						</td>
-					</tr>					
+					
+					
+								
 				</table>
 				<p class="submit">
 					<input
@@ -1220,99 +663,71 @@ class PFMS_AdminPages {
 		
 		?>
 		<div class="wrap">
-			<h2><?php esc_html_e("General Setup");?></h2>
+			<h2><?php esc_html_e("Pandora FMS WP Plugin Setup");?></h2>
 			<form method="post" action="options.php">
 				<?php settings_fields('pfmswp-settings-group');?>
 				<?php $options = get_option('pfmswp-options');?>			
 				<table class="form-table">
-					<!--<tr valign="top">
-						<th scope="row">
-							<?php //esc_html_e("Footer");?>
-						</th>
-						<td>
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php //esc_html_e("Footer");?>
-									</span>
-								</legend>
-								<label for="pfmswp-options[show_footer]">
-									<input
-										type="checkbox"
-										name="pfmswp-options[show_footer]"
-										value="1"
-										<?php
-										//checked($options['show_footer'], 1, true);
-										// />
-										?>
-									<?php //esc_html_e("Show");?>
-								<!--</label>
-							</fieldset>
-						</td>
-					</tr>-->
 					<tr>
 						<th scope="row">
 							<h3><?php esc_html_e("API Settings");?></h3>
 						</th>
 					</tr>
-					<tr valign="top">
+
+<tr valign="top">
 						<th scope="row">
-							<?php esc_html_e("Email for notifications");?>
+							<?php esc_html_e("Exclusion list for plugins to be checked for updates");?>
 						</th>
 						<td>
 							<fieldset>
-								<legend class="screen-reader-text">
-									<span> 
-										<?php esc_html_e("Email for notifications");?> 
-									</span>
-								</legend>
-								<label for="pfmswp-options[email_notifications]">
-									<input
-										class="regular-text"
-										type="text"
-										name="pfmswp-options[email_notifications]"
-										value="<?php echo esc_attr($options['email_notifications']);?>"
-									/>
-									<p class="description">
-										<?php
-										esc_html_e("If this address is not set, the notifications uses the default admin email.");
-										?>
-									</p>
-								</label>
+								<p class="description">
+									<?php esc_html_e("Use plugin name as seen internally (shortname). One per line");?>
+								</p>
+								<p>
+									<textarea
+										name="pfmswp-options-system_security[blacklist_plugins_check_update]"
+										class="large-text code"
+										rows="5"><?php 
+										echo esc_textarea($options['blacklist_plugins_check_update']); ?></textarea>
+								</p>
 							</fieldset>
 						</td>
 					</tr>
-					<!--<tr valign="top">
+
+
+					<tr valign="top">
 						<th scope="row">
-							<?php //esc_html_e("API Password");?>
+							<?php esc_html_e("API Password");?>
 						</th>
 						<td>
 							<fieldset>
 								<legend class="screen-reader-text">
 									<span>
-										<?php //esc_html_e("API password");?>
+										<?php esc_html_e("API password");?>
 									</span>
 								</legend>
 								<label for="pfmswp-options[api_password]">
 									<input
 										class="regular-text"
-										type="password"
+										type="text"
 										name="pfmswp-options[api_password]"
-										value="<?php //echo esc_attr($options['api_password']);?>"
+										value="<?php echo esc_attr($options['api_password']);?>"
 										/>
 								</label>
 							</fieldset>
 						</td>
-					</tr>-->
+					</tr>
+
 					<tr valign="top">
 						<th scope="row">
 							<?php esc_html_e("API IPs");?>
 						</th>
 						<td>
 							<fieldset>
-								<legend class="screen-reader-text">
+								<legend>
 									<span> 
-										<?php esc_html_e("API Source allowed IPs");?> 
+										<?php esc_html_e("Allowed IPs to access API");?> 
+										<br><i>* means any IP's allowed (by default)</i>
 									</span>
 								</legend>
 								<p>

@@ -22,9 +22,6 @@ $plugin_dir_path = plugin_dir_path(__FILE__);
 require_once($plugin_dir_path . "PandoraFMS_WP.class.php");
 require_once($plugin_dir_path . "PFMS_AdminPages.class.php");
 require_once($plugin_dir_path . "PFMS_Widget_Dashboard.class.php");
-//require_once($plugin_dir_path . "PFMS_Footer.class.php");
-//require_once(plugin_dir_path(__FILE__) . "PFMS_GoogleAnalytics.class.php");
-//require_once(plugin_dir_path(__FILE__) . "PFMS_Hooks.class.php");
 
 require_once(ABSPATH . "wp-admin/includes/class-wp-upgrader.php");
 require_once(ABSPATH . "wp-admin/includes/file.php");
@@ -155,47 +152,6 @@ class PFMS_ApiRest {
 	}
 	
 
-	public static function apirest_password_audit($data) {
-		global $wpdb;
-		
-		$pfms_api = PFMS_ApiRest::getInstance();
-		$pfms_wp = PandoraFMS_WP::getInstance();
-		
-		if (!$pfms_api->apirest_check_authentication()) {
-			return $pfms_api->apirest_error_authentication();
-		}
-		else {
-
-			$return = array();
-			$return['status'] = 0;
-			$return['users'] = array();
-			
-			$tablename = $wpdb->prefix . $pfms_wp->prefix . "audit_users_weak_password";
-			$users = $wpdb->get_results("SELECT user FROM `" . $tablename . "`");
-			
-			if (empty($users)) {
-				$users = array();
-				$return['status'] = 1;
-			}
-			
-			foreach ($users as $user) {
-				$return['users'][] = $user->user;
-				
-			}
-
-			//$pfms_wp->debug($return);
-			if(empty($return['users'])){
-				return 1;
-			}
-			else{
-				return 0; // There are weak passwords 
-			}
-
-		}
-
-	}
-	
-
 	public static function apirest_new_account($data) {
 		global $wpdb;
 
@@ -254,35 +210,8 @@ class PFMS_ApiRest {
 		if (!$pfms_api->apirest_check_authentication()) {
 			return $pfms_api->apirest_error_authentication();
 		}
-		else {
-
-			$return = array();
-
-			$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
-			$themes = $wpdb->get_results("
-				SELECT data
-				FROM `" . $tablename . "`
-				WHERE type= 'new_theme' AND
-					timestamp > date_sub(NOW(), INTERVAL $api_data_newer_minutes MINUTE)"); 
-
-			foreach ($themes as $row) {
-				preg_match(
-					"/New theme \[(.*)\]./",
-					$row->data, $matches);
-				
-				$return[] = $matches[1]; 
-			}
-
-			//$pfms_wp->debug($return);
-			if(empty($return)){
-				return 1;
-			}
-			else{
-				return 0; //There are new themes
-			}
-
-		}
-
+		
+		return $pfms_wp->api_new_themes();
 	}
 
 
@@ -298,35 +227,8 @@ class PFMS_ApiRest {
 		if (!$pfms_api->apirest_check_authentication()) {
 			return $pfms_api->apirest_error_authentication();
 		}
-		else {
 
-			$return = array();
-
-			$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
-			$plugins = $wpdb->get_results("
-				SELECT data
-				FROM `" . $tablename . "`
-				WHERE type= 'new_plugin' AND
-					timestamp > date_sub(NOW(), INTERVAL $api_data_newer_minutes MINUTE)"); 
-
-			foreach ($plugins as $row) {
-				preg_match(
-					"/New plugin \[(.*)\]./",
-					$row->data, $matches);
-				
-				$return[] = $matches[1]; 
-			}
-
-			//$pfms_wp->debug($return);
-			if(empty($return)){
-				return 1;
-			}
-			else{
-				return 0; //There are new plugins
-			}
-
-		}
-
+		return $pfms_wp->api_new_plugins();
 	}
 
 
@@ -357,7 +259,6 @@ class PFMS_ApiRest {
 		}
 
 	}
-
 
 	public static function apirest_check_new_comments($data){
 		global $wpdb;
@@ -480,8 +381,13 @@ class PFMS_ApiRest {
 				
 				$return[] = $matches[1];
 			}
-			
-			return $return;
+
+			if(empty($return)){
+				return 1;
+			}
+			else{
+				return 0;
+			}
 		}
 
 	}
@@ -531,346 +437,6 @@ class PFMS_ApiRest {
 		}
 
 	}
-
-
-	public static function apirest_file_original_check() {
-		global $wpdb;
-
-		$pfms_api = PFMS_ApiRest::getInstance();
-		$pfms_wp = PandoraFMS_WP::getInstance();
-		
-		if (!$pfms_api->apirest_check_authentication()) {
-			return $pfms_api->apirest_error_authentication();
-		}
-		else {
-
-			$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
-
-			$filesystem = $wpdb->get_var( " SELECT COUNT(`id`) id, path FROM `$tablename` WHERE  original = 'no' "); 
-
-
-			if($filesystem > 0){
-				return 0; //There are files no originals
-			}
-			else{
-				return 1;
-			}
-
-
-		}
-
-	}
-
-
-	public static function apirest_file_original_data($data) {
-		global $wpdb;
-
-		$pfms_api = PFMS_ApiRest::getInstance();
-		$pfms_wp = PandoraFMS_WP::getInstance();
-		
-		if (!$pfms_api->apirest_check_authentication()) {
-			return $pfms_api->apirest_error_authentication();
-		}
-		else {
-
-			$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
-
-			$filesystem = $wpdb->get_results(" SELECT path FROM `$tablename` WHERE original = 'no' ");
-			$filesystem = json_decode(json_encode($filesystem), True); 
-			
-			$array = array();
-			foreach ($filesystem as $key => $value) {
-
-					$index = 'path';
-
-					$path = $value[$index];
-					$filename_array[] = substr(strrchr($path, "/"), 1);
-
-					$filename_array = array_merge($filename_array,$array);
-					$filename = implode(",", $filename_array);
-					
-			}
-
-			return $filename; // If there aren't files the result is null
-			//  List of files no originals
-
-		}
-
-	}
-
-
-	public static function apirest_file_new_check() {
-		global $wpdb;
-
-		$pfms_api = PFMS_ApiRest::getInstance();
-		$pfms_wp = PandoraFMS_WP::getInstance();
-		
-		if (!$pfms_api->apirest_check_authentication()) {
-			return $pfms_api->apirest_error_authentication();
-		}
-		else {
-
-			$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
-
-			$filesystem = $wpdb->get_var( " SELECT COUNT(`id`) id, path FROM `$tablename` WHERE  status = 'new' "); 
-
-
-			if($filesystem > 0){
-				return 0; //There are new files
-			}
-			else{
-				return 1;
-			}
-
-		}
-
-	}
-
-
-	public static function apirest_file_new_data($data) {
-		global $wpdb;
-
-		$pfms_api = PFMS_ApiRest::getInstance();
-		$pfms_wp = PandoraFMS_WP::getInstance();
-		
-		if (!$pfms_api->apirest_check_authentication()) {
-			return $pfms_api->apirest_error_authentication();
-		}
-		else {
-
-			$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
-
-			$filesystem = $wpdb->get_results(" SELECT path FROM `$tablename` WHERE status = 'new' ");
-			$filesystem = json_decode(json_encode($filesystem), True); //convert stdclass in array
-			
-			$array = array();
-			foreach ($filesystem as $key => $value) {
-
-					$index = 'path';
-
-					$path = $value[$index];
-					$filename_array[] = substr(strrchr($path, "/"), 1);
-
-					$filename_array = array_merge($filename_array,$array);
-					$filename = implode(",", $filename_array);
-				
-			}
-
-			if(!empty($filename)){
-				return $filename; // If there aren't files the result is null
-			}
-			
-			// List of new files
-
-
-		}
-		
-	}
-
-
-	public static function apirest_file_modified_check() {
-		global $wpdb;
-
-		$pfms_api = PFMS_ApiRest::getInstance();
-		$pfms_wp = PandoraFMS_WP::getInstance();
-		
-		if (!$pfms_api->apirest_check_authentication()) {
-			return $pfms_api->apirest_error_authentication();
-		}
-		else {
-
-			$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
-
-			$filesystem = $wpdb->get_var( " SELECT COUNT(`id`) id, path FROM `$tablename` WHERE  status = 'changed' "); 
-
-
-			if($filesystem > 0){
-				return 0; // There are files modified
-			}
-			else{
-				return 1;
-			}
-
-
-		}
-
-	}
-
-
-	public static function apirest_file_modified_data($data) {
-		global $wpdb;
-
-		$pfms_api = PFMS_ApiRest::getInstance();
-		$pfms_wp = PandoraFMS_WP::getInstance();
-		
-		if (!$pfms_api->apirest_check_authentication()) {
-			return $pfms_api->apirest_error_authentication();
-		}
-		else {
-
-			$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
-
-			$filesystem = $wpdb->get_results(" SELECT path FROM `$tablename` WHERE status = 'changed' ");
-	
-			$array = array();
-			foreach ($filesystem as $key => $value) {
-					$filesystem = array($value); //convert stdclass in array
-
-					$index = 'path';
-
-					$path = $value->$index;
-					$filename_array[] = substr(strrchr($path, "/"), 1);
-
-					$filename_array = array_merge($filename_array,$array);
-					$filename = implode(", ", $filename_array);
-
-			}
-
-			if(!empty($filename)){
-				return $filename; // If there aren't files the result is null
-			}
-			// List of modified files.
-
-		}
-		
-	}
-
-
-	public static function apirest_file_infected_check() {
-		global $wpdb;
-
-		$pfms_api = PFMS_ApiRest::getInstance();
-		$pfms_wp = PandoraFMS_WP::getInstance();
-		
-		if (!$pfms_api->apirest_check_authentication()) {
-			return $pfms_api->apirest_error_authentication();
-		}
-		else {
-
-			$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
-
-			$filesystem = $wpdb->get_var( " SELECT COUNT(`id`) id, path FROM `$tablename` WHERE  infected = 'yes' "); 
-
-
-			if($filesystem > 0){
-				return 0; //There are files infected
-			}
-			else{
-				return 1;
-			}
-
-
-		}
-
-	}
-
-
-	public static function apirest_file_infected_data($data) {
-		global $wpdb;
-
-		$pfms_api = PFMS_ApiRest::getInstance();
-		$pfms_wp = PandoraFMS_WP::getInstance();
-		
-		if (!$pfms_api->apirest_check_authentication()) {
-			return $pfms_api->apirest_error_authentication();
-		}
-		else {
-
-			$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
-
-			$filesystem = $wpdb->get_results(" SELECT path FROM `$tablename` WHERE infected = 'yes' ");
-			$filesystem = json_decode(json_encode($filesystem), True); //convert object stdclass in array
-			
-			$array = array();
-			foreach ($filesystem as $key => $value) {
-
-					$index = 'path';
-
-					$path = $value[$index];
-					$filename_array[] = substr(strrchr($path, "/"), 1);
-
-					$filename_array = array_merge($filename_array,$array);
-					$filename = implode(",", $filename_array);	
-
-			}
-
-			if(!empty($filename)){
-				return $filename; // If there aren't files the result is null
-			}
-			// List of infected files.
-
-		}
-		
-	}
-
-
-	public static function apirest_file_insecure_check() {
-		global $wpdb;
-
-		$pfms_api = PFMS_ApiRest::getInstance();
-		$pfms_wp = PandoraFMS_WP::getInstance();
-		
-		if (!$pfms_api->apirest_check_authentication()) {
-			return $pfms_api->apirest_error_authentication();
-		}
-		else {
-
-			$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
-
-			$filesystem = $wpdb->get_var( " SELECT COUNT(`id`) id, path FROM `$tablename` WHERE  writable_others = 1 "); 
-
-
-			if($filesystem > 0){
-				return 0; // There are files writables for others
-			}
-			else{
-				return 1; 
-			}
-
-		}
-
-	}
-
-
-	public static function apirest_file_insecure_data($data) {
-		global $wpdb;
-
-		$pfms_api = PFMS_ApiRest::getInstance();
-		$pfms_wp = PandoraFMS_WP::getInstance();
-		
-		if (!$pfms_api->apirest_check_authentication()) {
-			return $pfms_api->apirest_error_authentication();
-		}
-		else {
-
-			$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
-
-			$filesystem = $wpdb->get_results(" SELECT path FROM `$tablename` WHERE writable_others = 1 ");
-			$filesystem = json_decode(json_encode($filesystem), True); //convert object stdclass in array
-			
-			$array = array();
-			foreach ($filesystem as $key => $value) {
-
-					$index = 'path';
-
-					$path = $value[$index];
-					$filename_array[] = substr(strrchr($path, "/"), 1);
-
-					$filename_array = array_merge($filename_array,$array);
-					$filename = implode(",", $filename_array);
-					
-			}
-
-
-			if(!empty($filename)){
-				return $filename; // If there aren't files the result is null
-			}
-			// Lista of files writables for others.
-
-		}
-		
-	}
-
 
 	//=== END ==== API REST CODE =======================================
 	

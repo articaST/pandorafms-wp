@@ -1,4 +1,6 @@
 <?php
+
+
 class pagination{
 /*
 Script Name: *Digg Style Paginator Class
