@@ -62,7 +62,6 @@ This API request should report 1.
 	/user_login
 	/failed_login
 
-
 == Screenshots ==
 
 1. This is the Dashboard, here you can view a summary.

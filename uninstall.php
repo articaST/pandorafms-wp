@@ -1,6 +1,6 @@
 <?php
 /*
-Copyright (c) 2017-2017 Artica Soluciones Tecnologicas
+Copyright (c) 2021 Artica PFMS
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -32,10 +32,6 @@ require_once(plugin_dir_path(__FILE__) . "/includes/PandoraFMS_WP.class.php");
 
 	//DELETE TABLES--------------------------------
 
-	// Table "audit_users_weak_password"
-	$tablename = $wpdb->prefix . $pfms_wp->prefix . "audit_users_weak_password";
-	$sql = "DROP TABLE IF EXISTS `$tablename`";
-	$wpdb->query($sql);
 	
 	// Table "access_control"
 	$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
@@ -44,11 +40,6 @@ require_once(plugin_dir_path(__FILE__) . "/includes/PandoraFMS_WP.class.php");
 	
 	// Table "user_stats"
 	$tablename = $wpdb->prefix . $pfms_wp->prefix . "user_stats";
-	$sql = "DROP TABLE IF EXISTS `$tablename`";
-	$wpdb->query($sql);
-	
-	// Table "list_files"
-	$tablename = $wpdb->prefix . $pfms_wp->prefix . "filesystem";
 	$sql = "DROP TABLE IF EXISTS `$tablename`";
 	$wpdb->query($sql);
 
