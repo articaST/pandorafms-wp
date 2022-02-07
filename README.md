@@ -1,4 +1,6 @@
-=== Pandora FMS WP ===
+![Pandora FMS](https://pandorafms.com/wp-content/uploads/2021/11/Pandora-FMS.png)
+
+# Pandora FMS WP
 Contributors: artica
 Tags: monitoring, security, audit, secure
 Requires at least: 4.7
@@ -7,9 +9,9 @@ Stable tag: 1.0
 License: Apache License 2.0
 License URI: https://www.apache.org/licenses/LICENSE-2.0
 
-== Description ==
+# Description
 
-Pandora FMS WP is a monitoring plugin for Wordpress. 100% free and OpenSource, no freemium or enterprise version. Collect basic information from your Wordpress and allow Pandora FMS to retrieve it remotely using a REST API. It also allow to define custom SQL queries to monitor other plugins or do your custom queries and collect from Pandora FMS.
+Pandora FMS WP is a **monitoring plugin for Wordpress**. 100% free and OpenSource, no freemium or enterprise version. Collect basic information from your Wordpress and allow Pandora FMS to retrieve it remotely using a REST API. It also allow to define custom SQL queries to monitor other plugins or do your custom queries and collect from Pandora FMS.
 
 This plugin has been developed by [Pandora FMS team](https://pandorafms.com "Pandora FMS team"). Sourcecode is available at [https://github.com/articaST/pandorafms-wp/](https://github.com/articaST/pandorafms-wp/ "https://github.com/articaST/pandorafms-wp/")
 
@@ -70,13 +72,13 @@ This API request should report 1.
 4. General Setup Menu: API settings and set the time to delete the logs.
 5. Filesystem Status Menu: Check the status of system files: check WP integrity, scan for infected files, and send email when files list is modified.
 
-== Limitations ==
+## Limitations
 
 *	WP Multisite not supported on this version. 
 *	To use the Wordpress API REST, you need version 4.6 or higher.
 
-== Changelog ==
+## Changelog
 
 * 2022-02-06 New version, 2.0 removes some filesystem hardening tools. Plugin is now much more fast and lighter. 
 
-== Upgrade Notice ==
+## Upgrade Notice
