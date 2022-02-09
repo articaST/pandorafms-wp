@@ -50,6 +50,14 @@ This API request should report 1 if works as intented.
 6. Pandora FMS setup of a remote module using Wordpress plugin which connects with this WP plugin.
 7. Pandora FMS overview of several wordpress monitors.
 
+![Screenshot 1](https://ps.w.org/pandora-fms-wp/assets/screenshot-1.png)
+![Screenshot 2](https://ps.w.org/pandora-fms-wp/assets/screenshot-2.png)
+![Screenshot 3](https://ps.w.org/pandora-fms-wp/assets/screenshot-3.png)
+![Screenshot 4](https://ps.w.org/pandora-fms-wp/assets/screenshot-4.png)
+![Screenshot 5](https://ps.w.org/pandora-fms-wp/assets/screenshot-5.png)
+![Screenshot 6](https://ps.w.org/pandora-fms-wp/assets/screenshot-6.png)
+![Screenshot 7](https://ps.w.org/pandora-fms-wp/assets/screenshot-7.png)
+
 ## Limitations ##
 
 * WP Multisite not supported on this version. 
