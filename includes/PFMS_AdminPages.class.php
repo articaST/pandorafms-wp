@@ -489,173 +489,6 @@ class PFMS_AdminPages {
 	//=== END === ACCESS CONTROL VIEW ==================================
 
 
-	//=== SYSTEM SECURITY VIEW =========================================
-	public static function show_system_security() {
-		global $wpdb;
-		
-		$pfms_wp = PandoraFMS_WP::getInstance();
-		$pfms_ap = PFMS_AdminPages::getInstance();
-		
-		?>
-		<div class="wrap">
-			<h2><?php esc_html_e("System Security");?></h2>
-		</div>
-		<p>Options to enforce security on your site.</p>
-		
-		<div class="wrap">
-			<h3><?php esc_html_e("Bruteforce attack logs");?></h3>
-			<?php
-			$list = $pfms_wp->get_list_login_lockout();
-			if (empty($list))
-				$list = array();
-			
-			if (empty($list)) {
-				?>
-				<p><?php esc_html_e("Empty data");?></p>
-				<?php
-			}
-			else {
-				?>
-				<table id="list_bruteforce_attack_logs" class="widefat striped">
-					<thead >
-						<tr>
-							<th><?php esc_html_e("User");?></th>
-							<th><?php esc_html_e("Count");?></th>
-							<th><?php esc_html_e("Last time");?></th>
-						</tr>
-					</thead>
-					<tbody>
-						<?php
-						foreach ($list as $entry) {
-							?>
-							<tr>
-								<td><?php esc_html_e($entry['user']);?></td>
-								<td><?php esc_html_e($entry['count']);?></td>
-								<td><?php esc_html_e($entry['time']);?></td>
-							</tr>
-							<?php
-						}
-						?>
-					</tbody>
-				</table>
-
-				<script type="text/javascript" >
-
-					jQuery(function() {
-						jQuery('#list_bruteforce_attack_logs').scrollTableBody({'rowsToDisplay': 5});
-					});
-
-				</script>
-
-				<?php
-			}
-			?>
-			
-			<form method="post" action="options.php">
-				<?php settings_fields('pfmswp-settings-group-system_security');?>
-				<?php $options = get_option('pfmswp-options-system_security');?>
-				<table class="form-table">
-					<tr valign="top">
-						<th scope="row">
-							<?php esc_html_e("Check of \"admin\" user enabled");?>
-						</th>
-						<td>
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("Check of \"admin\" user enabled");?>
-									</span>
-								</legend>
-								<label for="pfmswp-options-system_security[enabled_check_admin]">
-									<input
-										type="checkbox"
-										name="pfmswp-options-system_security[enabled_check_admin]"
-										value="1"
-										<?php checked($options['enabled_check_admin'], 1, true); ?>
-									/>
-									<?php esc_html_e("Active to check if \"admin\" exists.");?>
-								</label>
-							</fieldset>
-						</td>
-					</tr>
-
-					<tr valign="top">
-						<th scope="row">
-							<?php esc_html_e("Check core updates enabled");?>
-						</th>
-						<td>
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("Check core updates enabled");?>
-									</span>
-								</legend>
-								<label for="pfmswp-options-system_security[enabled_wordpress_updated]">
-									<input
-										type="checkbox"
-										name="pfmswp-options-system_security[enabled_wordpress_updated]"
-										value="1"
-										<?php checked($options['enabled_wordpress_updated'], 1, true); ?>
-									/>
-									<?php esc_html_e("Active to check the core updates available.");?>
-								</label>
-							</fieldset>
-						</td>
-					</tr>
-					<tr valign="top">
-						<th scope="row">
-							<?php esc_html_e("Check plugins updates enabled");?>
-						</th>
-						<td>
-							<fieldset>
-								<legend class="screen-reader-text">
-									<span>
-										<?php esc_html_e("Check plugin updates enabled");?>
-									</span>
-								</legend>
-								<label for="pfmswp-options-system_security[enabled_plugins_updated]">
-									<input
-										type="checkbox"
-										name="pfmswp-options-system_security[enabled_plugins_updated]"
-										value="1"
-										<?php checked($options['enabled_plugins_updated'], 1, true); ?>
-									/>
-									<?php esc_html_e("Active to check the plugins updates available.");?>
-								</label>
-							</fieldset>
-							<br />
-							<fieldset>
-								<p class="description">
-									<?php esc_html_e("Black list plugins to check updates.");?>
-								</p>
-								<p>
-									<textarea
-										name="pfmswp-options-system_security[blacklist_plugins_check_update]"
-										class="large-text code"
-										rows="10"><?php 
-										echo esc_textarea($options['blacklist_plugins_check_update']); ?></textarea>
-								</p>
-							</fieldset>
-						</td>
-					</tr>
-					
-					
-								
-				</table>
-				<p class="submit">
-					<input
-						type="submit" name="submit" id="submit"
-						class="button button-primary"
-						value="<?php esc_attr_e("Save Changes");?>" 
-					/>
-				</p>
-			</form>
-		</div>
-		<?php
-	}
-	//=== END === SYSTEM SECURITY VIEW =================================
-
-
 	//=== GENERAL SETUP VIEW ===========================================
 	public static function show_general_setup() {
 		$pfms_ap = PFMS_AdminPages::getInstance();
@@ -674,28 +507,28 @@ class PFMS_AdminPages {
 						</th>
 					</tr>
 
-<tr valign="top">
+					<tr valign="top">
 						<th scope="row">
 							<?php esc_html_e("Exclusion list for plugins to be checked for updates");?>
 						</th>
 						<td>
 							<fieldset>
 								<p class="description">
-									<?php esc_html_e("Use plugin name as seen internally (shortname). One per line");?>
+									<?php esc_html_e("Use plugin name, one per line");?>
 								</p>
 								<p>
 									<textarea
-										name="pfmswp-options-system_security[blacklist_plugins_check_update]"
+										name="pfmswp-options[blacklist_plugins_check_update]"
 										class="large-text code"
-										rows="5"><?php 
+										rows="3"><?php 
 										echo esc_textarea($options['blacklist_plugins_check_update']); ?></textarea>
 								</p>
 							</fieldset>
 						</td>
 					</tr>
 
-
-					<tr valign="top">
+					<!-- In this version we don't suppor auth -->
+					<tr valign="top" style="visibility: collapse;">
 						<th scope="row">
 							<?php esc_html_e("API Password");?>
 						</th>
@@ -718,6 +551,7 @@ class PFMS_AdminPages {
 						</td>
 					</tr>
 
+
 					<tr valign="top">
 						<th scope="row">
 							<?php esc_html_e("API IPs");?>
@@ -727,7 +561,7 @@ class PFMS_AdminPages {
 								<legend>
 									<span> 
 										<?php esc_html_e("Allowed IPs to access API");?> 
-										<br><i>* means any IP's allowed (by default)</i>
+										<i>. A '*'' means any IP's allowed (by default)</i>
 									</span>
 								</legend>
 								<p>
@@ -737,6 +571,21 @@ class PFMS_AdminPages {
 							</fieldset>
 						</td>
 					</tr>
+
+<?php 
+$check_url = get_home_url()."/wp-json/pandorafms_wp/online";
+$check_url = "<a href='$check_url'>$check_url</a>";
+?>
+					<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("How to use the REST PI");?>
+						</th>
+						<td>
+							Use <b><?php echo $check_url;?> </b> to check for a working API. It should return 1 as 'OK, thats good'. You need <b>permalinks enabled</b> in your Wordpress, if not you will get a 404. <br><br>Please the documentation for more API calls available.
+						</td>
+					</tr>
+
+
 					<tr valign="top">
 						<th scope="row">
 							<?php esc_html_e("API show alert on data newer than X minutes");?>
@@ -815,7 +664,53 @@ class PFMS_AdminPages {
 							</fieldset>
 						</td>
 					</tr>
+			
+				<tr valign="top">
+					<th scope="row">
+						<h3><?php esc_html_e("Custom SQL calls");?></h3>
+					</th>
+				</tr>
+
+				<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("Cuscom SQL Call #1");?> 
+						</th>
+						<td>
+							<fieldset>
+								<legend>
+									<span> 
+										<i>Enter your SQL command to extract info. Should return a single value. <br>Use this to extract info from plugins. API REST is /custom_sql_1</i>
+									</span>
+								</legend>
+								<p>
+									<textarea name="pfmswp-options[custom_1]" class="large-text code" rows="2"><?php 
+										echo esc_textarea($options['custom_1']); ?></textarea>
+								</p>
+							</fieldset>
+						</td>
+				</tr>	
+				
+				<tr valign="top">
+						<th scope="row">
+							<?php esc_html_e("Cuscom SQL Call #2");?> 
+						</th>
+						<td>
+							<fieldset>
+								<legend>
+									<span> 
+										<i>Enter your SQL command to extract info. Should return a single value. <br>Use this to extract info from plugins. API REST is /custom_sql_2</i>
+									</span>
+								</legend>
+								<p>
+									<textarea name="pfmswp-options[custom_2]" class="large-text code" rows="2"><?php 
+										echo esc_textarea($options['custom_2']); ?></textarea>
+								</p>
+							</fieldset>
+						</td>
+				</tr>	
+
 				</table>
+				
 				<p class="submit">
 					<input
 						type="submit" name="submit" id="submit"

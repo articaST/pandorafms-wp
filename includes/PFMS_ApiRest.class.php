@@ -214,6 +214,22 @@ class PFMS_ApiRest {
 		return $pfms_wp->api_new_themes();
 	}
 
+	public static function apirest_bruteforce(){
+		global $wpdb;
+
+		$pfms_api = PFMS_ApiRest::getInstance();
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$options = get_option('pfmswp-options');
+		$api_data_newer_minutes = $options['api_data_newer_minutes'];
+
+		if ($pfms_wp->brute_force_attempts(60) == 1)
+			return 1;
+
+		return 0;
+	}
+
+
 
 	public static function apirest_plugin_registered($data){
 		global $wpdb;
@@ -437,6 +453,44 @@ class PFMS_ApiRest {
 		}
 
 	}
+
+	public static function apirest_custom_1(){
+		global $wpdb;
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		$pfms_api = PFMS_ApiRest::getInstance();
+		$options = get_option('pfmswp-options');
+
+		if (!$pfms_api->apirest_check_authentication()) {
+			return $pfms_api->apirest_error_authentication();
+		}
+		else {
+			$sql = $wpdb->get_var($options['custom_1']);
+			if (is_numeric($sql))
+				return (int)$sql;
+			return $sql;
+			
+		}
+
+	}
+
+	public static function apirest_custom_2() {
+		global $wpdb;
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		$pfms_api = PFMS_ApiRest::getInstance();
+		$options = get_option('pfmswp-options');
+
+		if (!$pfms_api->apirest_check_authentication()) {
+			return $pfms_api->apirest_error_authentication();
+		}
+		else {
+			$sql = $wpdb->get_var($options['custom_2']);
+			if (is_numeric($sql))
+				return (int)$sql;
+			return $sql;
+		}
+
+	}
+
 
 	//=== END ==== API REST CODE =======================================
 	

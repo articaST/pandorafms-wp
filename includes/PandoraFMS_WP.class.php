@@ -1,6 +1,6 @@
 <?php
 /*
-Copyright (c) 2021 Artica PFMS 
+Copyright (c) 2022 Artica PFMS 
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -32,11 +32,8 @@ class PandoraFMS_WP {
 	 * DEBUG == 1
 	 *  - The force the cron task for to execute the next time
 	 */
-	public $debug = 1;
+	public $debug = 0;
 	
-	public $wp_login_php = false;
-	
-	public $name_dir_plugin = '';
 	//=== END ==== ATRIBUTES ===========================================
 	
 	
@@ -70,10 +67,14 @@ class PandoraFMS_WP {
 								'api_ip' => "*",
 								'api_data_newer_minutes' => 60,
 								'deleted_time' => 7,
-								'new_time' => 7
+								'new_time' => 7,
+								'blacklist_plugins_check_update' => 'Hello Dolly', 
+								'custom_1' => 'SELECT option_value FROM wp_options WHERE option_name = "admin_email"',
+								'custom_2' => 'SELECT DATEDIFF(NOW(), NOW() - INTERVAL VARIABLE_VALUE SECOND) AS "Uptime_days" 
+								FROM performance_schema.session_status
+WHERE VARIABLE_NAME = "Uptime";'
 							  ); 
-			update_option("pfmswp-options", $pfmswp_options); //Por defecto, pero no se si se debe hacer aqui ?!! Es que sino no las crea al inicio
-			
+			update_option("pfmswp-options", $pfmswp_options); 
 		}
 		
 		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');		
@@ -240,53 +241,20 @@ class PandoraFMS_WP {
 		$pfms_wp->install();
 		
 		$options_access_control = get_option("pfmswp-options-access_control");
-		$options_filesystem = get_option("pfmswp-options-filesystem");
-
-
 		if(!$options_access_control){
-
 			$access_control_default_options = array(
-												'email_new_account' => 1,
-												'email_user_login' => 1,
-												'email_change_email' => 1,
-												'email_plugin_new' => 1,
-												'email_theme_new' => 1,										
-												'activate_login_rename' => 0,
-												'login_rename_page' => "",
+
+
 												'bruteforce_attempts' => 4,
 												'bruteforce_attack_protection' => 1,
 												'bruteforce_attack_attempts' => 3,
 												'wait_protect_bruteforce_login_seconds' => 120, 	
-												'h_recent_brute_force' => 90,																							
-												'blacklist_ips' => "",											
-												'url_redirect_ip_banned' => "",
-												'activate_login_recaptcha' => 0,
-												'site_key' => "",
-												'secret' => "",									
-												'disable_xmlrpc' => 0									
+												'h_recent_brute_force' => 90
 											); 
 
 			update_option("pfmswp-options-access_control", $access_control_default_options);
 
 		}
-
-
-		if(!$options_filesystem){
-
-			$filesystem_default_options = array(
-												'check_filehash_svn' => 1,
-												'blacklist_files' => 'PandoraFMS_WP.class.php
-/plugins/akismet/
-.png
-.jpg
-.gif',
-												'scan_infected_files' => 1,
-												'send_email_files_modified' => 1								
-											); 
-
-			update_option("pfmswp-options-filesystem", $filesystem_default_options);
-
-		} 
 	}
 	
 	
@@ -294,6 +262,7 @@ class PandoraFMS_WP {
 		error_log( "Deactivation" );
 	}
 	
+	// Register of API routes
 	
 	public static function rest_api_init() {
 		error_log("rest_api_init");	
@@ -397,11 +366,28 @@ class PandoraFMS_WP {
 			)
 		);
 
-		// Total users
+		register_rest_route('pandorafms_wp', '/custom_sql_1',
+			array(
+				'methods' => 'GET',
+				'callback' => array('PFMS_ApiRest', 'apirest_custom_1')
+			)
+		);
 
-				
+		register_rest_route('pandorafms_wp', '/custom_sql_2',
+			array(
+				'methods' => 'GET',
+				'callback' => array('PFMS_ApiRest', 'apirest_custom_2')
+			)
+		);
+		
+		register_rest_route('pandorafms_wp', '/bruteforce',
+			array(
+				'methods' => 'GET',
+				'callback' => array('PFMS_ApiRest', 'apirest_bruteforce')
+			)
+		);
+		
 	}
-
 
 	public static function init() {
 		$pfms_wp = PandoraFMS_WP::getInstance();
@@ -429,76 +415,16 @@ class PandoraFMS_WP {
 			$ip = 'unknown';
 		}		
 
-		//Code footer
-	
 		
 		//=== INIT === EVENT HOOKS =====================================
+
 		add_action("user_register", array('PandoraFMS_WP', 'user_register'));
 		add_action("wp_login", array('PandoraFMS_WP', 'user_login'));	
 		add_action("wp_login_failed", array('PandoraFMS_WP', 'user_login_failed'));
-		
+
 		//=== END ==== EVENT HOOKS =====================================	
 	}
 	
-
-	public static function admin_init() {
-		$pfms_wp = PandoraFMS_WP::getInstance();
-		
-		// Create the widget
-		add_action('wp_dashboard_setup',
-			array("PFMS_Widget_Dashboard", "show_dashboard"));
-		
-		//Added settings
-		register_setting(
-			"pfmswp-settings-group",
-			"pfmswp-options",
-			array("PandoraFMS_WP", "sanitize_options")); 
-		
-		register_setting(
-			"pfmswp-settings-group-options-monitoring",
-			"pfmswp-options-monitoring",
-			array("PandoraFMS_WP", "sanitize_options_monitoring"));
-	
-	
-	
-		// Added script
-		wp_enqueue_script('jquery-ui-dialog');
-		wp_enqueue_style("wp-jquery-ui-dialog");
-		
-		wp_enqueue_script(
-			'my_custom_script',
-			plugin_dir_url( __FILE__ ) . '../js/jquery.scrollTableBody-1.0.0.js');
-	}
-	
-
-	// Added script
-	public static function my_wp_enqueue_script(){
-			
-	    wp_enqueue_script(
-			'admin_scripts',
-			plugin_dir_url( __FILE__ ) . '../js/pfms_admin_js.js'); //My JQuery functions
-
-	}
-
-
-	// Minimum version of Wordpress to run the API
-	public static function show_message_version_wp() {		
-		$pfms_wp = PandoraFMS_WP::getInstance();
-			
-		if( substr(get_bloginfo('version'), 0, 3) < '4.6' ){
-    	    echo '<div id="message" class="notice notice-warning is-dismissible">	   
-        			<p>To use the Wordpress API REST, you need the version 4.6 as a minimum.</p>
-        	     </div>';
-	    }
-	    elseif ( substr(get_bloginfo('version'), 0, 3) < '4.7' ){
-	    	echo '<div id="message" class="notice notice-warning is-dismissible">
-        			<p>To use the Wordpress API REST, you need to install the plugin <a href="https://es.wordpress.org/plugins/rest-api/">WP REST API (Version 2)</a> </p>
-        	     </div>';
-	    }
-	 
-	}
-
-
 	public static function user_register($user_id) {
 		global $wpdb;
 		
@@ -567,6 +493,89 @@ class PandoraFMS_WP {
 			
 			error_log("user_login_failed");
 		}// If user exists
+	}
+
+	
+	public static function user_login($user_login) {
+		global $wpdb;
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$pfms_wp->store_user_login($user_login, true);
+		
+		delete_transient("pfms_wp::bruteforce_attempts-".$user_login);
+		//Delete the transient (attemps) because the login is correct 
+		
+		$user = get_user_by('login', $user_login);
+		
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
+		$return = $wpdb->insert(
+			$tablename,
+			array(
+				'type' => 'user_login',
+				'data' =>
+					sprintf("User [%s] login.",
+						esc_sql($user->user_login)),
+				'timestamp' => date('Y-m-d H:i:s')),
+			array('%s', '%s', '%s'));
+	}
+
+
+	public static function admin_init() {
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		// Create the widget
+		add_action('wp_dashboard_setup',
+			array("PFMS_Widget_Dashboard", "show_dashboard"));
+		
+		//Added settings
+		register_setting(
+			"pfmswp-settings-group",
+			"pfmswp-options",
+			array("PandoraFMS_WP", "sanitize_options")); 
+		
+		register_setting(
+			"pfmswp-settings-group-options-monitoring",
+			"pfmswp-options-monitoring",
+			array("PandoraFMS_WP", "sanitize_options_monitoring"));
+	
+	
+	
+		// Added script
+		wp_enqueue_script('jquery-ui-dialog');
+		wp_enqueue_style("wp-jquery-ui-dialog");
+		
+		wp_enqueue_script(
+			'my_custom_script',
+			plugin_dir_url( __FILE__ ) . '../js/jquery.scrollTableBody-1.0.0.js');
+	}
+	
+
+	// Added script
+	public static function my_wp_enqueue_script(){
+			
+	    wp_enqueue_script(
+			'admin_scripts',
+			plugin_dir_url( __FILE__ ) . '../js/pfms_admin_js.js'); //My JQuery functions
+
+	}
+
+
+	// Minimum version of Wordpress to run the API
+	public static function show_message_version_wp() {		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+			
+		if( substr(get_bloginfo('version'), 0, 3) < '4.6' ){
+    	    echo '<div id="message" class="notice notice-warning is-dismissible">	   
+        			<p>To use the Wordpress API REST, you need the version 4.6 as a minimum.</p>
+        	     </div>';
+	    }
+	    elseif ( substr(get_bloginfo('version'), 0, 3) < '4.7' ){
+	    	echo '<div id="message" class="notice notice-warning is-dismissible">
+        			<p>To use the Wordpress API REST, you need to install the plugin <a href="https://es.wordpress.org/plugins/rest-api/">WP REST API (Version 2)</a> </p>
+        	     </div>';
+	    }
+	 
 	}
 
 	public function check_new_plugins() {
@@ -692,10 +701,9 @@ class PandoraFMS_WP {
 		$default_options['enabled_check_admin'] = 1;
 		$default_options['enabled_wordpress_updated'] = 1;
 		$default_options['enabled_plugins_updated'] = 1;
-		$default_options['blacklist_plugins_check_update'] = "";
+		$default_options['blacklist_plugins_check_update'] = "Hello Dolly";
 		return $default_options;
 	}
-
 	
 	public static function sanitize_options($options) {
 		$pfms_wp = PandoraFMS_WP::getInstance();
@@ -801,79 +809,7 @@ class PandoraFMS_WP {
 	}
 
 	
-	public function get_list_login_lockout() {
-		global $wpdb;
-		
-		$return = array();
-		
-		$pfms_wp = PandoraFMS_WP::getInstance();
-		
-		$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
-		$rows = $wpdb->get_results(
-			"SELECT *
-			FROM `" . $tablename . "`
-			WHERE type = 'login_lockout'
-			ORDER BY `timestamp` DESC");
-		if (empty($rows))
-			$rows = array();
-		
-		foreach ($rows as $row) {
-			preg_match(
-				"/User \[(.*)\] login lockout after \[([0-9]+)\] attempts./",
-				$row->data, $matches);
-			
-			$return[] = array(
-				'user' => $matches[1],
-				'count' => $matches[2],
-				'time' => $row->timestamp);
-		}
-		
-		return $return;
-	}
-	
-	public function brute_force_attempts($api_data_newer_minutes) { 
-
-		global $wpdb;
-		$pfms_wp = PandoraFMS_WP::getInstance();
-
-		//error_log('brute_force_attempts');
-
-		// pfmswp-options-access_control[bruteforce_attack_attempts] = Maximum number of attempts
-		// $h_recent_brute_force = Time in which these attempts happen
-		// pfmswp-options-access_control[wait_protect_bruteforce_login_seconds] = Locks the user during this time (120 seconds default)
-
-		$time_in_seconds = $api_data_newer_minutes * 60;
-
-		$options_access_control = get_option('pfmswp-options-access_control');
-		
-		$return = 0;
-
-
-		$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
-
-		$fails_in_interval = $wpdb->get_results(
-			"SELECT *
-			FROM `" . $tablename . "`
-			WHERE 
-			(type = 'failed_login' AND timestamp > date_sub(NOW(), INTERVAL $time_in_seconds SECOND) )
-			OR
-			(type = 'login_lockout' AND timestamp > date_sub(NOW(), INTERVAL $time_in_seconds SECOND) )
-			ORDER BY timestamp DESC");
-
-			if ( count($fails_in_interval) >= $options_access_control['bruteforce_attack_attempts']  ) {
-				$return = 0; //Return 0 (verde)
-			}
-			else{
-				$return = 1; //Return 1 (rojo) if there aren't lockouts in the last $api_data_newer_minutes seconds.
-			}
-
-			
-		return $return;
-		
-	}
-	
-
-	//Submenu Dashboard
+	//Get data for submenu Dashboard
 	public function get_dashboard_data() {
 		$pfms_wp = PandoraFMS_WP::getInstance();		
 		$pfms_api = PFMS_ApiRest::getInstance();
@@ -928,6 +864,72 @@ class PandoraFMS_WP {
 	
 	//=== INIT === CHECKS ==============================================
 
+	public function get_list_login_lockout() {
+		global $wpdb;
+		
+		$return = array();
+		
+		$pfms_wp = PandoraFMS_WP::getInstance();
+		
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
+		$rows = $wpdb->get_results(
+			"SELECT *
+			FROM `" . $tablename . "`
+			WHERE type = 'login_lockout'
+			ORDER BY `timestamp` DESC");
+		if (empty($rows))
+			$rows = array();
+		
+		foreach ($rows as $row) {
+			preg_match(
+				"/User \[(.*)\] login lockout after \[([0-9]+)\] attempts./",
+				$row->data, $matches);
+			
+			$return[] = array(
+				'user' => $matches[1],
+				'count' => $matches[2],
+				'time' => $row->timestamp);
+		}
+		
+		return $return;
+	}
+	
+	public function brute_force_attempts($api_data_newer_minutes) { 
+
+		global $wpdb;
+		$pfms_wp = PandoraFMS_WP::getInstance();
+
+		// pfmswp-options-access_control[bruteforce_attack_attempts] = Maximum number of attempts
+		// $h_recent_brute_force = Time in which these attempts happen
+		// pfmswp-options-access_control[wait_protect_bruteforce_login_seconds] = Locks the user during this time (120 seconds default)
+
+		$time_in_seconds = $api_data_newer_minutes * 60;
+
+		$options_access_control = get_option('pfmswp-options-access_control');
+		
+		$return = 0;
+
+		$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
+
+		$fails_in_interval = $wpdb->get_results(
+			"SELECT *
+			FROM `" . $tablename . "`
+			WHERE 
+			(type = 'failed_login' AND timestamp > date_sub(NOW(), INTERVAL $time_in_seconds SECOND) )
+			OR
+			(type = 'login_lockout' AND timestamp > date_sub(NOW(), INTERVAL $time_in_seconds SECOND) )
+			ORDER BY timestamp DESC");
+
+			if ( count($fails_in_interval) >= $options_access_control['bruteforce_attack_attempts']  ) {
+				$return = 0; //Return 0 (verde)
+			}
+			else{
+				$return = 1; //Return 1 (rojo) if there aren't lockouts in the last $api_data_newer_minutes seconds.
+			}
+
+		return $return;
+		
+	}
 
  	public function get_user_count() {
  		global $wpdb;
@@ -992,9 +994,8 @@ class PandoraFMS_WP {
 			if (!empty($update_plugins->response)) {
 				$plugins = (array)$update_plugins->response;
 				
-				$options = get_option('pfmswp-options-system_security');
-				$blacklist_plugins_check_update =
-					$options['blacklist_plugins_check_update'];
+				$options = get_option('pfmswp-options');
+				$blacklist_plugins_check_update = $options['blacklist_plugins_check_update'];
 				$blacklist_plugins_check_update = str_replace(
 					"\r", "\n", $blacklist_plugins_check_update);
 				$blacklist_plugins_check_update = explode("\n",
@@ -1003,16 +1004,14 @@ class PandoraFMS_WP {
 					$blacklist_plugins_check_update = array();
 				$blacklist_plugins_check_update =
 					array_filter($blacklist_plugins_check_update);
-				
 				foreach ($plugins as $plugin) {
 					$plugin = (array)$plugin;
 					$plugin_data = get_plugin_data(WP_PLUGIN_DIR . '/' . $plugin['plugin']);
 					$plugin_name = $plugin_data['Name'];
-					
+
 					if (array_search($plugin_name, $blacklist_plugins_check_update) !== false) {
 						continue;
 					}
-					
 					$pending_update_plugins[] = $plugin_name;
 				}
 			}
@@ -1146,29 +1145,6 @@ class PandoraFMS_WP {
 	}
 
 
-	public static function user_login($user_login) {
-		global $wpdb;
-		
-		$pfms_wp = PandoraFMS_WP::getInstance();
-		
-		$pfms_wp->store_user_login($user_login, true);
-		
-		delete_transient("pfms_wp::bruteforce_attempts-".$user_login);
-		//Delete the transient (attemps) because the login is correct 
-		
-		$user = get_user_by('login', $user_login);
-		
-		$tablename = $wpdb->prefix . $pfms_wp->prefix . "access_control";
-		$return = $wpdb->insert(
-			$tablename,
-			array(
-				'type' => 'user_login',
-				'data' =>
-					sprintf("User [%s] login.",
-						esc_sql($user->user_login)),
-				'timestamp' => date('Y-m-d H:i:s')),
-			array('%s', '%s', '%s'));
-	}
 	
 
 	//Send an email when any user change the email

@@ -3,7 +3,7 @@
 # Plugin server designed for PandoraFMS (pandorafms.com)
 # Checks for Pandora FMS WP (v2)
 #
-# Copyright (C) 2021 slerena@pandorafms.com
+# Copyright (C) 2022 slerena@pandorafms.com
 #--------------------------------------------------------------------
 
 use strict;

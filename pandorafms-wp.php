@@ -1,18 +1,18 @@
 <?php
 /**
  * @package PandoraFMS WP
- * @version 0.1
+ * @version 2.0
  */
 /*
 Plugin Name: PandoraFMS WP
 Plugin URI: https://github.com/articaST/pandorafms-wp
-Description: Plugin for monitoring Wordpress with Pandora FMS
+Description: Plugin for monitoring Wordpress with Pandora FMS. Collect data from your wordpress and make it accessible from outside using the REST API. It makes available data to a remote Pandora FMS for monitoring this information.
 Author: Artica PFMS
 Version: 2.0
 Author URI: https://artica.es/
 Text Domain: pandorafms-wp
 License: AGPLv3
-Copyright: (c) 2021 Artica PFMS
+Copyright: (c) 2022 Artica PFMS
 */
 
 if ( ! defined( 'ABSPATH' ) ) die();
